@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ArrowRight, Users, Building, MapPin } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
@@ -41,10 +42,12 @@ const HeroSection = () => {
                   className="pl-10 border-0 bg-transparent text-lg h-12"
                 />
               </div>
-              <Button variant="hero" size="lg" className="h-12 px-8">
-                Find Placements
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              <Link to="/find-placements">
+                <Button variant="hero" size="lg" className="h-12 px-8">
+                  Find Placements
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -75,12 +78,16 @@ const HeroSection = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <Button variant="hero" size="lg" className="min-w-[200px]">
-              I'm a Student
-            </Button>
-            <Button variant="outline" size="lg" className="min-w-[200px]">
-              I'm a Company
-            </Button>
+            <Link to="/profile">
+              <Button variant="hero" size="lg" className="min-w-[200px]">
+                I'm a Student
+              </Button>
+            </Link>
+            <Link to="/for-companies">
+              <Button variant="outline" size="lg" className="min-w-[200px]">
+                I'm a Company
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
