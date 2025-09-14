@@ -2,41 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* PlacementsBridge Design System - Green theme for Uganda internship platform */
 
 @layer base {
   :root {
+    /* Core colors */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 212 84% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 212 84% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 212 84% 4%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Green primary palette - #0F9D58 */
+    --primary: 146 74% 34%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 146 74% 28%;
+    --primary-light: 146 45% 90%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Dark green - #0B7A44 */
+    --primary-dark: 146 80% 26%;
+    --primary-dark-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Light green accents - #E6F4EA */
+    --secondary: 146 45% 94%;
+    --secondary-foreground: 146 74% 20%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Amber accent - #FFB703 */
+    --accent: 45 100% 51%;
+    --accent-foreground: 45 100% 10%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Neutral colors */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --border: 146 20% 88%;
+    --input: 146 20% 88%;
+    --ring: 146 74% 34%;
+
+    /* Success states */
+    --success: 146 74% 34%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning states */
+    --warning: 45 100% 51%;
+    --warning-foreground: 45 100% 10%;
+
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
