@@ -129,14 +129,11 @@ BEGIN
     NEW.raw_user_meta_data->>'full_name'
   );
   
-  -- Assign admin role to specific email
-  IF NEW.email = 'joronimoamanya@gmail.com' THEN
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id, 'admin');
-  ELSE
-    INSERT INTO public.user_roles (user_id, role)
-    VALUES (NEW.id, 'user');
-  END IF;
+  -- Assign default role to newly registered users.
+  -- NOTE: Do NOT hardcode admin emails in migrations. Assign admin roles
+  -- manually via a secure admin UI or a one-off administrative script.
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, 'user');
   
   RETURN NEW;
 END;
