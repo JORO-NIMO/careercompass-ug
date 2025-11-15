@@ -1,24 +1,8 @@
-# Welcome to your Lovable project
-
-## Project info
-
-**URL**: https://lovable.dev/projects/84bb06cd-fb76-4c57-be38-a43d8b303c8e
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/84bb06cd-fb76-4c57-be38-a43d8b303c8e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
 # CareerCompass-UG
 
 This repository contains the CareerCompass-UG web application: a Vite + React + TypeScript frontend using Tailwind CSS and a Supabase backend. The project provides user-facing pages for students, mentors, and employers and includes integrations for authentication, data storage, and real-time features.
 
-This README replaces earlier scaffolded Lovable content and adds a detailed implementation plan for extending the platform with three major subsystems:
+This README replaces earlier scaffolded content and adds a detailed implementation plan for extending the platform with three major subsystems:
 
 - Notifications system (in-app + email + scheduled jobs + preference center)
 - Feedback & Analytics pipeline (events, admin dashboard, engagement metrics)
