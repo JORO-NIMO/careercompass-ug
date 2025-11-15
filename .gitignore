@@ -1,3 +1,14 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+.supabase
+dist/
+/.cache
+/.vite
+coverage/
+/*.log
+/.DS_Store
 # Logs
 logs
 *.log
