@@ -16,6 +16,9 @@ import NotificationsPage from "./pages/Notifications";
 import NotificationPreferences from "./pages/NotificationPreferences";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import FeedbackPage from "./pages/Feedback";
+import LearningHub from "./pages/LearningHub";
+import JobFeed from "./pages/JobFeed";
+import CareerExplorer from "./pages/CareerExplorer";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +41,9 @@ const App = () => (
             <Route path="/notification-preferences" element={<NotificationPreferences />} />
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/learning" element={<LearningHub />} />
+            <Route path="/jobs" element={<JobFeed />} />
+            <Route path="/career-explorer" element={<CareerExplorer />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
