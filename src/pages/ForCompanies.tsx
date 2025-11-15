@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,8 +9,92 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Building, Users, Target, Star } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const ForCompanies = () => {
+  const { isAdmin, user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [positionTitle, setPositionTitle] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [description, setDescription] = useState('');
+  const [region, setRegion] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [stipend, setStipend] = useState('');
+  const [availableSlots, setAvailableSlots] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to post placements",
+      });
+      navigate('/signin');
+    } else if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "Only administrators can post placements",
+        variant: "destructive",
+      });
+    }
+  }, [user, isAdmin, navigate, toast]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!isAdmin) {
+      toast({
+        title: "Error",
+        description: "You don't have permission to post placements",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSubmitting(true);
+    
+    try {
+      const { error } = await supabase.from('placements').insert({
+        position_title: positionTitle,
+        company_name: companyName,
+        description,
+        region,
+        industry,
+        stipend,
+        available_slots: parseInt(availableSlots),
+        created_by: user?.id,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Placement posted successfully",
+      });
+
+      // Reset form
+      setPositionTitle('');
+      setCompanyName('');
+      setDescription('');
+      setRegion('');
+      setIndustry('');
+      setStipend('');
+      setAvailableSlots('');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to post placement",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />

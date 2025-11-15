@@ -1,10 +1,18 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Menu, User, Briefcase, Search } from "lucide-react";
+import { Bell, Menu, Briefcase, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -28,20 +36,40 @@ const Header = () => {
           <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
             About
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+              <Shield className="w-4 h-4" />
+              Admin
+            </Link>
+          )}
         </nav>
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-3">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></span>
-          </Button>
-          <Link to="/signin">
-            <Button variant="outline">Sign In</Button>
-          </Link>
-          <Link to="/for-companies">
-            <Button variant="hero">Post Placement</Button>
-          </Link>
+          {user ? (
+            <>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></span>
+              </Button>
+              <Link to="/profile">
+                <Button variant="outline">Profile</Button>
+              </Link>
+              <Button variant="ghost" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/signin">
+                <Button variant="outline">Sign In</Button>
+              </Link>
+              <Link to="/for-companies">
+                <Button variant="hero">Post Placement</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -68,13 +96,31 @@ const Header = () => {
             <Link to="/about" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
               About
             </Link>
+            {isAdmin && (
+              <Link to="/admin" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+                Admin Dashboard
+              </Link>
+            )}
             <div className="pt-3 space-y-2 border-t border-border">
-              <Link to="/signin" className="block">
-                <Button variant="outline" className="w-full">Sign In</Button>
-              </Link>
-              <Link to="/for-companies" className="block">
-                <Button variant="hero" className="w-full">Post Placement</Button>
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/profile" className="block">
+                    <Button variant="outline" className="w-full">Profile</Button>
+                  </Link>
+                  <Button variant="ghost" className="w-full" onClick={handleSignOut}>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/signin" className="block">
+                    <Button variant="outline" className="w-full">Sign In</Button>
+                  </Link>
+                  <Link to="/for-companies" className="block">
+                    <Button variant="hero" className="w-full">Post Placement</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
