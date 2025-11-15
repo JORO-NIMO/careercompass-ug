@@ -12,6 +12,10 @@ import SignIn from "./pages/SignIn";
 import StudentProfile from "./pages/StudentProfile";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import NotificationsPage from "./pages/Notifications";
+import NotificationPreferences from "./pages/NotificationPreferences";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import FeedbackPage from "./pages/Feedback";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/signin" element={<SignIn />} />
             <Route path="/profile" element={<StudentProfile />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/notification-preferences" element={<NotificationPreferences />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
