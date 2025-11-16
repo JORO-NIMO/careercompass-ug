@@ -34,26 +34,14 @@ const ForCompanies = () => {
         description: "Please sign in to post placements",
       });
       navigate('/signin');
-    } else if (!isAdmin) {
-      toast({
-        title: "Access Denied",
-        description: "Only administrators can post placements",
-        variant: "destructive",
-      });
     }
-  }, [user, isAdmin, navigate, toast]);
+  }, [user, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isAdmin) {
-      toast({
-        title: "Error",
-        description: "You don't have permission to post placements",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Allow any logged-in company to submit a placement. It will be created
+    // with approved=false and reviewed by an admin before becoming public.
     
     setSubmitting(true);
     
@@ -67,13 +55,15 @@ const ForCompanies = () => {
         stipend,
         available_slots: parseInt(availableSlots),
         created_by: user?.id,
+        approved: false,
+        contact_info: user?.email || null,
       });
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Placement posted successfully",
+        title: "Submitted",
+        description: "Placement submitted and is pending admin review. You will be notified once approved.",
       });
 
       // Reset form

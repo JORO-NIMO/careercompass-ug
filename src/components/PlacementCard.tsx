@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Building, Clock, DollarSign, Users, Bookmark } from "lucide-react";
+import { useAuth } from '@/hooks/useAuth';
 
 interface PlacementCardProps {
   id: string;
@@ -31,6 +32,10 @@ const PlacementCard = ({
   remote,
   verified = false
 }: PlacementCardProps) => {
+  const { user } = useAuth();
+
+  const isAuthenticated = !!user;
+
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-border hover:border-primary/20 group">
       <CardHeader className="pb-3">
@@ -56,9 +61,11 @@ const PlacementCard = ({
 
       <CardContent className="space-y-4">
         {/* Description */}
-        <p className="text-muted-foreground text-sm line-clamp-2">
-          {description}
-        </p>
+        {isAuthenticated ? (
+          <p className="text-muted-foreground text-sm line-clamp-2">{description}</p>
+        ) : (
+          <p className="text-muted-foreground text-sm line-clamp-1">Sign in to view full details and application instructions.</p>
+        )}
 
         {/* Details Grid */}
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -103,9 +110,13 @@ const PlacementCard = ({
           <Clock className="w-4 h-4" />
           <span>{postedDate}</span>
         </div>
-        <Button size="sm" className="min-w-[80px]">
-          Apply Now
-        </Button>
+        {isAuthenticated ? (
+          <Button size="sm" className="min-w-[80px]">Apply Now</Button>
+        ) : (
+          <Button size="sm" className="min-w-[80px]" onClick={() => { window.location.href = '/signin'; }}>
+            Sign in
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
