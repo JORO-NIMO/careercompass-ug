@@ -1,9 +1,54 @@
 import PlacementCard from "./PlacementCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from '@/integrations/supabase/client';
 
 const FeaturedPlacements = () => {
-  const placements: any[] = [];
+  const [placements, setPlacements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('placements')
+          .select('id, position_title, company_name, description, region, industry, stipend, available_slots, created_at')
+          .eq('approved', true)
+          .order('created_at', { ascending: false })
+          .limit(9);
+
+        if (error) throw error;
+
+        if (!mounted) return;
+
+        const mapped = (data || []).map((p: any) => ({
+          id: p.id,
+          title: p.position_title,
+          company: p.company_name,
+          description: p.description,
+          region: p.region,
+          industry: p.industry,
+          stipend: p.stipend,
+          slots: p.available_slots,
+          postedDate: p.created_at,
+          remote: false,
+          verified: false,
+        }));
+
+        setPlacements(mapped);
+      } catch (err) {
+        console.error('Error loading featured placements', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <section className="py-16 bg-background">
@@ -19,7 +64,9 @@ const FeaturedPlacements = () => {
 
         {/* Placements Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {placements.length === 0 ? (
+          {loading ? (
+            <div className="col-span-full text-center py-12">Loading...</div>
+          ) : placements.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <p className="text-muted-foreground">No placements available yet.</p>
             </div>

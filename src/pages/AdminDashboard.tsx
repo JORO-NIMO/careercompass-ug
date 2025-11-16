@@ -110,6 +110,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const approvePlacement = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('placements')
+        .update({ approved: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({ title: 'Approved', description: 'Placement approved and is now visible publicly.' });
+      loadPlacements();
+      loadStats();
+    } catch (e) {
+      toast({ title: 'Error', description: 'Failed to approve placement', variant: 'destructive' });
+    }
+  };
+
   if (loading || loadingPlacements) {
     return (
       <div className="min-h-screen bg-background">
@@ -179,13 +196,20 @@ const AdminDashboard = () => {
                           <span>👥 {placement.available_slots} slots</span>
                         </div>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deletePlacement(placement.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        {!placement.approved && (
+                          <Button variant="default" size="sm" onClick={() => approvePlacement(placement.id)}>
+                            Approve
+                          </Button>
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => deletePlacement(placement.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
