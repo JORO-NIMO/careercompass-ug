@@ -12,9 +12,9 @@ const LearningHub: React.FC = () => {
     setLoading(true);
     try {
       const bk = await searchBooks(query);
-      setBooks(bk.docs ?? bk.docs || []);
+      setBooks(bk.docs ?? []);
       const cs = await fetchCourses(10);
-      setCourses(cs.elements ?? cs.elements || []);
+      setCourses(cs.elements ?? []);
     } catch (err) {
       console.error(err);
     } finally {
