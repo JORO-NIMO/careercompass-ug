@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { searchBooks } from '@/services/openLibraryService';
-import { fetchCourses } from '@/services/courseraService';
+import { getCourseraCourses } from '@/services/courseraService';
 
 const LearningHub: React.FC = () => {
   const [query, setQuery] = useState('software engineering');
@@ -13,7 +13,7 @@ const LearningHub: React.FC = () => {
     try {
       const bk = await searchBooks(query);
       setBooks(bk.docs ?? []);
-      const cs = await fetchCourses(10);
+      const cs = await getCourseraCourses(10);
       setCourses(cs.elements ?? []);
     } catch (err) {
       console.error(err);

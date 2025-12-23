@@ -1,3 +1,9 @@
+#!/usr/bin/env python3
+"""
+Placement Bot for Ugandan Internship & Industrial Training Intelligence
+Setup: pip install -r ../requirements.txt
+"""
+
 import time
 import requests
 from bs4 import BeautifulSoup

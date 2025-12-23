@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // Allow using process in this config without adding @types/node to the repo
 declare const process: any;
@@ -26,7 +25,6 @@ export default defineConfig(({ mode }: { mode: string }) => {
     },
     plugins: [
       react(),
-      mode === 'development' && componentTagger(),
       stripPlugin,
     ].filter(Boolean),
     resolve: {
