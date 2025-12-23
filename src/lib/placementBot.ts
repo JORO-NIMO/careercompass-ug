@@ -61,16 +61,18 @@ export function buildPlacementQueries(filters: PlacementFilters): BotQuery[] {
   const dork = buildDork(filters);
   const sector = filters.sector ?? "";
 
-  const google = `https://www.google.com/search?q=${encodeQuery(dork)}+site:.ug`;
-  const googleOrgGov = `https://www.google.com/search?q=${encodeQuery(`${dork} internship (site:org.ug OR site:go.ug)`)}`;
+  const google = `https://www.google.com/search?q=${encodeQuery(dork)}`;
+  const googleAllDomains = `https://www.google.com/search?q=${encodeQuery(`${dork} site:(.ug OR .com OR .org OR .net OR .dev OR .co.ug OR .ac.ug)`)}`;
+  const googleOrgGov = `https://www.google.com/search?q=${encodeQuery(`${dork} internship (site:org.ug OR site:go.ug OR site:org OR site:gov)`)}`;
   const googleGraduate = `https://www.google.com/search?q=${encodeQuery(`${sector} graduate trainee Uganda 2025 -job-boards`)}`;
   const googleCities = `https://www.google.com/search?q=${encodeQuery(`${dork} (Kampala OR Entebbe OR Mbarara OR Jinja)`)}`;
 
   return [
-    { label: "Industrial training in Uganda (.ug)", url: google, notes: "Targets local domains and industrial training phrasing." },
-    { label: "NGO & Govt internships", url: googleOrgGov, notes: "Focuses on org.ug / go.ug for public/NGO placements." },
+    { label: "Global search - all domains (.ug, .com, .org, .dev, etc.)", url: google, notes: "Searches across all domain extensions for Uganda-based placements." },
+    { label: "All Uganda domains (.ug, .co.ug, .ac.ug, .com, .org, .net, .dev)", url: googleAllDomains, notes: "Explicitly targets multiple Ugandan-related domain extensions." },
+    { label: "NGO & Govt internships", url: googleOrgGov, notes: "Focuses on org/gov domains for public and NGO placements worldwide." },
     { label: "Graduate trainee tracks", url: googleGraduate, notes: "Looks for graduate trainee pages, excludes job boards." },
-    { label: "City-focused internships", url: googleCities, notes: "Bias toward key cities for field attachment sites." },
+    { label: "City-focused internships", url: googleCities, notes: "Bias toward key cities (Kampala, Entebbe, Mbarara, Jinja) for field attachment sites." },
   ];
 }
 

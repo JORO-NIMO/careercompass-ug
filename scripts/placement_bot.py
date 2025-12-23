@@ -55,8 +55,9 @@ def build_queries(sector: str, placement_type: str, region: str | None = None) -
     region_part = f" {region}" if region else ""
     return [
         f"{base}{region_part}",
-        f"{base}{region_part} site:.ug",
-        f"{base}{region_part} (site:org.ug OR site:go.ug)",
+        f"{base}{region_part}",  # Global search across all domains
+        f"{base}{region_part} site:(.ug OR .com OR .org OR .net OR .dev OR .co.ug OR .ac.ug)",
+        f"{base}{region_part} (site:org OR site:gov OR site:org.ug OR site:go.ug)",
         f"{sector} graduate trainee Uganda 2025 -job-boards",
         f"{base} (Kampala OR Entebbe OR Mbarara OR Jinja)",
     ]
