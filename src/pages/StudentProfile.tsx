@@ -5,14 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { instituteCategories, getInstitutesByCategory, publicUniversities, privateUniversities, Institution } from "@/lib/institutions";
 
 const StudentProfile = () => {
   const [interests, setInterests] = useState(["Technology", "Finance"]);
   const [newInterest, setNewInterest] = useState("");
+  const [institutionType, setInstitutionType] = useState<"University" | "Institute">("University");
+  const [institutionId, setInstitutionId] = useState<string | undefined>(undefined);
 
   const addInterest = () => {
     if (newInterest.trim() && !interests.includes(newInterest.trim())) {
@@ -54,12 +57,12 @@ const StudentProfile = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="john.doe@university.ac.ug" />
+                  <Input id="email" type="email" placeholder="amanya.othername@university.ac.ug" />
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" placeholder="+256 700 000 000" />
+                  <Input id="phone" placeholder="+256 726128513" />
                 </div>
               </CardContent>
             </Card>
@@ -69,20 +72,56 @@ const StudentProfile = () => {
                 <CardTitle>Academic Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>University</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your university" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="muk">Makerere University</SelectItem>
-                      <SelectItem value="kyu">Kyambogo University</SelectItem>
-                      <SelectItem value="mubs">Makerere University Business School</SelectItem>
-                      <SelectItem value="ucu">Uganda Christian University</SelectItem>
-                      <SelectItem value="must">Mbarara University of Science and Technology</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Institution Type</Label>
+                    <Select value={institutionType} onValueChange={(v) => { setInstitutionType(v as any); setInstitutionId(undefined); }}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="University">University</SelectItem>
+                        <SelectItem value="Institute">Institute</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{institutionType === "University" ? "University" : "Institute"}</Label>
+                    <Select value={institutionId} onValueChange={(v) => setInstitutionId(v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={institutionType === "University" ? "Select your university" : "Select your institute"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-80">
+                        {institutionType === "University" ? (
+                          <>
+                            <SelectGroup>
+                              <SelectLabel>Public Universities</SelectLabel>
+                              {publicUniversities.map(u => (
+                                <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                              ))}
+                            </SelectGroup>
+                            <SelectGroup>
+                              <SelectLabel>Private Universities</SelectLabel>
+                              {privateUniversities.map(u => (
+                                <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </>
+                        ) : (
+                          <>
+                            {instituteCategories.map(cat => (
+                              <SelectGroup key={cat}>
+                                <SelectLabel>{cat}</SelectLabel>
+                                {getInstitutesByCategory(cat).map((i: Institution) => (
+                                  <SelectItem key={i.id} value={i.id}>{i.name} {i.ownership ? `(${i.ownership})` : ""}</SelectItem>
+                                ))}
+                              </SelectGroup>
+                            ))}
+                          </>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
