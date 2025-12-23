@@ -17,8 +17,19 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
   ];
 
   const industries = [
-    "Technology", "Banking & Finance", "Healthcare", "Education", "Agriculture", 
-    "Manufacturing", "Tourism", "Media & Communications", "Non-Profit", "Government"
+    "Agribusiness & Forestry",
+    "Healthcare & Medical",
+    "Media & ICT",
+    "Finance & Commerce",
+    "Tourism & Hospitality",
+    "Engineering & Technical",
+    "Legal & Professional Services"
+  ];
+
+  const placementTypes = [
+    "Industrial Training",
+    "Undergraduate Internship",
+    "Graduate Trainee"
   ];
 
   const fields = [
@@ -38,7 +49,7 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="search"
-              placeholder="Job title, company, or keywords..."
+              placeholder="Industrial training or graduate roles by title, company, or keyword"
               className="pl-10 bg-background"
             />
           </div>
@@ -80,6 +91,26 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
                 {industries.map((industry) => (
                   <SelectItem key={industry} value={industry.toLowerCase()}>
                     {industry}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Placement Type */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-primary" />
+              Placement Type
+            </Label>
+            <Select>
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder="Any type" />
+              </SelectTrigger>
+              <SelectContent>
+                {placementTypes.map((type) => (
+                  <SelectItem key={type} value={type.toLowerCase()}>
+                    {type}
                   </SelectItem>
                 ))}
               </SelectContent>
