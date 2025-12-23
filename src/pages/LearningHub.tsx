@@ -2,19 +2,41 @@ import React, { useState } from 'react';
 import { searchBooks } from '@/services/openLibraryService';
 import { fetchCourses } from '@/services/courseraService';
 
+interface Book {
+  key: string;
+  title: string;
+  author_name?: string[];
+}
+
+interface Course {
+  id?: string;
+  courseId?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+}
+
+interface BooksResponse {
+  docs?: Book[];
+}
+
+interface CoursesResponse {
+  elements?: Course[];
+}
+
 const LearningHub: React.FC = () => {
   const [query, setQuery] = useState('software engineering');
-  const [books, setBooks] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
 
   const runSearch = async () => {
     setLoading(true);
     try {
-      const bk = await searchBooks(query);
-      setBooks(bk.docs ?? []);
-      const cs = await fetchCourses(10);
-      setCourses(cs.elements ?? []);
+      const bk = (await searchBooks(query)) as BooksResponse;
+      setBooks(bk?.docs ?? []);
+      const cs = (await fetchCourses(10)) as CoursesResponse;
+      setCourses(cs?.elements ?? []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -35,7 +57,7 @@ const LearningHub: React.FC = () => {
       <section className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Books</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {books.map((b: any) => (
+          {books.map((b) => (
             <div key={b.key} className="p-3 border rounded bg-card">
               <div className="font-medium">{b.title}</div>
               <div className="text-sm text-muted">{(b.author_name || []).join(', ')}</div>
@@ -47,10 +69,10 @@ const LearningHub: React.FC = () => {
       <section>
         <h2 className="text-xl font-semibold mb-2">Courses</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {courses.map((c: any) => (
+          {courses.map((c) => (
             <div key={c.id || c.courseId} className="p-3 border rounded bg-card">
               <div className="font-medium">{c.name || c.title}</div>
-              <div className="text-sm text-muted">{c.description?.slice(0, 120)}</div>
+              <div className="text-sm text-muted">{(c.description || '').slice(0, 120)}</div>
             </div>
           ))}
         </div>
