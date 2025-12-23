@@ -35,7 +35,8 @@ export default async function (req: Request) {
       timestamp: e.timestamp || new Date().toISOString(),
     }));
     
-    await supabase.from('analytics_events').insert(rows).catch((e) => console.error('insert analytics error', e));
+    const { error: insertError } = await supabase.from('analytics_events').insert(rows);
+    if (insertError) console.error('insert analytics error', insertError);
 
     // Forward to PostHog if configured
     const POSTHOG_API_KEY = Deno.env.get('POSTHOG_API_KEY');

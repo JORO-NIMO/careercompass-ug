@@ -4,6 +4,18 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from '@/integrations/supabase/client';
 
+interface PlacementData {
+  id: string;
+  position_title: string;
+  company_name: string;
+  description: string;
+  region: string;
+  industry: string;
+  stipend: string;
+  available_slots: number;
+  created_at: string;
+}
+
 const FeaturedPlacements = () => {
   const [placements, setPlacements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +27,7 @@ const FeaturedPlacements = () => {
       try {
         const { data, error } = await supabase
           .from('placements')
-          .select('id, position_title, company_name, description, region, industry, stipend, available_slots, created_at')
-          .eq('approved', true)
+          .select('id, position_title, company_name, description, region, industry, stipend, available_slots, created_at, approved')
           .order('created_at', { ascending: false })
           .limit(9);
 
@@ -24,19 +35,22 @@ const FeaturedPlacements = () => {
 
         if (!mounted) return;
 
-        const mapped = (data || []).map((p: any) => ({
-          id: p.id,
-          title: p.position_title,
-          company: p.company_name,
-          description: p.description,
-          region: p.region,
-          industry: p.industry,
-          stipend: p.stipend,
-          slots: p.available_slots,
-          postedDate: p.created_at,
-          remote: false,
-          verified: false,
-        }));
+        // Filter approved placements and map to card format
+        const mapped = ((data as (PlacementData & { approved?: boolean })[]) || [])
+          .filter((p) => p.approved === true)
+          .map((p) => ({
+            id: p.id,
+            title: p.position_title,
+            company: p.company_name,
+            description: p.description,
+            region: p.region,
+            industry: p.industry,
+            stipend: p.stipend,
+            slots: p.available_slots,
+            postedDate: p.created_at,
+            remote: false,
+            verified: false,
+          }));
 
         setPlacements(mapped);
       } catch (err) {
