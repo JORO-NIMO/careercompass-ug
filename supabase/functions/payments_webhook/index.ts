@@ -2,8 +2,92 @@
 // Handles payment provider webhooks (Stripe, Paystack, etc.)
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
 
-// Stripe webhook signature verification
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature, x-paystack-signature',
+};
+
+/**
+ * Timing-safe comparison of two strings to prevent timing attacks
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+/**
+ * Verify Stripe webhook signature
+ * Based on Stripe's webhook signature verification algorithm
+ */
 async function verifyStripeSignature(
+  payload: string,
+  signatureHeader: string,
+  secret: string
+): Promise<boolean> {
+  if (!signatureHeader || !secret) return false;
+  
+  try {
+    // Parse the signature header (format: t=timestamp,v1=signature)
+    const parts: Record<string, string> = {};
+    signatureHeader.split(',').forEach(part => {
+      const [key, value] = part.split('=');
+      if (key && value) parts[key] = value;
+    });
+    
+    const timestamp = parts['t'];
+    const signature = parts['v1'];
+    
+    if (!timestamp || !signature) {
+      console.error('Missing timestamp or signature in header');
+      return false;
+    }
+    
+    // Verify timestamp is within tolerance (5 minutes)
+    const timestampAge = Math.abs(Date.now() / 1000 - parseInt(timestamp, 10));
+    if (timestampAge > 300) {
+      console.error('Webhook timestamp is too old');
+      return false;
+    }
+    
+    // Compute expected signature
+    const signedPayload = `${timestamp}.${payload}`;
+    const encoder = new TextEncoder();
+    
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      key,
+      encoder.encode(signedPayload)
+    );
+    
+    // Convert to hex string
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Timing-safe comparison
+    return timingSafeEqual(signature, expectedSignature);
+  } catch (err) {
+    console.error('Stripe signature verification error:', err);
+    return false;
+  }
+}
+
+/**
+ * Verify Paystack webhook signature (HMAC SHA-512)
+ */
+async function verifyPaystackSignature(
   payload: string,
   signature: string,
   secret: string
@@ -11,66 +95,94 @@ async function verifyStripeSignature(
   if (!signature || !secret) return false;
   
   try {
-    // Simplified signature verification - in production use Stripe SDK
     const encoder = new TextEncoder();
+    
     const key = await crypto.subtle.importKey(
       'raw',
       encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
+      { name: 'HMAC', hash: 'SHA-512' },
       false,
-      ['verify']
+      ['sign']
     );
     
-    const sigHeader = signature.split(',').reduce((acc, pair) => {
-      const [key, value] = pair.split('=');
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
-    
-    const signedPayload = `${sigHeader.t}.${payload}`;
-    const expectedSig = await crypto.subtle.sign(
+    const signatureBuffer = await crypto.subtle.sign(
       'HMAC',
       key,
-      encoder.encode(signedPayload)
+      encoder.encode(payload)
     );
     
-    return true; // Simplified - implement full verification in production
-  } catch {
+    // Convert to hex string
+    const expectedSignature = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Timing-safe comparison
+    return timingSafeEqual(signature.toLowerCase(), expectedSignature.toLowerCase());
+  } catch (err) {
+    console.error('Paystack signature verification error:', err);
     return false;
   }
 }
 
 export default async function (req: Request) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ ok: false, message: 'Method not allowed' }),
-      { status: 405, headers: { 'Content-Type': 'application/json' } }
+      { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 
   try {
-    const signature = req.headers.get('stripe-signature') || req.headers.get('x-paystack-signature');
-    const provider = signature?.includes('stripe') ? 'stripe' : 'paystack';
+    const stripeSignature = req.headers.get('stripe-signature');
+    const paystackSignature = req.headers.get('x-paystack-signature');
+    
+    // Determine provider based on signature header
+    const provider = stripeSignature ? 'stripe' : paystackSignature ? 'paystack' : null;
+    
+    if (!provider) {
+      console.error('No valid webhook signature header found');
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Missing webhook signature' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
     
     const rawBody = await req.text();
-    const event = JSON.parse(rawBody);
     
-    // Verify webhook signature (important for security)
+    // Verify webhook signature (REQUIRED for security)
     const webhookSecret = Deno.env.get(
       provider === 'stripe' ? 'STRIPE_WEBHOOK_SECRET' : 'PAYSTACK_WEBHOOK_SECRET'
     );
     
-    if (webhookSecret && signature) {
-      const isValid = await verifyStripeSignature(rawBody, signature, webhookSecret);
-      if (!isValid) {
-        console.error('Invalid webhook signature');
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Invalid signature' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
+    if (!webhookSecret) {
+      console.error(`Missing ${provider.toUpperCase()}_WEBHOOK_SECRET environment variable`);
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Webhook secret not configured' }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
     }
-
+    
+    let isValid = false;
+    if (provider === 'stripe') {
+      isValid = await verifyStripeSignature(rawBody, stripeSignature!, webhookSecret);
+    } else {
+      isValid = await verifyPaystackSignature(rawBody, paystackSignature!, webhookSecret);
+    }
+    
+    if (!isValid) {
+      console.error(`Invalid ${provider} webhook signature`);
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Invalid signature' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    
+    const event = JSON.parse(rawBody);
     const supabase = createSupabaseServiceClient();
 
     // Handle different event types
@@ -91,14 +203,11 @@ export default async function (req: Request) {
         console.error('Missing user_id or post_id in metadata');
         return new Response(
           JSON.stringify({ ok: false, error: 'Missing required metadata' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
-      // Use idempotency key to prevent duplicate processing
-      const idempotencyKey = `${provider}_${chargeId}`;
-      
-      // Check if already processed
+      // Check if already processed (idempotency)
       const { data: existing } = await supabase
         .from('payments')
         .select('id')
@@ -108,7 +217,7 @@ export default async function (req: Request) {
       if (existing) {
         return new Response(
           JSON.stringify({ ok: true, message: 'Already processed' }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
+          { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
@@ -131,7 +240,7 @@ export default async function (req: Request) {
         console.error('Failed to create payment record:', paymentError);
         return new Response(
           JSON.stringify({ ok: false, error: 'Payment record creation failed' }),
-          { status: 500, headers: { 'Content-Type': 'application/json' } }
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
@@ -155,7 +264,7 @@ export default async function (req: Request) {
 
       return new Response(
         JSON.stringify({ ok: true, payment_id: payment.id }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -179,13 +288,13 @@ export default async function (req: Request) {
 
     return new Response(
       JSON.stringify({ ok: true, event_type: eventType }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   } catch (err) {
     console.error('payments_webhook error:', err);
     return new Response(
-      JSON.stringify({ ok: false, error: String(err) }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ ok: false, error: 'Internal server error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 }
