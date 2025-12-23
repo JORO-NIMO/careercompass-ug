@@ -1,6 +1,7 @@
 // Supabase Edge Function (Deno) - Notifications
 // Handles creating and scheduling notifications
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
+import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../_shared/auth.ts';
 
 interface NotificationPayload {
   user_id?: string;
@@ -13,21 +14,50 @@ interface NotificationPayload {
 }
 
 export default async function (req: Request) {
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   const method = req.method.toUpperCase();
 
   if (method === 'POST') {
     try {
+      // Require authentication
+      const { user, error: authError } = await verifyAuth(req);
+      if (authError || !user) {
+        return unauthorizedResponse(authError || 'Authentication required');
+      }
+
       const payload: NotificationPayload = await req.json().catch(() => ({}));
 
       // Validate required fields
       if (!payload.type || !payload.title) {
         return new Response(
           JSON.stringify({ ok: false, error: 'Missing required fields: type and title' }),
-          { status: 400, headers: { 'Content-Type': 'application/json' } }
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
       const supabase = createSupabaseServiceClient();
+
+      // Ensure user can only create notifications for themselves unless admin
+      const targetUserId = payload.user_id || user.id;
+      
+      if (targetUserId !== user.id) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        
+        if (!roleData) {
+          return new Response(
+            JSON.stringify({ ok: false, error: 'Cannot create notifications for other users' }),
+            { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          );
+        }
+      }
 
       // Determine if notification should be scheduled or sent immediately
       const isScheduled = payload.scheduled_at && new Date(payload.scheduled_at) > new Date();
@@ -47,20 +77,20 @@ export default async function (req: Request) {
           console.error('Failed to create scheduled job:', jobError);
           return new Response(
             JSON.stringify({ ok: false, error: 'Failed to schedule notification' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
           );
         }
 
         return new Response(
           JSON.stringify({ ok: true, scheduled: true }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
+          { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       } else {
         // Create notification immediately
         const { error: notifError } = await supabase
           .from('notifications')
           .insert({
-            user_id: payload.user_id || null,
+            user_id: targetUserId,
             type: payload.type,
             title: payload.title,
             body: payload.body || null,
@@ -74,29 +104,26 @@ export default async function (req: Request) {
           console.error('Failed to create notification:', notifError);
           return new Response(
             JSON.stringify({ ok: false, error: 'Failed to create notification' }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
+            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
           );
         }
 
-        // TODO: Send email if channel includes 'email'
-        // TODO: Send push notification if channel includes 'push'
-
         return new Response(
           JSON.stringify({ ok: true, sent: true }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
+          { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
     } catch (err) {
       console.error('notifications function error:', err);
       return new Response(
-        JSON.stringify({ ok: false, error: String(err) }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ ok: false, error: 'Internal server error' }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
   }
 
   return new Response(
     JSON.stringify({ ok: false, message: 'Method not allowed' }),
-    { status: 405, headers: { 'Content-Type': 'application/json' } }
+    { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
   );
 }

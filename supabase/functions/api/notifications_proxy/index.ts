@@ -1,17 +1,53 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
+import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
 
 export default async function (req: Request) {
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   try {
-    if (req.method !== 'POST') return new Response(JSON.stringify({ ok: false, message: 'Method not allowed' }), { status: 405 });
+    if (req.method !== 'POST') {
+      return new Response(
+        JSON.stringify({ ok: false, message: 'Method not allowed' }), 
+        { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Require authentication for sending notifications
+    const { user, error: authError } = await verifyAuth(req);
+    if (authError || !user) {
+      return unauthorizedResponse(authError || 'Authentication required');
+    }
 
     const payload = await req.json().catch(() => ({}));
     // payload: { user_id?, title, body, channels: ['in_app','email'], scheduled_at? }
 
     const supabase = createSupabaseServiceClient();
 
+    // Ensure user can only send notifications for themselves or validate admin role
+    const targetUserId = payload.user_id || user.id;
+    
+    // If targeting a different user, verify the sender has permission (admin check)
+    if (targetUserId !== user.id) {
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      if (!roleData) {
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Cannot send notifications to other users' }), 
+          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
     // Insert into notifications table for history
     await supabase.from('notifications').insert({
-      user_id: payload.user_id || null,
+      user_id: targetUserId,
       type: payload.type || 'custom',
       title: payload.title,
       body: payload.body,
@@ -24,7 +60,6 @@ export default async function (req: Request) {
     if ((payload.channels || []).includes('email')) {
       const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
       if (BREVO_API_KEY && payload.email) {
-        // send email via Brevo
         await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'api-key': BREVO_API_KEY },
@@ -33,8 +68,8 @@ export default async function (req: Request) {
       }
     }
 
-    // If in_app and user_id present, consider using OneSignal (push): OneSignal for web push
-    if ((payload.channels || []).includes('push') && payload.user_id) {
+    // If push channel and user_id present, use OneSignal for web push
+    if ((payload.channels || []).includes('push') && targetUserId) {
       const ONESIGNAL_API_KEY = Deno.env.get('ONESIGNAL_API_KEY');
       const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID');
       if (ONESIGNAL_API_KEY && ONESIGNAL_APP_ID) {
@@ -46,9 +81,15 @@ export default async function (req: Request) {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    return new Response(
+      JSON.stringify({ ok: true }), 
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
   } catch (err) {
     console.error('notifications_proxy error', err);
-    return new Response(JSON.stringify({ ok: false, error: String(err) }), { status: 500 });
+    return new Response(
+      JSON.stringify({ ok: false, error: 'Internal server error' }), 
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+    );
   }
 }
