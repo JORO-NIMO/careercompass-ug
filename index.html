@@ -20,33 +20,81 @@
 
   <body>
     <div id="root"></div>
-    <script type="module">
-      // Strip vendor/preview tool scripts (Lovable, preview tools, etc.)
-      const blacklist = ['lovable', 'lovable.dev', 'lovable-tagger', 'edit-with-lovable'];
-
-      function shouldRemove(el) {
-        try {
-          const src = (el.getAttribute && (el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('content'))) || '';
-          const html = (el.outerHTML || '') + ' ' + src;
-          const lower = html.toLowerCase();
-          return blacklist.some(s => lower.includes(s));
-        } catch (e) {
-          return false;
-        }
+    <style>
+      /* Hide Lovable elements via CSS */
+      [data-lovable],
+      [data-with-lovable],
+      [class*="lovable"],
+      [class*="edit-with-lovable"],
+      iframe[src*="lovable"],
+      script[src*="lovable"],
+      div[id*="lovable"],
+      button[aria-label*="lovable"],
+      button[aria-label*="Edit with"],
+      [data-testid*="lovable"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
       }
-
-      function removeMatches() {
-        document.querySelectorAll('script, iframe, link, img, div').forEach(el => {
-          if (shouldRemove(el)) el.remove();
+    </style>
+    <script>
+      // Aggressively remove Lovable widgets and scripts
+      const lovablePatterns = ['lovable', 'edit-with', 'floating-editor', 'tagger'];
+      
+      function removeAllLovable() {
+        // Remove by class, id, data attributes
+        document.querySelectorAll('[class*="lovable"], [id*="lovable"], [data-lovable], [data-with-lovable]').forEach(el => el.remove());
+        
+        // Remove buttons with "Edit with" text
+        document.querySelectorAll('button, a, div').forEach(el => {
+          if (el.textContent && el.textContent.includes('Edit with')) {
+            el.remove();
+          }
+          // Check for Lovable in various attributes
+          const attrs = el.attributes || [];
+          for (let attr of attrs) {
+            if (attr.value && lovablePatterns.some(p => attr.value.toLowerCase().includes(p))) {
+              el.remove();
+              break;
+            }
+          }
+        });
+        
+        // Remove Lovable scripts
+        document.querySelectorAll('script').forEach(el => {
+          if (el.src && el.src.includes('lovable')) el.remove();
+          if (el.textContent && el.textContent.includes('lovable')) el.remove();
+        });
+        
+        // Remove Lovable iframes
+        document.querySelectorAll('iframe').forEach(el => {
+          if (el.src && el.src.includes('lovable')) el.remove();
         });
       }
-
-      // Run immediately and on DOMContentLoaded. Also run again after a short delay
-      // to catch late-injected preview scripts.
-      try { removeMatches(); } catch (e) {}
-      document.addEventListener('DOMContentLoaded', () => { try { removeMatches(); } catch (e) {} });
-      setTimeout(() => { try { removeMatches(); } catch (e) {} }, 500);
-      setTimeout(() => { try { removeMatches(); } catch (e) {} }, 1500);
+      
+      // Run multiple times to catch all injected content
+      removeAllLovable();
+      document.addEventListener('DOMContentLoaded', removeAllLovable);
+      setTimeout(removeAllLovable, 100);
+      setTimeout(removeAllLovable, 300);
+      setTimeout(removeAllLovable, 500);
+      setTimeout(removeAllLovable, 1000);
+      setTimeout(removeAllLovable, 2000);
+      
+      // Use MutationObserver to continuously remove new Lovable elements
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+          if (mutation.addedNodes.length) {
+            setTimeout(removeAllLovable, 50);
+          }
+        });
+      });
+      
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: false
+      });
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
