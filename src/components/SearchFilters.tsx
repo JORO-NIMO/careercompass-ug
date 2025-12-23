@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Search, MapPin, Building, GraduationCap, Calendar } from "lucide-react";
+import { useState } from "react";
 
 interface SearchFiltersProps {
   onSearch?: (filters: any) => void;
@@ -11,6 +12,13 @@ interface SearchFiltersProps {
 }
 
 const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
+  const [keywords, setKeywords] = useState("");
+  const [region, setRegion] = useState<string | undefined>(undefined);
+  const [industry, setIndustry] = useState<string | undefined>(undefined);
+  const [field, setField] = useState<string | undefined>(undefined);
+  const [year, setYear] = useState<string | undefined>(undefined);
+  const [placementType, setPlacementType] = useState<string | undefined>(undefined);
+
   const ugandaRegions = [
     "Central Region", "Eastern Region", "Northern Region", "Western Region", 
     "Kampala", "Wakiso", "Mukono", "Jinja", "Mbale", "Gulu", "Lira", "Mbarara", "Fort Portal"
@@ -32,6 +40,10 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
     "Graduate Trainee"
   ];
 
+  const triggerSearch = () => {
+    onSearch?.({ keywords, region, industry, field, year, placementType });
+  };
+
   const fields = [
     "Computer Science", "Business Administration", "Engineering", "Medicine", "Education",
     "Agriculture", "Law", "Journalism", "Economics", "Social Work"
@@ -51,6 +63,9 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
               id="search"
               placeholder="Industrial training or graduate roles by title, company, or keyword"
               className="pl-10 bg-background"
+              value={keywords}
+              onChange={(e) => setKeywords(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); triggerSearch(); } }}
             />
           </div>
         </div>
@@ -69,7 +84,8 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
               </SelectTrigger>
               <SelectContent>
                 {ugandaRegions.map((region) => (
-                  <SelectItem key={region} value={region.toLowerCase()}>
+                  <SelectItem key={region} value={region.toLowerCase()}
+                    onClick={() => setRegion(region.toLowerCase())}>
                     {region}
                   </SelectItem>
                 ))}
@@ -89,7 +105,8 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
               </SelectTrigger>
               <SelectContent>
                 {industries.map((industry) => (
-                  <SelectItem key={industry} value={industry.toLowerCase()}>
+                  <SelectItem key={industry} value={industry.toLowerCase()}
+                    onClick={() => setIndustry(industry)}>
                     {industry}
                   </SelectItem>
                 ))}
@@ -109,7 +126,8 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
               </SelectTrigger>
               <SelectContent>
                 {placementTypes.map((type) => (
-                  <SelectItem key={type} value={type.toLowerCase()}>
+                  <SelectItem key={type} value={type.toLowerCase()}
+                    onClick={() => setPlacementType(type)}>
                     {type}
                   </SelectItem>
                 ))}
@@ -129,7 +147,8 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
               </SelectTrigger>
               <SelectContent>
                 {fields.map((field) => (
-                  <SelectItem key={field} value={field.toLowerCase()}>
+                  <SelectItem key={field} value={field.toLowerCase()}
+                    onClick={() => setField(field)}>
                     {field}
                   </SelectItem>
                 ))}
@@ -149,7 +168,8 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
               </SelectTrigger>
               <SelectContent>
                 {years.map((year) => (
-                  <SelectItem key={year} value={year.toLowerCase()}>
+                  <SelectItem key={year} value={year.toLowerCase()}
+                    onClick={() => setYear(year)}>
                     {year}
                   </SelectItem>
                 ))}
@@ -160,7 +180,7 @@ const SearchFilters = ({ onSearch, className }: SearchFiltersProps) => {
 
         {/* Search Button */}
         <div className="flex justify-center pt-2">
-          <Button size="lg" className="w-full md:w-auto min-w-[200px]">
+          <Button size="lg" className="w-full md:w-auto min-w-[200px]" onClick={triggerSearch}>
             Find Placements
           </Button>
         </div>

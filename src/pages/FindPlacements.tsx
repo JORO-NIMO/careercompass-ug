@@ -2,8 +2,26 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchFilters from "@/components/SearchFilters";
 import FeaturedPlacements from "@/components/FeaturedPlacements";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { buildPlacementQueries, BotQuery } from "@/lib/placementBot";
+import { useState } from "react";
 
 const FindPlacements = () => {
+  const [queries, setQueries] = useState<BotQuery[]>([]);
+
+  const handleSearch = (filters: any) => {
+    const built = buildPlacementQueries({
+      keywords: filters?.keywords,
+      sector: filters?.industry as any,
+      region: filters?.region,
+      placementType: filters?.placementType,
+      field: filters?.field,
+      year: filters?.year,
+    });
+    setQueries(built);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -22,8 +40,28 @@ const FindPlacements = () => {
         </div>
         
         <div className="container mx-auto px-4 -mt-16 relative z-20">
-          <SearchFilters />
+          <SearchFilters onSearch={handleSearch} />
         </div>
+
+        {queries.length > 0 && (
+          <div className="container mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {queries.map((q) => (
+              <Card key={q.label} className="bg-secondary/30 border-primary/10">
+                <CardHeader>
+                  <CardTitle className="text-lg">{q.label}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{q.notes}</p>
+                  <Button asChild variant="outline" className="w-full" aria-label={`Open ${q.label}`}>
+                    <a href={q.url} target="_blank" rel="noreferrer noopener">
+                      Open search in new tab
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
         
         <FeaturedPlacements />
       </main>
