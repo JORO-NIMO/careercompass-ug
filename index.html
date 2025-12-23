@@ -20,35 +20,33 @@
 
   <body>
     <div id="root"></div>
-    <script type="module" data-strip>
-      // Optional runtime toggle to strip vendor/overlay scripts injected by preview tools.
-      // Enable by setting VITE_STRIP_VENDOR_SCRIPTS=true in your Vite env (e.g., .env or deployment)
-      if (import.meta.env.VITE_STRIP_VENDOR_SCRIPTS === 'true') {
-        const blacklist = ['lovable', 'lovable.dev', 'lovable-tagger', 'edit-with-lovable'];
+    <script type="module">
+      // Strip vendor/preview tool scripts (Lovable, preview tools, etc.)
+      const blacklist = ['lovable', 'lovable.dev', 'lovable-tagger', 'edit-with-lovable'];
 
-        function shouldRemove(el) {
-          try {
-            const src = (el.getAttribute && (el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('content'))) || '';
-            const html = (el.outerHTML || '') + ' ' + src;
-            const lower = html.toLowerCase();
-            return blacklist.some(s => lower.includes(s));
-          } catch (e) {
-            return false;
-          }
+      function shouldRemove(el) {
+        try {
+          const src = (el.getAttribute && (el.getAttribute('src') || el.getAttribute('href') || el.getAttribute('content'))) || '';
+          const html = (el.outerHTML || '') + ' ' + src;
+          const lower = html.toLowerCase();
+          return blacklist.some(s => lower.includes(s));
+        } catch (e) {
+          return false;
         }
-
-        function removeMatches() {
-          document.querySelectorAll('script, iframe, link, img').forEach(el => {
-            if (shouldRemove(el)) el.remove();
-          });
-        }
-
-        // Run immediately and on DOMContentLoaded. Also run again after a short delay
-        // to catch late-injected preview scripts.
-        try { removeMatches(); } catch (e) {}
-        document.addEventListener('DOMContentLoaded', () => { try { removeMatches(); } catch (e) {} });
-        setTimeout(() => { try { removeMatches(); } catch (e) {} }, 1500);
       }
+
+      function removeMatches() {
+        document.querySelectorAll('script, iframe, link, img, div').forEach(el => {
+          if (shouldRemove(el)) el.remove();
+        });
+      }
+
+      // Run immediately and on DOMContentLoaded. Also run again after a short delay
+      // to catch late-injected preview scripts.
+      try { removeMatches(); } catch (e) {}
+      document.addEventListener('DOMContentLoaded', () => { try { removeMatches(); } catch (e) {} });
+      setTimeout(() => { try { removeMatches(); } catch (e) {} }, 500);
+      setTimeout(() => { try { removeMatches(); } catch (e) {} }, 1500);
     </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
