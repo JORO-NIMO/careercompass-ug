@@ -19,6 +19,7 @@ interface Placement {
   stipend: string;
   available_slots: number;
   created_at: string;
+  approved: boolean;
 }
 
 const AdminDashboard = () => {
@@ -55,7 +56,7 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPlacements(data || []);
+      setPlacements((data as Placement[]) || []);
     } catch (error) {
       toast({
         title: "Error",
@@ -114,7 +115,7 @@ const AdminDashboard = () => {
     try {
       const { error } = await supabase
         .from('placements')
-        .update({ approved: true })
+        .update({ approved: true } as Record<string, boolean>)
         .eq('id', id);
 
       if (error) throw error;

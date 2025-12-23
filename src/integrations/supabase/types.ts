@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       placements: {
         Row: {
+          approved: boolean
           available_slots: number
           company_name: string
           created_at: string | null
@@ -29,6 +30,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          approved?: boolean
           available_slots: number
           company_name: string
           created_at?: string | null
@@ -42,6 +44,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          approved?: boolean
           available_slots?: number
           company_name?: string
           created_at?: string | null
@@ -116,6 +119,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
