@@ -1,1 +1,13 @@
 project_id = "mewtttsivypykqhxrgjk"
+
+[functions.api]
+verify_jwt = true
+
+[functions.events]
+verify_jwt = true
+
+[functions.notifications]
+verify_jwt = true
+
+[functions.payments_webhook]
+verify_jwt = false
