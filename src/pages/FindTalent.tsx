@@ -193,6 +193,17 @@ const FindTalent = () => {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Search for qualified candidates across Uganda. Connect with skilled professionals ready for their next opportunity.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+            <Button variant="outline" asChild>
+              <a href="/find-placements">View Placements</a>
+            </Button>
+            <Button asChild>
+              <a href="/for-companies">Post a Placement</a>
+            </Button>
+            <Button variant="secondary" asChild>
+              <a href="/pricing">See Pricing</a>
+            </Button>
+          </div>
         </div>
 
         {/* Search and Filters */}
