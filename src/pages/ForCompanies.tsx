@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -8,15 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Building, Users, Target, Star } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const ForCompanies = () => {
-  const { isAdmin, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const formRef = useRef<HTMLDivElement | null>(null);
   
   const [positionTitle, setPositionTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -39,21 +39,38 @@ const ForCompanies = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Allow any logged-in company to submit a placement. It will be created
-    // with approved=false and reviewed by an admin before becoming public.
-    
+
+    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry || !availableSlots.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please complete all required fields before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const slotsNumber = Number.parseInt(availableSlots, 10);
+
+    if (Number.isNaN(slotsNumber) || slotsNumber <= 0) {
+      toast({
+        title: "Invalid slot count",
+        description: "Enter how many positions you have available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
     
     try {
       const { error } = await supabase.from('placements').insert({
-        position_title: positionTitle,
-        company_name: companyName,
-        description,
+        position_title: positionTitle.trim(),
+        company_name: companyName.trim(),
+        description: description.trim(),
         region,
         industry,
-        stipend,
-        available_slots: parseInt(availableSlots),
+        stipend: stipend.trim(),
+        available_slots: slotsNumber,
         created_by: user?.id,
         approved: false,
         contact_info: user?.email || null,
@@ -85,137 +102,157 @@ const ForCompanies = () => {
     }
   };
 
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const regionOptions = [
+    { value: 'central', label: 'Central Region' },
+    { value: 'eastern', label: 'Eastern Region' },
+    { value: 'northern', label: 'Northern Region' },
+    { value: 'western', label: 'Western Region' },
+  ];
+
+  const industryOptions = [
+    { value: 'technology', label: 'Technology' },
+    { value: 'finance', label: 'Finance' },
+    { value: 'healthcare', label: 'Healthcare' },
+    { value: 'education', label: 'Education' },
+    { value: 'agriculture', label: 'Agriculture' },
+    { value: 'creative', label: 'Creative & Media' },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main>
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-primary via-primary-glow to-primary-dark text-primary-foreground">
-          <div className="container mx-auto px-4 py-16">
-            <div className="text-center space-y-6">
-              <h1 className="text-4xl md:text-5xl font-bold">
-                Find Top Talent for Your Company
-              </h1>
-              <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-                Connect with motivated students across Uganda and build your future workforce
-              </p>
-              <Button size="lg" variant="secondary" className="mt-8">
-                Post Your First Placement
+      <main className="py-16">
+        <div className="container mx-auto px-4 space-y-16">
+          <section className="max-w-3xl mx-auto text-center space-y-6">
+            <h1 className="text-4xl md:text-5xl font-bold">Post a Placement</h1>
+            <p className="text-lg text-muted-foreground">
+              Share your internship or graduate opportunities with thousands of motivated students across Uganda. Provide the details below and our team will review before publishing.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button size="lg" onClick={scrollToForm} disabled={submitting}>
+                {submitting ? 'Submitting…' : 'Start Posting'}
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <a href="/find-talent">Browse Candidates</a>
               </Button>
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Benefits Section */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Why Choose PlacementsBridge?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card>
-                <CardHeader>
-                  <Users className="w-12 h-12 text-primary mb-4" />
-                  <CardTitle>Access Top Students</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  Connect with pre-screened students from universities across Uganda
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <Target className="w-12 h-12 text-primary mb-4" />
-                  <CardTitle>Targeted Matching</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  Our smart matching system connects you with students who fit your requirements
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <Star className="w-12 h-12 text-primary mb-4" />
-                  <CardTitle>Easy Management</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  Simple dashboard to manage applications and communicate with candidates
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        {/* Post Placement Form */}
-        <section className="py-16 bg-secondary/20">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-8">Post a Placement</h2>
-              <Card>
-                <CardContent className="p-6 space-y-6">
+          <section ref={formRef} className="max-w-3xl mx-auto w-full">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Placement details</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Position Title</Label>
-                      <Input id="title" placeholder="e.g. Software Engineer Intern" />
+                      <Label htmlFor="title">Position title</Label>
+                      <Input
+                        id="title"
+                        placeholder="e.g. Software Engineer Intern"
+                        value={positionTitle}
+                        onChange={(e) => setPositionTitle(e.target.value)}
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="company">Company Name</Label>
-                      <Input id="company" placeholder="Your company name" />
+                      <Label htmlFor="company">Company name</Label>
+                      <Input
+                        id="company"
+                        placeholder="Your company name"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" placeholder="Describe the role and responsibilities..." rows={4} />
+                    <Label htmlFor="description">Role description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe the role, responsibilities, and ideal candidate…"
+                      rows={6}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      required
+                    />
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Region</Label>
-                      <Select>
+                      <Select value={region || undefined} onValueChange={setRegion}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select region" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="central">Central Region</SelectItem>
-                          <SelectItem value="eastern">Eastern Region</SelectItem>
-                          <SelectItem value="northern">Northern Region</SelectItem>
-                          <SelectItem value="western">Western Region</SelectItem>
+                          {regionOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>Industry</Label>
-                      <Select>
+                      <Select value={industry || undefined} onValueChange={setIndustry}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select industry" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="technology">Technology</SelectItem>
-                          <SelectItem value="finance">Finance</SelectItem>
-                          <SelectItem value="healthcare">Healthcare</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="agriculture">Agriculture</SelectItem>
+                          {industryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="stipend">Stipend (Optional)</Label>
-                      <Input id="stipend" placeholder="e.g. 500,000 UGX/month" />
+                      <Label htmlFor="stipend">Stipend (optional)</Label>
+                      <Input
+                        id="stipend"
+                        placeholder="e.g. 500,000 UGX/month"
+                        value={stipend}
+                        onChange={(e) => setStipend(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="slots">Available Slots</Label>
-                      <Input id="slots" type="number" placeholder="e.g. 5" />
+                      <Label htmlFor="slots">Available slots</Label>
+                      <Input
+                        id="slots"
+                        type="number"
+                        min={1}
+                        placeholder="e.g. 5"
+                        value={availableSlots}
+                        onChange={(e) => setAvailableSlots(e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
-                  
-                  <Button className="w-full" size="lg">
-                    Post Placement
+
+                  <div className="text-sm text-muted-foreground">
+                    Placements are saved as drafts until an admin approves them. You will receive an email once the listing is live.
+                  </div>
+
+                  <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+                    {submitting ? 'Submitting placement…' : 'Submit for review'}
                   </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
+                </form>
+              </CardContent>
+            </Card>
+          </section>
+        </div>
       </main>
       <Footer />
     </div>

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Briefcase, Mail, Phone, MapPin, Twitter, Facebook, Linkedin, MessageCircle } from "lucide-react";
+import { Briefcase, Mail, Phone, MapPin, Twitter, Linkedin, MessageCircle, Music4 } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -19,14 +19,35 @@ const Footer = () => {
               Connecting Uganda's brightest students with leading companies for meaningful internship experiences.
             </p>
             <div className="flex space-x-3">
-              <Button variant="ghost" size="icon">
-                <Facebook className="w-5 h-5" />
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href="https://www.linkedin.com/in/joronimo-amanya-00a516344/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="w-5 h-5" />
+                </a>
               </Button>
-              <Button variant="ghost" size="icon">
-                <Twitter className="w-5 h-5" />
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href="https://x.com/Ishabarundo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="X (Twitter)"
+                >
+                  <Twitter className="w-5 h-5" />
+                </a>
               </Button>
-              <Button variant="ghost" size="icon">
-                <Linkedin className="w-5 h-5" />
+              <Button variant="ghost" size="icon" asChild>
+                <a
+                  href="https://www.tiktok.com/@ishabarundo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
+                >
+                  <Music4 className="w-5 h-5" />
+                </a>
               </Button>
             </div>
           </div>
@@ -83,6 +104,39 @@ const Footer = () => {
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">Kampala, Uganda</span>
+              </div>
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <Linkedin className="w-4 h-4" />
+                <a
+                  href="https://www.linkedin.com/in/joronimo-amanya-00a516344/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm hover:text-primary transition-colors"
+                >
+                  LinkedIn
+                </a>
+              </div>
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <Twitter className="w-4 h-4" />
+                <a
+                  href="https://x.com/Ishabarundo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm hover:text-primary transition-colors"
+                >
+                  X (Twitter)
+                </a>
+              </div>
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <Music4 className="w-4 h-4" />
+                <a
+                  href="https://www.tiktok.com/@ishabarundo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm hover:text-primary transition-colors"
+                >
+                  TikTok
+                </a>
               </div>
             </div>
             <div className="space-y-2">
