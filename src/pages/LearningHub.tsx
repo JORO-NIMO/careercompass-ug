@@ -33,17 +33,11 @@ const LearningHub: React.FC = () => {
   const runSearch = async () => {
     setLoading(true);
     try {
-<<<<<<< HEAD
-      const bk = await searchBooks(query);
-      setBooks(bk.docs ?? []);
-      const cs = await getCourseraCourses(10);
-      setCourses(cs.elements ?? []);
-=======
       const bk = (await searchBooks(query)) as BooksResponse;
-      setBooks(bk?.docs ?? []);
-      const cs = (await fetchCourses(10)) as CoursesResponse;
-      setCourses(cs?.elements ?? []);
->>>>>>> 82ad5f243ccebef5c8f9c79e84e949e7677f2ae7
+      setBooks(bk.docs ?? []);
+
+      const cs = (await getCourseraCourses(10)) as CoursesResponse;
+      setCourses(cs.elements ?? []);
     } catch (err) {
       console.error(err);
     } finally {
