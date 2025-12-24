@@ -28,11 +28,17 @@ const Header = () => {
           <Link to="/find-placements" className="text-muted-foreground hover:text-primary transition-colors">
             Find Placements
           </Link>
+          <Link to="/find-talent" className="text-muted-foreground hover:text-primary transition-colors">
+            Find Talent
+          </Link>
+          <Link to="/application-tips" className="text-muted-foreground hover:text-primary transition-colors">
+            Resources
+          </Link>
           <Link to="/for-companies" className="text-muted-foreground hover:text-primary transition-colors">
             For Companies
           </Link>
-          <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-            About
+          <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
+            Pricing
           </Link>
           {isAdmin && (
             <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
@@ -88,11 +94,20 @@ const Header = () => {
             <Link to="/find-placements" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
               Find Placements
             </Link>
+            <Link to="/find-talent" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+              Find Talent
+            </Link>
+            <Link to="/application-tips" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+              Application Tips
+            </Link>
+            <Link to="/cv-builder" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+              CV Builder
+            </Link>
             <Link to="/for-companies" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
               For Companies
             </Link>
-            <Link to="/about" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
-              About
+            <Link to="/pricing" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+              Pricing
             </Link>
             {isAdmin && (
               <Link to="/admin" className="block py-2 text-muted-foreground hover:text-primary transition-colors">

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Briefcase, Mail, Phone, MapPin, Twitter, Facebook, Linkedin } from "lucide-react";
+import { Briefcase, Mail, Phone, MapPin, Twitter, Facebook, Linkedin, MessageCircle } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -35,10 +35,10 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">For Students</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Find Placements</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Create Profile</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Application Tips</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">CV Builder</a></li>
+              <li><a href="/find-placements" className="hover:text-primary transition-colors">Find Placements</a></li>
+              <li><a href="/profile" className="hover:text-primary transition-colors">Create Profile</a></li>
+              <li><a href="/application-tips" className="hover:text-primary transition-colors">Application Tips</a></li>
+              <li><a href="/cv-builder" className="hover:text-primary transition-colors">CV Builder</a></li>
             </ul>
           </div>
 
@@ -46,10 +46,10 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">For Companies</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="#" className="hover:text-primary transition-colors">Post Placements</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Find Talent</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Company Verification</a></li>
-              <li><a href="#" className="hover:text-primary transition-colors">Pricing</a></li>
+              <li><a href="/for-companies" className="hover:text-primary transition-colors">Post Placements</a></li>
+              <li><a href="/find-talent" className="hover:text-primary transition-colors">Find Talent</a></li>
+              <li><a href="/for-companies" className="hover:text-primary transition-colors">Company Verification</a></li>
+              <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing</a></li>
             </ul>
           </div>
 
@@ -59,11 +59,26 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Mail className="w-4 h-4" />
-                <span className="text-sm">hello@placementsbridge.ug</span>
+                <a href="mailto:joronimoamanya@gmail.com" className="text-sm hover:text-primary transition-colors">
+                  joronimoamanya@gmail.com
+                </a>
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Phone className="w-4 h-4" />
-                <span className="text-sm">+256 700 000 000</span>
+                <a href="tel:+256726128513" className="text-sm hover:text-primary transition-colors">
+                  +256 726 128 513
+                </a>
+              </div>
+              <div className="flex items-center space-x-2 text-muted-foreground">
+                <MessageCircle className="w-4 h-4" />
+                <a 
+                  href="https://wa.me/256726128513" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm hover:text-primary transition-colors"
+                >
+                  WhatsApp Us
+                </a>
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <MapPin className="w-4 h-4" />

@@ -25,6 +25,10 @@ const FeedbackPage = lazy(() => import("./pages/Feedback"));
 const LearningHub = lazy(() => import("./pages/LearningHub"));
 const JobFeed = lazy(() => import("./pages/JobFeed"));
 const CareerExplorer = lazy(() => import("./pages/CareerExplorer"));
+const ApplicationTips = lazy(() => import("./pages/ApplicationTips"));
+const CVBuilder = lazy(() => import("./pages/CVBuilder"));
+const FindTalent = lazy(() => import("./pages/FindTalent"));
+const Pricing = lazy(() => import("./pages/Pricing"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,6 +68,10 @@ function AppRouter() {
         <Route path="/learning" element={<LearningHub />} />
         <Route path="/jobs" element={<JobFeed />} />
         <Route path="/career-explorer" element={<CareerExplorer />} />
+        <Route path="/application-tips" element={<ApplicationTips />} />
+        <Route path="/cv-builder" element={<CVBuilder />} />
+        <Route path="/find-talent" element={<FindTalent />} />
+        <Route path="/pricing" element={<Pricing />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

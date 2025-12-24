@@ -36,6 +36,18 @@ Current stack (found in the repo):
 
 The sections below describe how to build the requested features while integrating with the existing stack.
 
+## Quick start
+
+- Install dependencies: npm ci
+- Local development: npm run dev
+- Type check: npm run type-check
+- Production build: npm run build
+
+## Deployment
+
+- Netlify: build command npm run build, publish dist (SPA redirect handled via netlify.toml).
+- Vercel: install npm ci, build npm run build, output dist, SPA rewrite to /index.html via vercel.json.
+
 ## Goals for the platform extension
 
 Deliver the following capabilities:
