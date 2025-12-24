@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "./hooks/useAuth";
 import { usePageTracking } from "./hooks/usePageTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -88,6 +89,7 @@ const App = () => (
           <BrowserRouter>
             <AppRouter />
           </BrowserRouter>
+          <Analytics />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
