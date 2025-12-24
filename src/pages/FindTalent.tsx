@@ -28,120 +28,11 @@ const FindTalent = () => {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
 
-  // Mock data - in production this would come from Supabase
-  const mockCandidates: Candidate[] = [
-    {
-      id: "1",
-      name: "Sarah Namukasa",
-      title: "Software Developer",
-      location: "Kampala",
-      field: "Software Development",
-      education: "BSc Computer Science, Makerere University",
-      skills: ["React", "Node.js", "Python", "PostgreSQL", "AWS"],
-      experience: "2 years",
-      email: "sarah.n@example.com",
-      phone: "+256 700 123 456",
-      availability: "Immediate",
-      verified: true
-    },
-    {
-      id: "2",
-      name: "James Okello",
-      title: "Digital Marketing Specialist",
-      location: "Entebbe",
-      field: "Marketing",
-      education: "BA Marketing, Uganda Christian University",
-      skills: ["SEO", "Social Media", "Content Marketing", "Google Ads", "Analytics"],
-      experience: "3 years",
-      email: "james.o@example.com",
-      phone: "+256 700 234 567",
-      availability: "2 weeks notice",
-      verified: true
-    },
-    {
-      id: "3",
-      name: "Grace Atim",
-      title: "Accountant",
-      location: "Kampala",
-      field: "Finance & Accounting",
-      education: "BCom Accounting, Kampala International University",
-      skills: ["QuickBooks", "Financial Reporting", "Tax Compliance", "Auditing", "Excel"],
-      experience: "1 year",
-      email: "grace.a@example.com",
-      phone: "+256 700 345 678",
-      availability: "Immediate",
-      verified: false
-    },
-    {
-      id: "4",
-      name: "David Mugisha",
-      title: "Graphic Designer",
-      location: "Mbarara",
-      field: "Design",
-      education: "Diploma in Graphic Design, Uganda Technical College",
-      skills: ["Adobe Photoshop", "Illustrator", "InDesign", "Figma", "Branding"],
-      experience: "4 years",
-      email: "david.m@example.com",
-      phone: "+256 700 456 789",
-      availability: "1 month notice",
-      verified: true
-    },
-    {
-      id: "5",
-      name: "Rebecca Nakalembe",
-      title: "Data Analyst",
-      location: "Kampala",
-      field: "Data Science",
-      education: "MSc Data Science, Makerere University",
-      skills: ["Python", "R", "SQL", "Tableau", "Machine Learning"],
-      experience: "2 years",
-      email: "rebecca.n@example.com",
-      phone: "+256 700 567 890",
-      availability: "Immediate",
-      verified: true
-    },
-    {
-      id: "6",
-      name: "Martin Ssemakula",
-      title: "Civil Engineer",
-      location: "Jinja",
-      field: "Engineering",
-      education: "BEng Civil Engineering, Kyambogo University",
-      skills: ["AutoCAD", "Structural Design", "Project Management", "Site Supervision"],
-      experience: "5 years",
-      email: "martin.s@example.com",
-      phone: "+256 700 678 901",
-      availability: "2 months notice",
-      verified: true
-    }
-  ];
-
-  const fields = [
-    "All Fields",
-    "Software Development",
-    "Marketing",
-    "Finance & Accounting",
-    "Design",
-    "Data Science",
-    "Engineering",
-    "Healthcare",
-    "Education",
-    "Sales"
-  ];
+  // TODO: Fetch candidates from Supabase
+  const filteredCandidates: Candidate[] = [];
 
   const locations = ["All Locations", "Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu", "Mbale"];
   const experienceLevels = ["All Experience", "Fresh Graduate", "1-2 years", "3-5 years", "5+ years"];
-
-  const filteredCandidates = mockCandidates.filter(candidate => {
-    const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesField = selectedField === "all" || candidate.field === selectedField;
-    const matchesLocation = selectedLocation === "all" || candidate.location === selectedLocation;
-    
-    return matchesSearch && matchesField && matchesLocation;
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12">
@@ -208,6 +99,20 @@ const FindTalent = () => {
 
         {/* Candidates Grid */}
         <div className="grid md:grid-cols-2 gap-6">
+          {filteredCandidates.length === 0 && (
+            <Card className="md:col-span-2 py-12">
+              <CardContent className="text-center">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
+                <p className="text-muted-foreground mb-4">
+                  The talent search feature is currently being populated with verified candidates. Contact us to be featured.
+                </p>
+                <a href="mailto:joronimoamanya@gmail.com">
+                  <Button>Contact Us</Button>
+                </a>
+              </CardContent>
+            </Card>
+          )}
           {filteredCandidates.map((candidate) => (
             <Card key={candidate.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -327,7 +232,9 @@ const FindTalent = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg">Request Recruitment Support</Button>
+            <a href="mailto:joronimoamanya@gmail.com" className="flex-1">
+              <Button size="lg" className="w-full">Request Recruitment Support</Button>
+            </a>
             <Button size="lg" variant="outline">Post a Job Opening</Button>
           </CardContent>
         </Card>
