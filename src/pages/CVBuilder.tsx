@@ -255,7 +255,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, fullName: e.target.value }
                       })}
-                      placeholder="John Doe"
+                      placeholder="Aine Conerald"
                     />
                   </div>
                   <div>
