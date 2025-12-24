@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Download, Plus, Trash2, Eye } from "lucide-react";
+import { Download, Plus, Trash2, Eye, EyeOff, Save, RotateCcw, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 interface Experience {
@@ -63,7 +63,27 @@ const CVBuilder = () => {
 
   const [currentSkill, setCurrentSkill] = useState("");
   const [currentLanguage, setCurrentLanguage] = useState("");
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    const savedData = localStorage.getItem('cvBuilderData');
+    if (savedData) {
+      try {
+        setCvData(JSON.parse(savedData));
+        toast.info("Previous CV data loaded");
+      } catch (e) {
+        console.error("Failed to load saved CV data", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem('cvBuilderData', JSON.stringify(cvData));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [cvData]);
 
   const addExperience = () => {
     const newExp: Experience = {
@@ -151,8 +171,46 @@ const CVBuilder = () => {
   };
 
   const handleDownload = () => {
-    toast.success("CV download will be available soon. For now, use the preview to copy your CV.");
-    setShowPreview(true);
+    if (!cvData.personalInfo.fullName || !cvData.personalInfo.email) {
+      toast.error("Please fill in your name and email first");
+      return;
+    }
+    window.print();
+    toast.success("Use your browser's print dialog to save as PDF");
+  };
+
+  const handleSave = () => {
+    localStorage.setItem('cvBuilderData', JSON.stringify(cvData));
+    toast.success("CV saved successfully!");
+  };
+
+  const handleReset = () => {
+    if (confirm("Are you sure you want to clear all CV data? This cannot be undone.")) {
+      setCvData({
+        personalInfo: {
+          fullName: "",
+          email: "",
+          phone: "",
+          location: "",
+          linkedIn: "",
+          website: ""
+        },
+        summary: "",
+        experience: [],
+        education: [],
+        skills: [],
+        languages: []
+      });
+      localStorage.removeItem('cvBuilderData');
+      toast.success("CV data cleared");
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const [year, month] = dateString.split('-');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${monthNames[parseInt(month) - 1]} ${year}`;
   };
 
   return (
@@ -163,8 +221,18 @@ const CVBuilder = () => {
           <Badge className="mb-4" variant="secondary">Free Tool</Badge>
           <h1 className="text-4xl font-bold mb-4">CV Builder</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Create a professional CV in minutes. Fill in your information and preview your CV in real-time.
+            Create a professional CV in minutes. Your data is auto-saved and never leaves your device.
           </p>
+          <div className="flex gap-2 justify-center mt-4">
+            <Button variant="outline" size="sm" onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Now
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Clear All
+            </Button>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -316,11 +384,13 @@ const CVBuilder = () => {
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <Input
+                          type="month"
                           placeholder="Start Date"
                           value={exp.startDate}
                           onChange={(e) => updateExperience(exp.id, "startDate", e.target.value)}
                         />
                         <Input
+                          type="month"
                           placeholder="End Date"
                           value={exp.endDate}
                           onChange={(e) => updateExperience(exp.id, "endDate", e.target.value)}
@@ -387,6 +457,7 @@ const CVBuilder = () => {
                         onChange={(e) => updateEducation(edu.id, "location", e.target.value)}
                       />
                       <Input
+                        type="month"
                         placeholder="Graduation Date"
                         value={edu.graduationDate}
                         onChange={(e) => updateEducation(edu.id, "graduationDate", e.target.value)}
@@ -487,21 +558,27 @@ const CVBuilder = () => {
                       size="sm"
                       onClick={() => setShowPreview(!showPreview)}
                     >
-                      <Eye className="h-4 w-4 mr-2" />
+                      {showPreview ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
                       {showPreview ? "Hide" : "Show"}
                     </Button>
-                    <Button size="sm" onClick={handleDownload}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+                    <Button size="sm" onClick={handleDownload} disabled={!cvData.personalInfo.fullName}>
+                      <Printer className="h-4 w-4 mr-2" />
+                      Print/PDF
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               {showPreview && (
-                <CardContent className="bg-white p-8 max-h-[800px] overflow-y-auto">
+                <CardContent className="bg-white p-8 max-h-[800px] overflow-y-auto print:max-h-none" id="cv-preview">
                   {/* CV Preview Content */}
-                  <div className="space-y-6 text-sm">
-                    {/* Personal Info */}
+                  {!cvData.personalInfo.fullName && !cvData.personalInfo.email ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <p className="mb-2">Your CV will appear here</p>
+                      <p className="text-sm">Start by filling in your personal information</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 text-sm">
+                      {/* Personal Info */}
                     {cvData.personalInfo.fullName && (
                       <div className="text-center border-b pb-4">
                         <h2 className="text-2xl font-bold">{cvData.personalInfo.fullName}</h2>
@@ -591,11 +668,33 @@ const CVBuilder = () => {
                       </div>
                     )}
                   </div>
+                  )}
                 </CardContent>
               )}
             </Card>
           </div>
         </div>
+
+        {/* Print Styles */}
+        <style>{`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #cv-preview, #cv-preview * {
+              visibility: visible;
+            }
+            #cv-preview {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+            }
+            .no-print {
+              display: none !important;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );

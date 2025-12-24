@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Briefcase, GraduationCap, Mail, Phone, Globe, Award } from "lucide-react";
+import { Search, MapPin, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Clock3 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { useToast } from "@/hooks/use-toast";
+
+type ProfileRow = Tables<"profiles">;
 
 interface Candidate {
   id: string;
@@ -16,23 +22,160 @@ interface Candidate {
   education: string;
   skills: string[];
   experience: string;
-  email: string;
-  phone: string;
+  email?: string;
+  phone?: string;
   availability: string;
   verified: boolean;
+  updatedAt?: string | null;
 }
 
+const BASE_FIELD_OPTIONS = [
+  "Technology",
+  "Business & Finance",
+  "Engineering",
+  "Healthcare",
+  "Agriculture",
+  "Creative Arts",
+  "Education",
+  "Hospitality",
+];
+
+const BASE_LOCATION_OPTIONS = ["Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu", "Mbale", "Fort Portal", "Arua"];
+
+const BASE_EXPERIENCE_OPTIONS = ["Fresh Graduate", "1-2 years", "3-5 years", "5+ years"];
+
 const FindTalent = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedField, setSelectedField] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // TODO: Fetch candidates from Supabase
-  const filteredCandidates: Candidate[] = [];
+  useEffect(() => {
+    let isMounted = true;
 
-  const locations = ["All Locations", "Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu", "Mbale"];
-  const experienceLevels = ["All Experience", "Fresh Graduate", "1-2 years", "3-5 years", "5+ years"];
+    const mapProfileToCandidate = (profile: ProfileRow): Candidate => {
+      const interests = profile.areas_of_interest ?? [];
+      const primaryInterest = interests[0] ?? "Open to opportunities";
+
+      return {
+        id: profile.id,
+        name: profile.full_name ?? "Unnamed Candidate",
+        title: primaryInterest,
+        location: "Location not specified",
+        field: primaryInterest,
+        education: "Education details not provided",
+        skills: interests,
+        experience: "Experience not specified",
+        email: profile.email,
+        phone: undefined,
+        availability: "Available upon request",
+        verified: false,
+        updatedAt: profile.updated_at,
+      };
+    };
+
+    const loadCandidates = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, areas_of_interest, updated_at")
+          .order("updated_at", { ascending: false })
+          .limit(100);
+
+        if (error) throw error;
+
+        if (!isMounted) return;
+
+        const mapped = (data ?? []).map(mapProfileToCandidate);
+        setCandidates(mapped);
+      } catch (error) {
+        console.error("Failed to load candidates", error);
+        if (isMounted) {
+          toast({
+            title: "Unable to load candidates",
+            description: "Please try again shortly.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCandidates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [toast]);
+
+  const fieldOptions = useMemo(() => {
+    const unique = new Set<string>(BASE_FIELD_OPTIONS);
+    candidates.forEach((candidate) => {
+      if (candidate.field && candidate.field !== "Open to opportunities") {
+        unique.add(candidate.field);
+      }
+    });
+    return Array.from(unique).sort();
+  }, [candidates]);
+
+  const locationOptions = useMemo(() => {
+    const unique = new Set<string>(BASE_LOCATION_OPTIONS);
+    candidates.forEach((candidate) => {
+      if (candidate.location && candidate.location !== "Location not specified") {
+        unique.add(candidate.location);
+      }
+    });
+    return Array.from(unique).sort();
+  }, [candidates]);
+
+  const experienceOptions = useMemo(() => {
+    const unique = new Set<string>(BASE_EXPERIENCE_OPTIONS);
+    candidates.forEach((candidate) => {
+      if (candidate.experience && candidate.experience !== "Experience not specified") {
+        unique.add(candidate.experience);
+      }
+    });
+    return Array.from(unique).sort();
+  }, [candidates]);
+
+  const filteredCandidates = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+
+    return candidates.filter((candidate) => {
+      const searchableValues = [
+        candidate.name,
+        candidate.title,
+        candidate.field,
+        candidate.location,
+        candidate.skills.join(" "),
+      ];
+
+      const matchesTerm =
+        term.length === 0 || searchableValues.some((value) => value?.toLowerCase().includes(term));
+      const matchesField = selectedField === "all" || candidate.field === selectedField;
+      const matchesLocation = selectedLocation === "all" || candidate.location === selectedLocation;
+      const matchesExperience = selectedExperience === "all" || candidate.experience === selectedExperience;
+
+      return matchesTerm && matchesField && matchesLocation && matchesExperience;
+    });
+  }, [candidates, searchTerm, selectedField, selectedLocation, selectedExperience]);
+
+  const showComingSoon = !loading && candidates.length === 0;
+  const showNoResults = !loading && candidates.length > 0 && filteredCandidates.length === 0;
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSelectedField("all");
+    setSelectedLocation("all");
+    setSelectedExperience("all");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12">
@@ -49,7 +192,7 @@ const FindTalent = () => {
         {/* Search and Filters */}
         <Card className="mb-8">
           <CardContent className="pt-6">
-            <div className="grid md:grid-cols-4 gap-4">
+            <div className="grid md:grid-cols-5 gap-4">
               <div className="md:col-span-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -67,8 +210,10 @@ const FindTalent = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Fields</SelectItem>
-                  {fields.slice(1).map(field => (
-                    <SelectItem key={field} value={field}>{field}</SelectItem>
+                  {fieldOptions.map((field) => (
+                    <SelectItem key={field} value={field}>
+                      {field}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -78,8 +223,23 @@ const FindTalent = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>
-                  {locations.slice(1).map(location => (
-                    <SelectItem key={location} value={location}>{location}</SelectItem>
+                  {locationOptions.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedExperience} onValueChange={setSelectedExperience}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Experience" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Experience</SelectItem>
+                  {experienceOptions.map((experience) => (
+                    <SelectItem key={experience} value={experience}>
+                      {experience}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -99,21 +259,26 @@ const FindTalent = () => {
 
         {/* Candidates Grid */}
         <div className="grid md:grid-cols-2 gap-6">
-          {filteredCandidates.length === 0 && (
-            <Card className="md:col-span-2 py-12">
-              <CardContent className="text-center">
-                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground mb-4">
-                  The talent search feature is currently being populated with verified candidates. Contact us to be featured.
-                </p>
-                <a href="mailto:joronimoamanya@gmail.com">
-                  <Button>Contact Us</Button>
-                </a>
-              </CardContent>
-            </Card>
-          )}
-          {filteredCandidates.map((candidate) => (
+          {loading &&
+            Array.from({ length: 4 }).map((_, index) => (
+              <Card key={index} className="p-6 space-y-4">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <div className="flex-1 space-y-3">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-5 w-16" />
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                  </div>
+                </div>
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </Card>
+            ))}
+          {!loading &&
+            filteredCandidates.map((candidate) => (
             <Card key={candidate.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start gap-4">
@@ -170,27 +335,42 @@ const FindTalent = () => {
                         +{candidate.skills.length - 5} more
                       </Badge>
                     )}
+                    {candidate.skills.length === 0 && (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">
+                        Interests coming soon
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
                 {/* Contact Info */}
                 <div className="pt-4 border-t space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">
-                      {candidate.email}
-                    </a>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a href={`tel:${candidate.phone}`} className="text-blue-600 hover:underline">
-                      {candidate.phone}
-                    </a>
-                  </div>
+                  {candidate.email && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">
+                        {candidate.email}
+                      </a>
+                    </div>
+                  )}
+                  {candidate.phone && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a href={`tel:${candidate.phone}`} className="text-blue-600 hover:underline">
+                        {candidate.phone}
+                      </a>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-sm">
                     <Globe className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Available: {candidate.availability}</span>
                   </div>
+                  {candidate.updatedAt && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock3 className="h-3 w-3" />
+                      <span>Updated {new Date(candidate.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -203,22 +383,28 @@ const FindTalent = () => {
           ))}
         </div>
 
-        {/* No Results */}
-        {filteredCandidates.length === 0 && (
-          <Card className="py-12">
+        {showComingSoon && (
+          <Card className="py-12 mt-8">
             <CardContent className="text-center">
               <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No candidates found</h3>
+              <h3 className="text-xl font-semibold mb-2">Be the first to be featured</h3>
               <p className="text-muted-foreground mb-4">
-                Try adjusting your search criteria or filters
+                We&apos;re onboarding verified candidates. Contact us to showcase your profile to employers.
               </p>
-              <Button onClick={() => {
-                setSearchTerm("");
-                setSelectedField("all");
-                setSelectedLocation("all");
-              }}>
-                Clear Filters
-              </Button>
+              <a href="mailto:joronimoamanya@gmail.com">
+                <Button>Contact Us</Button>
+              </a>
+            </CardContent>
+          </Card>
+        )}
+
+        {showNoResults && (
+          <Card className="py-12 mt-8">
+            <CardContent className="text-center">
+              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No candidates match your filters</h3>
+              <p className="text-muted-foreground mb-4">Try adjusting your search criteria or reset the filters.</p>
+              <Button onClick={handleClearFilters}>Clear Filters</Button>
             </CardContent>
           </Card>
         )}
