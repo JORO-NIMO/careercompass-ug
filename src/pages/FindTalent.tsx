@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 type ProfileRow = Tables<"profiles">;
 
@@ -45,7 +45,6 @@ const BASE_LOCATION_OPTIONS = ["Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu",
 const BASE_EXPERIENCE_OPTIONS = ["Fresh Graduate", "1-2 years", "3-5 years", "5+ years"];
 
 const FindTalent = () => {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedField, setSelectedField] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
@@ -53,7 +52,12 @@ const FindTalent = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     let isMounted = true;
 
     const mapProfileToCandidate = (profile: ProfileRow): Candidate => {
@@ -64,14 +68,14 @@ const FindTalent = () => {
         id: profile.id,
         name: profile.full_name ?? "Unnamed Candidate",
         title: primaryInterest,
-        location: "Location not specified",
+        location: profile.location ?? "Location not specified",
         field: primaryInterest,
-        education: "Education details not provided",
+        education: profile.experience_level ? `${profile.experience_level} graduate` : "Education details not provided",
         skills: interests,
-        experience: "Experience not specified",
+        experience: profile.experience_level ?? "Experience not specified",
         email: profile.email,
         phone: undefined,
-        availability: "Available upon request",
+        availability: profile.availability_status ?? "Available upon request",
         verified: false,
         updatedAt: profile.updated_at,
       };
@@ -82,7 +86,9 @@ const FindTalent = () => {
         setLoading(true);
         const { data, error } = await supabase
           .from("profiles")
-          .select("id, full_name, email, areas_of_interest, updated_at")
+          .select(
+            "id, full_name, email, areas_of_interest, updated_at, location, experience_level, availability_status",
+          )
           .order("updated_at", { ascending: false })
           .limit(100);
 
@@ -113,7 +119,7 @@ const FindTalent = () => {
     return () => {
       isMounted = false;
     };
-  }, [toast]);
+  }, []);
 
   const fieldOptions = useMemo(() => {
     const unique = new Set<string>(BASE_FIELD_OPTIONS);
