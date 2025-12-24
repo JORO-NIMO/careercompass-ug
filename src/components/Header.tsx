@@ -98,10 +98,7 @@ const Header = () => {
               Find Talent
             </Link>
             <Link to="/application-tips" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
-              Application Tips
-            </Link>
-            <Link to="/cv-builder" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
-              CV Builder
+              Resources
             </Link>
             <Link to="/for-companies" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
               For Companies

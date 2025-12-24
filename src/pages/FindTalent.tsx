@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Clock3 } from "lucide-react";
+import { Search, MapPin, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Clock3, Zap, ArrowUpRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -205,6 +205,45 @@ const FindTalent = () => {
             </Button>
           </div>
         </div>
+
+        <Card id="boosting-faq" className="mb-10 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <Zap className="h-5 w-5 text-primary" />
+              How Boosting Works
+            </CardTitle>
+            <CardDescription>
+              Boosted placements get a blue badge, float to the top of search results, and appear in employer highlight emails.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-lg border border-primary/20 bg-white/80 p-4">
+                <p className="font-semibold mb-1">7 Day Boost</p>
+                <p className="text-sm text-muted-foreground">Perfect for short campaigns. Expect a 1.5x visibility lift.</p>
+              </div>
+              <div className="rounded-lg border border-primary/30 bg-white/90 p-4">
+                <p className="font-semibold mb-1">14 Day Boost</p>
+                <p className="text-sm text-muted-foreground">Stay top-of-mind throughout your interview window with a 2x bump.</p>
+              </div>
+              <div className="rounded-lg border border-primary bg-white p-4 shadow-sm">
+                <p className="font-semibold mb-1">30 Day Boost</p>
+                <p className="text-sm text-muted-foreground">Dominate searches for the entire month with premium badge placement.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 mt-6">
+              <Button asChild>
+                <a href="/for-companies">
+                  Activate a boost
+                  <ArrowUpRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+              <Button variant="ghost" size="sm" asChild>
+                <a href="#boosting-faq">Read boost FAQs</a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Search and Filters */}
         <Card className="mb-8">

@@ -155,9 +155,9 @@ const Footer = () => {
             © 2024 PlacementsBridge. All rights reserved.
           </p>
           <div className="flex space-x-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-primary transition-colors">Support</a>
+            <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>
+            <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+            <a href="/support" className="hover:text-primary transition-colors">Support</a>
           </div>
         </div>
       </div>

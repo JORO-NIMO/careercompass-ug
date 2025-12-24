@@ -11,13 +11,36 @@ interface PlacementData {
   description: string;
   region: string;
   industry: string;
-  stipend: string;
+  stipend: string | null;
   available_slots: number;
   created_at: string;
+  approved?: boolean;
+}
+
+interface BoostData {
+  post_id: string;
+  boost_until: string;
+  multiplier: number | null;
+}
+
+interface FeaturedCardPlacement {
+  id: string;
+  title: string;
+  company: string;
+  region: string;
+  industry: string;
+  stipend?: string;
+  slots: number;
+  postedDate: string;
+  description: string;
+  remote: boolean;
+  verified: boolean;
+  boosted: boolean;
+  boostEndsAt: string | null;
 }
 
 const FeaturedPlacements = () => {
-  const [placements, setPlacements] = useState<any[]>([]);
+  const [placements, setPlacements] = useState<FeaturedCardPlacement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,24 +58,59 @@ const FeaturedPlacements = () => {
 
         if (!mounted) return;
 
-        // Filter approved placements and map to card format
-        const mapped = ((data as (PlacementData & { approved?: boolean })[]) || [])
-          .filter((p) => p.approved === true)
-          .map((p) => ({
+        const placementRows = (data as PlacementData[] | null) ?? [];
+        const approvedRows = placementRows.filter((p) => p.approved === true);
+        const placementIds = approvedRows.map((p) => p.id);
+
+        const nowIso = new Date().toISOString();
+        let boostsByPost = new Map<string, BoostData>();
+
+        if (placementIds.length > 0) {
+          const { data: boostRows, error: boostError } = await supabase
+            .from('boosts')
+            .select('post_id, boost_until, multiplier')
+            .in('post_id', placementIds)
+            .gt('boost_until', nowIso);
+
+          if (boostError) throw boostError;
+
+          const activeBoosts = (boostRows as BoostData[] | null) ?? [];
+
+          for (const boost of activeBoosts) {
+            const existing = boostsByPost.get(boost.post_id);
+            if (!existing || new Date(boost.boost_until).getTime() > new Date(existing.boost_until).getTime()) {
+              boostsByPost.set(boost.post_id, boost);
+            }
+          }
+        }
+
+        const mapped = approvedRows.map<FeaturedCardPlacement>((p) => {
+          const boostInfo = boostsByPost.get(p.id);
+          return {
             id: p.id,
             title: p.position_title,
             company: p.company_name,
             description: p.description,
             region: p.region,
             industry: p.industry,
-            stipend: p.stipend,
+            stipend: p.stipend || undefined,
             slots: p.available_slots,
             postedDate: p.created_at,
             remote: false,
             verified: false,
-          }));
+            boosted: Boolean(boostInfo),
+            boostEndsAt: boostInfo?.boost_until ?? null,
+          };
+        });
 
-        setPlacements(mapped);
+        const sorted = mapped.sort((a, b) => {
+          if (a.boosted === b.boosted) {
+            return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
+          }
+          return a.boosted ? -1 : 1;
+        });
+
+        setPlacements(sorted);
       } catch (err) {
         console.error('Error loading featured placements', err);
       } finally {

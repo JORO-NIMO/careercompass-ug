@@ -21,6 +21,7 @@ export type Database = {
           company_name: string
           created_at: string | null
           created_by: string | null
+          contact_info: string | null
           description: string
           id: string
           industry: string
@@ -35,6 +36,7 @@ export type Database = {
           company_name: string
           created_at?: string | null
           created_by?: string | null
+          contact_info?: string | null
           description: string
           id?: string
           industry: string
@@ -49,6 +51,7 @@ export type Database = {
           company_name?: string
           created_at?: string | null
           created_by?: string | null
+          contact_info?: string | null
           description?: string
           id?: string
           industry?: string
@@ -56,6 +59,33 @@ export type Database = {
           region?: string
           stipend?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      boosts: {
+        Row: {
+          id: string
+          post_id: string
+          poster_id: string
+          boost_until: string
+          multiplier: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          poster_id: string
+          boost_until: string
+          multiplier?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          poster_id?: string
+          boost_until?: string
+          multiplier?: number | null
+          created_at?: string | null
         }
         Relationships: []
       }

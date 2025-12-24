@@ -1,14 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Building, Clock, DollarSign, Users, Bookmark } from "lucide-react";
+import { MapPin, Building, Clock, DollarSign, Users, Bookmark, Zap } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 
 interface PlacementCardProps {
   id: string;
   title: string;
   company: string;
-  location: string;
   region: string;
   industry: string;
   stipend?: string;
@@ -17,12 +16,13 @@ interface PlacementCardProps {
   description: string;
   remote: boolean;
   verified?: boolean;
+  boosted?: boolean;
+  boostEndsAt?: string | null;
 }
 
 const PlacementCard = ({
   title,
   company,
-  location,
   region,
   industry,
   stipend,
@@ -30,11 +30,19 @@ const PlacementCard = ({
   postedDate,
   description,
   remote,
-  verified = false
+  verified = false,
+  boosted = false,
+  boostEndsAt,
 }: PlacementCardProps) => {
   const { user } = useAuth();
 
   const isAuthenticated = !!user;
+  const formattedPostedDate = postedDate
+    ? new Date(postedDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Recently posted';
+  const boostEndsLabel = boostEndsAt
+    ? new Date(boostEndsAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+    : null;
 
   return (
     <Card className="hover:shadow-lg transition-all duration-200 border-border hover:border-primary/20 group">
@@ -53,9 +61,17 @@ const PlacementCard = ({
               )}
             </div>
           </div>
-          <Button variant="ghost" size="icon">
-            <Bookmark className="w-4 h-4" />
-          </Button>
+          <div className="flex flex-col items-end gap-2">
+            {boosted && (
+              <Badge variant="outline" className="border-primary text-primary bg-primary/10 flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                Boosted
+              </Badge>
+            )}
+            <Button variant="ghost" size="icon">
+              <Bookmark className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
 
@@ -108,8 +124,14 @@ const PlacementCard = ({
       <CardFooter className="flex justify-between items-center pt-4 border-t border-border">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Clock className="w-4 h-4" />
-          <span>{postedDate}</span>
+          <span>{formattedPostedDate}</span>
         </div>
+        {boosted && boostEndsLabel ? (
+          <div className="flex items-center gap-2 text-sm text-primary">
+            <Zap className="w-4 h-4" />
+            <span>Boost active until {boostEndsLabel}</span>
+          </div>
+        ) : null}
         {isAuthenticated ? (
           <Button size="sm" className="min-w-[80px]">Apply Now</Button>
         ) : (
