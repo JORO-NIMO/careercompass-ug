@@ -20,6 +20,30 @@
 
 import { corsHeaders, handleCors } from '../_shared/auth.ts';
 
+// Whitelist of allowed routes to prevent path traversal attacks
+const ALLOWED_ROUTES = new Set([
+  'ads',
+  'admin_ads',
+  'admin_boosts',
+  'admin_bullets',
+  'admin_listings',
+  'admin_notifications',
+  'analytics_proxy',
+  'books',
+  'boosts',
+  'boosts_maintenance',
+  'bullets',
+  'careers',
+  'companies',
+  'courses',
+  'jobs',
+  'listings',
+  'notifications',
+  'notifications_proxy',
+  'notifications_read',
+  'user_companies',
+]);
+
 export default async function (req: Request): Promise<Response> {
   // Handle CORS preflight requests (OPTIONS method)
   const corsResponse = handleCors(req);
@@ -46,6 +70,22 @@ export default async function (req: Request): Promise<Response> {
         }),
         { 
           status: 400, 
+          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+        }
+      );
+    }
+
+    // Validate route against whitelist to prevent path traversal
+    if (!ALLOWED_ROUTES.has(route)) {
+      console.error(`Attempted access to invalid route: ${route}`);
+      return new Response(
+        JSON.stringify({ 
+          ok: false, 
+          error: 'Route not found',
+          route: route
+        }),
+        { 
+          status: 404, 
           headers: { 'Content-Type': 'application/json', ...corsHeaders } 
         }
       );
@@ -84,8 +124,7 @@ export default async function (req: Request): Promise<Response> {
     return new Response(
       JSON.stringify({ 
         ok: false, 
-        error: 'Internal server error',
-        message: String(error)
+        error: 'Internal server error'
       }),
       { 
         status: 500, 
