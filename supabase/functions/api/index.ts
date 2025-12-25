@@ -1,8 +1,12 @@
 // Supabase Edge Function Router (Deno)
 // Routes requests to appropriate subdirectory handlers
-import { corsHeaders } from '../_shared/auth.ts';
+import { corsHeaders, handleCors } from '../_shared/auth.ts';
 
-export default async function serve(req: Request): Promise<Response> {
+export default async function (req: Request): Promise<Response> {
+  // Handle CORS preflight
+  const corsResponse = handleCors(req);
+  if (corsResponse) return corsResponse;
+
   try {
     // Parse the URL to extract the route
     const url = new URL(req.url);
