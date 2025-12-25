@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle2, FileText, Target, Users, Briefcase, Mail, Phone } from "lucide-react";
+import { CheckCircle, FileText, Target, Users, Briefcase, Mail, Phone } from "lucide-react";
 
 const ApplicationTips = () => {
   const tipCategories = [
@@ -134,7 +134,7 @@ const ApplicationTips = () => {
                 <ul className="space-y-2">
                   {category.tips.map((tip, tipIndex) => (
                     <li key={tipIndex} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                       <span>{tip}</span>
                     </li>
                   ))}
