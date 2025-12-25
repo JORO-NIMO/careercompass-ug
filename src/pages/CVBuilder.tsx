@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -209,9 +209,163 @@ const CVBuilder = () => {
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
     const [year, month] = dateString.split('-');
+    if (!year || !month) return dateString;
+    const monthIndex = Number.parseInt(month, 10) - 1;
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${monthNames[parseInt(month) - 1]} ${year}`;
+    if (monthIndex < 0 || monthIndex >= monthNames.length) return year;
+    return `${monthNames[monthIndex]} ${year}`;
   };
+
+  const deriveProfessionalTitle = (data: CVData): string => {
+    if (data.experience.length === 0) return "";
+    const sorted = [...data.experience].sort((a, b) => (b.startDate || "") > (a.startDate || "") ? 1 : -1);
+    const title = sorted[0]?.title?.trim();
+    return title || "";
+  };
+
+  const splitDescription = (text: string): string[] => {
+    if (!text) return [];
+    return text
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^[-•\d\.\s]+/, "").trim())
+      .filter(Boolean);
+  };
+
+  const categorizeSkills = (skills: string[]) => {
+    const buckets: Record<string, string[]> = {
+      "Technical Skills": [],
+      "Tools & Platforms": [],
+      "Professional Strengths": [],
+    };
+
+    const technicalKeywords = ["engineer", "developer", "program", "code", "data", "analysis", "sql", "cloud", "api", "python", "javascript", "typescript", "java", "c++", "aws", "azure", "design", "research", "marketing", "finance", "product", "ui", "ux"];
+    const toolsKeywords = ["git", "github", "jira", "figma", "notion", "excel", "powerpoint", "canva", "slack", "trello", "zapier", "powerbi", "tableau"];
+
+    skills.forEach((skillRaw) => {
+      const skill = skillRaw.trim();
+      if (!skill) return;
+      const lowered = skill.toLowerCase();
+      if (technicalKeywords.some((keyword) => lowered.includes(keyword))) {
+        buckets["Technical Skills"].push(skill);
+      } else if (toolsKeywords.some((keyword) => lowered.includes(keyword))) {
+        buckets["Tools & Platforms"].push(skill);
+      } else {
+        buckets["Professional Strengths"].push(skill);
+      }
+    });
+
+    return Object.entries(buckets)
+      .map(([category, items]) => ({ category, items }))
+      .filter(({ items }) => items.length > 0);
+  };
+
+  const buildResumePreview = useMemo(() => {
+    const lines: string[] = [];
+    const { personalInfo, summary, experience, education, skills, languages } = cvData;
+    const professionalTitle = deriveProfessionalTitle(cvData);
+
+    // HEADER
+    if (personalInfo.fullName) {
+      lines.push(personalInfo.fullName.toUpperCase());
+      if (professionalTitle) {
+        lines.push(professionalTitle);
+      }
+      if (personalInfo.location) {
+        lines.push(personalInfo.location);
+      }
+      const contacts = [
+        personalInfo.phone,
+        personalInfo.email,
+        personalInfo.linkedIn,
+        personalInfo.website,
+      ].filter(Boolean);
+      if (contacts.length > 0) {
+        lines.push(contacts.join(" | "));
+      }
+      lines.push("");
+    }
+
+    // PROFESSIONAL SUMMARY
+    if (summary.trim()) {
+      lines.push("PROFESSIONAL SUMMARY");
+      lines.push(summary.trim());
+      lines.push("");
+    }
+
+    // CORE SKILLS
+    const categorizedSkills = categorizeSkills(skills);
+    if (categorizedSkills.length > 0) {
+      lines.push("CORE SKILLS");
+      categorizedSkills.forEach(({ category, items }) => {
+        lines.push(`${category}: ${items.join(", ")}`);
+      });
+      lines.push("");
+    }
+
+    // PROFESSIONAL EXPERIENCE
+    if (experience.length > 0) {
+      lines.push("PROFESSIONAL EXPERIENCE");
+      const sortedExperience = [...experience].sort((a, b) => {
+        const dateA = a.startDate || "";
+        const dateB = b.startDate || "";
+        return dateA < dateB ? 1 : -1;
+      });
+
+      sortedExperience.forEach((role) => {
+        const title = role.title || "Role";
+        const company = role.company || "";
+        const location = role.location ? `, ${role.location}` : "";
+        const header = company ? `${title} — ${company}${location}` : `${title}${location}`;
+        lines.push(header.trim());
+
+        const start = formatDate(role.startDate);
+        const end = formatDate(role.endDate) || "Present";
+        const dateLine = [start, end].filter(Boolean).join(" – ");
+        if (dateLine) {
+          lines.push(dateLine);
+        }
+
+        const bullets = splitDescription(role.description);
+        bullets.forEach((bullet) => {
+          lines.push(`• ${bullet}`);
+        });
+
+        lines.push("");
+      });
+    }
+
+    // EDUCATION
+    if (education.length > 0) {
+      lines.push("EDUCATION");
+      const sortedEducation = [...education].sort((a, b) => (b.graduationDate || "") > (a.graduationDate || "") ? 1 : -1);
+
+      sortedEducation.forEach((edu) => {
+        const degree = edu.degree || "";
+        const institution = edu.institution ? ` — ${edu.institution}` : "";
+        const location = edu.location ? `, ${edu.location}` : "";
+        lines.push(`${degree}${institution}${location}`.trim());
+        if (edu.graduationDate) {
+          lines.push(formatDate(edu.graduationDate));
+        }
+        if (edu.gpa) {
+          lines.push(`GPA: ${edu.gpa}`);
+        }
+        lines.push("");
+      });
+    }
+
+    // ADDITIONAL SECTIONS
+    if (languages.length > 0) {
+      lines.push("LANGUAGES");
+      lines.push(languages.join(", "));
+      lines.push("");
+    }
+
+    return lines
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }, [cvData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white py-12">
@@ -268,7 +422,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, email: e.target.value }
                       })}
-                      placeholder="john@example.com"
+                      placeholder="aine@example.domain"
                     />
                   </div>
                   <div>
@@ -280,7 +434,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, phone: e.target.value }
                       })}
-                      placeholder="+256 700000000"
+                      placeholder="+256 726128513"
                     />
                   </div>
                   <div>
@@ -292,7 +446,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, location: e.target.value }
                       })}
-                      placeholder="Kampala, Uganda"
+                      placeholder="Mbarara, Uganda"
                     />
                   </div>
                   <div>
@@ -304,11 +458,11 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, linkedIn: e.target.value }
                       })}
-                      placeholder="linkedin.com/in/yourprofile"
+                      placeholder="linkedin.com/in/yourprofilename"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="website">Website/Portfolio</Label>
+                    <Label htmlFor="website">Website/Portfolio site</Label>
                     <Input
                       id="website"
                       value={cvData.personalInfo.website}
@@ -316,7 +470,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, website: e.target.value }
                       })}
-                      placeholder="yourwebsite.com"
+                      placeholder="yourwebsite.domain"
                     />
                   </div>
                 </div>
@@ -333,12 +487,11 @@ const CVBuilder = () => {
                 <Textarea
                   value={cvData.summary}
                   onChange={(e) => setCvData({ ...cvData, summary: e.target.value })}
-                  placeholder="Passionate software developer with 3+ years of experience in building web applications..."
+                  placeholder="Provide a detailed overview of your career and goals..."
                   rows={4}
                 />
               </CardContent>
-            </Card>
-
+            </Card}
             {/* Experience */}
             <Card>
               <CardHeader>
@@ -570,104 +723,15 @@ const CVBuilder = () => {
               </CardHeader>
               {showPreview && (
                 <CardContent className="bg-white p-8 max-h-[800px] overflow-y-auto print:max-h-none" id="cv-preview">
-                  {/* CV Preview Content */}
-                  {!cvData.personalInfo.fullName && !cvData.personalInfo.email ? (
+                  {(!cvData.personalInfo.fullName && !cvData.personalInfo.email) ? (
                     <div className="text-center py-12 text-muted-foreground">
-                      <p className="mb-2">Your CV will appear here</p>
-                      <p className="text-sm">Start by filling in your personal information</p>
+                      <p className="mb-2">Your ATS-ready CV will appear here</p>
+                      <p className="text-sm">Complete the form to generate an optimized layout</p>
                     </div>
                   ) : (
-                    <div className="space-y-6 text-sm">
-                      {/* Personal Info */}
-                    {cvData.personalInfo.fullName && (
-                      <div className="text-center border-b pb-4">
-                        <h2 className="text-2xl font-bold">{cvData.personalInfo.fullName}</h2>
-                        <div className="mt-2 text-muted-foreground space-y-1">
-                          {cvData.personalInfo.email && <p>{cvData.personalInfo.email}</p>}
-                          {cvData.personalInfo.phone && <p>{cvData.personalInfo.phone}</p>}
-                          {cvData.personalInfo.location && <p>{cvData.personalInfo.location}</p>}
-                          {cvData.personalInfo.linkedIn && <p>{cvData.personalInfo.linkedIn}</p>}
-                          {cvData.personalInfo.website && <p>{cvData.personalInfo.website}</p>}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Summary */}
-                    {cvData.summary && (
-                      <div>
-                        <h3 className="text-lg font-bold mb-2">PROFESSIONAL SUMMARY</h3>
-                        <p className="text-muted-foreground">{cvData.summary}</p>
-                      </div>
-                    )}
-
-                    {/* Experience */}
-                    {cvData.experience.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-bold mb-3">WORK EXPERIENCE</h3>
-                        <div className="space-y-4">
-                          {cvData.experience.map((exp) => (
-                            <div key={exp.id}>
-                              <div className="flex justify-between items-start mb-1">
-                                <div>
-                                  <h4 className="font-semibold">{exp.title}</h4>
-                                  <p className="text-muted-foreground">{exp.company}</p>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {exp.startDate} - {exp.endDate}
-                                </p>
-                              </div>
-                              {exp.location && (
-                                <p className="text-sm text-muted-foreground mb-1">{exp.location}</p>
-                              )}
-                              {exp.description && (
-                                <p className="text-muted-foreground">{exp.description}</p>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Education */}
-                    {cvData.education.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-bold mb-3">EDUCATION</h3>
-                        <div className="space-y-3">
-                          {cvData.education.map((edu) => (
-                            <div key={edu.id}>
-                              <div className="flex justify-between items-start mb-1">
-                                <div>
-                                  <h4 className="font-semibold">{edu.degree}</h4>
-                                  <p className="text-muted-foreground">{edu.institution}</p>
-                                </div>
-                                <p className="text-sm text-muted-foreground">{edu.graduationDate}</p>
-                              </div>
-                              {edu.location && (
-                                <p className="text-sm text-muted-foreground">{edu.location}</p>
-                              )}
-                              {edu.gpa && <p className="text-sm">GPA: {edu.gpa}</p>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Skills */}
-                    {cvData.skills.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-bold mb-2">SKILLS</h3>
-                        <p className="text-muted-foreground">{cvData.skills.join(" • ")}</p>
-                      </div>
-                    )}
-
-                    {/* Languages */}
-                    {cvData.languages.length > 0 && (
-                      <div>
-                        <h3 className="text-lg font-bold mb-2">LANGUAGES</h3>
-                        <p className="text-muted-foreground">{cvData.languages.join(" • ")}</p>
-                      </div>
-                    )}
-                  </div>
+                    <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
+                      {buildResumePreview}
+                    </pre>
                   )}
                 </CardContent>
               )}
