@@ -1,8 +1,10 @@
 import PlacementCard from "./PlacementCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from '@/integrations/supabase/client';
+import { fetchListings, type ListingWithCompany } from '@/services/listingsService';
+import { CuratedListingCard } from '@/components/CuratedListingCard';
 
 interface PlacementData {
   id: string;
@@ -18,9 +20,8 @@ interface PlacementData {
 }
 
 interface BoostData {
-  post_id: string;
-  boost_until: string;
-  multiplier: number | null;
+  entity_id: string;
+  ends_at: string;
 }
 
 interface FeaturedCardPlacement {
@@ -40,13 +41,43 @@ interface FeaturedCardPlacement {
 }
 
 const FeaturedPlacements = () => {
+  const [curatedListings, setCuratedListings] = useState<ListingWithCompany[]>([]);
   const [placements, setPlacements] = useState<FeaturedCardPlacement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fallbackLoadedRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    const load = async () => {
+    const loadCurated = async () => {
       setLoading(true);
+      try {
+        const listings = await fetchListings();
+        if (!mounted) return;
+        setCuratedListings(listings);
+        setError(null);
+      } catch (err: any) {
+        console.error('Error loading curated listings', err);
+        if (!mounted) return;
+        setError(err?.message ?? 'Unable to load featured listings.');
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCurated();
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadFallback = async () => {
+      if (fallbackLoadedRef.current) return;
+      fallbackLoadedRef.current = true;
+      setFallbackLoading(true);
       try {
         const { data, error } = await supabase
           .from('placements')
@@ -55,7 +86,6 @@ const FeaturedPlacements = () => {
           .limit(9);
 
         if (error) throw error;
-
         if (!mounted) return;
 
         const placementRows = (data as PlacementData[] | null) ?? [];
@@ -68,18 +98,21 @@ const FeaturedPlacements = () => {
         if (placementIds.length > 0) {
           const { data: boostRows, error: boostError } = await supabase
             .from('boosts')
-            .select('post_id, boost_until, multiplier')
-            .in('post_id', placementIds)
-            .gt('boost_until', nowIso);
+            .select('entity_id, ends_at')
+            .in('entity_id', placementIds)
+            .eq('entity_type', 'listing')
+            .eq('is_active', true)
+            .lte('starts_at', nowIso)
+            .gt('ends_at', nowIso);
 
           if (boostError) throw boostError;
 
           const activeBoosts = (boostRows as BoostData[] | null) ?? [];
 
           for (const boost of activeBoosts) {
-            const existing = boostsByPost.get(boost.post_id);
-            if (!existing || new Date(boost.boost_until).getTime() > new Date(existing.boost_until).getTime()) {
-              boostsByPost.set(boost.post_id, boost);
+            const existing = boostsByPost.get(boost.entity_id);
+            if (!existing || new Date(boost.ends_at).getTime() > new Date(existing.ends_at).getTime()) {
+              boostsByPost.set(boost.entity_id, boost);
             }
           }
         }
@@ -99,7 +132,7 @@ const FeaturedPlacements = () => {
             remote: false,
             verified: false,
             boosted: Boolean(boostInfo),
-            boostEndsAt: boostInfo?.boost_until ?? null,
+            boostEndsAt: boostInfo?.ends_at ?? null,
           };
         });
 
@@ -112,15 +145,22 @@ const FeaturedPlacements = () => {
 
         setPlacements(sorted);
       } catch (err) {
-        console.error('Error loading featured placements', err);
+        console.error('Fallback load failed', err);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setFallbackLoading(false);
+        }
       }
     };
 
-    load();
-    return () => { mounted = false; };
-  }, []);
+    if (!loading && curatedListings.length === 0) {
+      loadFallback();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [curatedListings.length, loading]);
 
   return (
     <section className="py-16 bg-background">
@@ -137,15 +177,29 @@ const FeaturedPlacements = () => {
         {/* Placements Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {loading ? (
-            <div className="col-span-full text-center py-12">Loading...</div>
-          ) : placements.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-muted-foreground">No placements available yet.</p>
-            </div>
-          ) : (
+            <div className="col-span-full text-center py-12">Loading curated listings…</div>
+          ) : curatedListings.length > 0 ? (
+            curatedListings.map((listing) => (
+              <CuratedListingCard
+                key={listing.id}
+                title={listing.title}
+                description={listing.description}
+                companyName={listing.companies?.name}
+                featured={listing.is_featured}
+                updatedAt={listing.updated_at}
+              />
+            ))
+          ) : fallbackLoading ? (
+            <div className="col-span-full text-center py-12">Loading placements…</div>
+          ) : placements.length > 0 ? (
             placements.map((placement) => (
               <PlacementCard key={placement.id} {...placement} />
             ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground">No placements available yet.</p>
+              {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
+            </div>
           )}
         </div>
 

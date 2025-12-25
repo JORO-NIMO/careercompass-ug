@@ -8,6 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Users, Briefcase } from 'lucide-react';
+import { AdminAdsManager } from '@/components/AdminAdsManager';
+import { AdminBoostsManager } from '@/components/AdminBoostsManager';
+import { AdminBulletManager } from '@/components/AdminBulletManager';
+import { AdminCompaniesManager } from '@/components/AdminCompaniesManager';
+import { AdminListingsManager } from '@/components/AdminListingsManager';
 
 interface Placement {
   id: string;
@@ -171,6 +176,14 @@ const AdminDashboard = () => {
             </Card>
           </div>
 
+          <div className="mb-8">
+            <AdminListingsManager />
+          </div>
+
+          <div className="mb-8">
+            <AdminBulletManager />
+          </div>
+
           {/* Placements List */}
           <Card>
             <CardHeader>
@@ -217,6 +230,18 @@ const AdminDashboard = () => {
               )}
             </CardContent>
           </Card>
+
+          <div className="mt-8">
+            <AdminCompaniesManager />
+          </div>
+
+          <div className="mt-8">
+            <AdminAdsManager />
+          </div>
+
+          <div className="mt-8">
+            <AdminBoostsManager />
+          </div>
         </div>
       </main>
       <Footer />

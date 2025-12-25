@@ -191,79 +191,64 @@ export default async function (req: Request) {
     if (eventType === 'charge.succeeded' || eventType === 'payment_intent.succeeded') {
       // Extract payment details
       const chargeId = event.data?.object?.id || event.data?.id;
-      const amount = event.data?.object?.amount || event.data?.amount;
+      const amountRaw = event.data?.object?.amount || event.data?.amount;
+      const amount = typeof amountRaw === 'string' ? parseInt(amountRaw, 10) : Number(amountRaw);
       const currency = event.data?.object?.currency || event.data?.currency || 'ugx';
       const metadata = event.data?.object?.metadata || event.data?.metadata || {};
       
       const userId = metadata.user_id;
-      const postId = metadata.post_id;
-      const boostDays = parseInt(metadata.boost_days || '7');
-      
-      if (!userId || !postId) {
-        console.error('Missing user_id or post_id in metadata');
+      const entityId = metadata.entity_id || metadata.post_id;
+      const entityTypeRaw = (metadata.entity_type || 'listing').toString().toLowerCase();
+      const boostDays = parseInt(metadata.boost_days || '7', 10);
+
+      if (!userId || !entityId) {
+        console.error('Missing user_id or entity_id in metadata');
         return new Response(
           JSON.stringify({ ok: false, error: 'Missing required metadata' }),
           { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
-      // Check if already processed (idempotency)
-      const { data: existing } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('provider_charge_id', chargeId)
-        .maybeSingle();
-      
-      if (existing) {
+      const entityType = entityTypeRaw === 'company' ? 'company' : 'listing';
+
+      if (!Number.isFinite(boostDays) || boostDays <= 0) {
+        console.error('Invalid boost duration provided');
         return new Response(
-          JSON.stringify({ ok: true, message: 'Already processed' }),
-          { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          JSON.stringify({ ok: false, error: 'Invalid boost duration' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
-      // Create payment record
-      const { data: payment, error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          user_id: userId,
-          amount_cents: amount,
-          currency: currency,
-          provider: provider,
-          provider_charge_id: chargeId,
-          status: 'succeeded',
-          metadata: metadata,
-        })
-        .select()
-        .single();
-
-      if (paymentError) {
-        console.error('Failed to create payment record:', paymentError);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        console.error('Invalid payment amount received');
         return new Response(
-          JSON.stringify({ ok: false, error: 'Payment record creation failed' }),
+          JSON.stringify({ ok: false, error: 'Invalid payment amount' }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+
+      const { data: paymentId, error: boostCreationError } = await supabase.rpc('create_boost_from_payment', {
+        _user_id: userId,
+        _amount_cents: Math.trunc(amount),
+        _currency: currency,
+        _provider: provider,
+        _provider_charge_id: chargeId,
+        _metadata: metadata,
+        _entity_id: entityId,
+        _entity_type: entityType,
+        _boost_days: boostDays,
+      });
+
+      if (boostCreationError) {
+        console.error('create_boost_from_payment error:', boostCreationError);
+        return new Response(
+          JSON.stringify({ ok: false, error: 'Failed to record boost for payment' }),
           { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
 
-      // Create boost record
-      const boostUntil = new Date();
-      boostUntil.setDate(boostUntil.getDate() + boostDays);
-      
-      const { error: boostError } = await supabase
-        .from('boosts')
-        .insert({
-          post_id: postId,
-          poster_id: userId,
-          boost_until: boostUntil.toISOString(),
-          multiplier: 2.0, // Default boost multiplier
-        });
-
-      if (boostError) {
-        console.error('Failed to create boost record:', boostError);
-        // Payment succeeded but boost failed - log for manual review
-      }
-
       return new Response(
-        JSON.stringify({ ok: true, payment_id: payment.id }),
+        JSON.stringify({ ok: true, payment_id: paymentId }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }

@@ -14,7 +14,88 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          image_url: string
+          link: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          image_url: string
+          link?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          image_url?: string
+          link?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       placements: {
+      bullets: {
+        Row: {
+          id: string
+          owner_id: string
+          balance: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          balance?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          balance?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bullet_transactions: {
+        Row: {
+          id: string
+          owner_id: string
+          delta: number
+          reason: string
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          delta: number
+          reason: string
+          created_at?: string
+          created_by: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          delta?: number
+          reason?: string
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: []
+      }
         Row: {
           approved: boolean
           available_slots: number
@@ -65,29 +146,186 @@ export type Database = {
       boosts: {
         Row: {
           id: string
-          post_id: string
-          poster_id: string
-          boost_until: string
-          multiplier: number | null
-          created_at: string | null
+          entity_id: string
+          entity_type: string
+          starts_at: string
+          ends_at: string
+          is_active: boolean
+          payment_id: string | null
+          created_at: string
         }
         Insert: {
           id?: string
-          post_id: string
-          poster_id: string
-          boost_until: string
-          multiplier?: number | null
-          created_at?: string | null
+          entity_id: string
+          entity_type?: string
+          starts_at?: string
+          ends_at: string
+          is_active?: boolean
+          payment_id?: string | null
+          created_at?: string
         }
         Update: {
           id?: string
-          post_id?: string
-          poster_id?: string
-          boost_until?: string
-          multiplier?: number | null
-          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          starts_at?: string
+          ends_at?: string
+          is_active?: boolean
+          payment_id?: string | null
+          created_at?: string
         }
         Relationships: []
+      }
+      companies: {
+        Row: {
+          id: string
+          created_by: string | null
+          owner_id: string
+          name: string
+          location_raw: string | null
+          maps_place_id: string | null
+          formatted_address: string | null
+          website_url: string | null
+          contact_email: string | null
+          approved: boolean
+          maps_verified: boolean
+          web_verified: boolean
+          verification_notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          created_by?: string | null
+          owner_id: string
+          name: string
+          location_raw?: string | null
+          maps_place_id?: string | null
+          formatted_address?: string | null
+          website_url?: string | null
+          contact_email?: string | null
+          approved?: boolean
+          maps_verified?: boolean
+          web_verified?: boolean
+          verification_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          created_by?: string | null
+          owner_id?: string
+          name?: string
+          location_raw?: string | null
+          maps_place_id?: string | null
+          formatted_address?: string | null
+          website_url?: string | null
+          contact_email?: string | null
+          approved?: boolean
+          maps_verified?: boolean
+          web_verified?: boolean
+          verification_notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      listings: {
+        Row: {
+          id: string
+          company_id: string | null
+          title: string
+          description: string
+          is_featured: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id?: string | null
+          title: string
+          description: string
+          is_featured?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string | null
+          title?: string
+          description?: string
+          is_featured?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      company_media: {
+        Row: {
+          id: string
+          company_id: string
+          placement_id: string | null
+          url: string
+          path: string
+          type: string
+          size: number
+          uploaded_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          placement_id?: string | null
+          url: string
+          path: string
+          type: string
+          size: number
+          uploaded_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          placement_id?: string | null
+          url?: string
+          path?: string
+          type?: string
+          size?: number
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_media_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_media_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "placements"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
@@ -143,6 +381,78 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string | null
+          type: string
+          title: string
+          body: string | null
+          message: string | null
+          metadata: Json | null
+          channel: string[] | null
+          scheduled_at: string | null
+          sent_at: string | null
+          read: boolean | null
+          created_at: string | null
+          target_role: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          type: string
+          title: string
+          body?: string | null
+          message?: string | null
+          metadata?: Json | null
+          channel?: string[] | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          read?: boolean | null
+          created_at?: string | null
+          target_role?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          type?: string
+          title?: string
+          body?: string | null
+          message?: string | null
+          metadata?: Json | null
+          channel?: string[] | null
+          scheduled_at?: string | null
+          sent_at?: string | null
+          read?: boolean | null
+          created_at?: string | null
+          target_role?: string | null
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      notification_reads: {
+        Row: {
+          id: string
+          notification_id: string
+          user_id: string
+          read_at: string | null
+        }
+        Insert: {
+          id?: string
+          notification_id: string
+          user_id: string
+          read_at?: string | null
+        }
+        Update: {
+          id?: string
+          notification_id?: string
+          user_id?: string
+          read_at?: string | null
         }
         Relationships: []
       }

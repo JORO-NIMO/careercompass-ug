@@ -222,6 +222,10 @@ Add or update these pages/components in `src/`:
 	- `BoostPost` flow on employer/mentor post creation page with amount, duration, and CTA.
 	- Payment modal to collect payment method (Stripe Elements / redirect to provider), then show success/receipt.
 
+- Company media management:
+	- `UserDashboard` company cards include a media library for approved companies.
+	- Uploads accept images or PDFs up to 5MB and store files in the `company-media` bucket via `/api/companies/:companyId/media`.
+
 - `RBAC` UI updates:
 	- Role selection flows for mentor and employer onboarding.
 	- Admin-only pages are guarded by `useAuth().isAdmin` and server-side checks.
@@ -291,6 +295,7 @@ EMAIL_PROVIDER_API_KEY=
 ```
 
 - Provision background job runner or use Supabase Scheduled Functions to run jobs every minute/hour for sending scheduled notifications and processing boost expirations.
+- Ensure a Supabase storage bucket named `company-media` exists (or set `COMPANY_MEDIA_BUCKET`) and keep it public if you rely on direct URLs. Enforce the 5 MB limit and allow only image/* or application/pdf MIME types across Edge Functions and the client.
 
 ## Next steps (prioritized)
 

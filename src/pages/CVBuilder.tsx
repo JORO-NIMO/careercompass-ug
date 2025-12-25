@@ -722,7 +722,7 @@ const CVBuilder = () => {
                 </div>
               </CardHeader>
               {showPreview && (
-                <CardContent className="bg-white p-8 max-h-[800px] overflow-y-auto print:max-h-none" id="cv-preview">
+                <CardContent className="bg-white p-6 max-h-[800px] overflow-y-auto print:max-h-none print:p-8" id="cv-preview">
                   {(!cvData.personalInfo.fullName && !cvData.personalInfo.email) ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <p className="mb-2">Your ATS-ready CV will appear here</p>
@@ -749,14 +749,28 @@ const CVBuilder = () => {
               visibility: visible;
             }
             #cv-preview {
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
+              position: static;
+              width: 210mm;
+              min-height: auto;
+              padding: 20mm !important;
+              box-sizing: border-box;
             }
             .no-print {
               display: none !important;
             }
+            pre {
+              font-family: "Calibri", "Arial", sans-serif !important;
+              font-size: 11pt !important;
+              line-height: 1.4 !important;
+              margin: 0 !important;
+              white-space: pre-wrap !important;
+              word-break: break-word;
+            }
+          }
+
+          @page {
+            size: A4;
+            margin: 15mm;
           }
         `}</style>
       </div>

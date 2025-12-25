@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Zap, Crown, Star } from "lucide-react";
+import { Check, Sparkles, Crown, Star } from "lucide-react";
 
 const Pricing = () => {
   const plans = [
@@ -22,22 +22,22 @@ const Pricing = () => {
       popular: false
     },
     {
-      name: "Boosted Listing",
+      name: "Featured Listing",
       price: "UGX 50,000",
       period: "/week",
       description: "Increase visibility and reach more qualified candidates faster",
       features: [
         "All Basic features",
-        "3x visibility boost",
+        "3x visibility lift",
         "Featured placement in search",
         "Priority support",
         "Advanced analytics",
         "Highlighted border & badge"
       ],
-      cta: "Boost Your Listing",
+      cta: "Feature Your Listing",
       variant: "default" as const,
       popular: true,
-      badge: <Zap className="h-4 w-4" />
+      badge: <Sparkles className="h-4 w-4" />
     },
     {
       name: "Premium Package",
@@ -45,8 +45,8 @@ const Pricing = () => {
       period: "/month",
       description: "Complete recruitment solution for active hiring companies",
       features: [
-        "All Boosted features",
-        "Unlimited boosted listings",
+        "All Featured Listing features",
+        "Unlimited featured listings",
         "Company verification badge",
         "Dedicated account manager",
         "Priority candidate matching",
@@ -66,7 +66,7 @@ const Pricing = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <Badge className="mb-4" variant="secondary">Pricing Plans</Badge>
-          <h1 className="text-4xl font-bold mb-4">Boost Your Job Listings</h1>
+          <h1 className="text-4xl font-bold mb-4">Feature Your Job Listings</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Choose the perfect plan to reach qualified candidates faster. Pay only for what you need.
           </p>
@@ -127,10 +127,10 @@ const Pricing = () => {
           ))}
         </div>
 
-        {/* How Boosting Works */}
+        {/* How Featuring Works */}
         <Card className="mb-12">
           <CardHeader>
-            <CardTitle className="text-2xl">How Boosting Works</CardTitle>
+            <CardTitle className="text-2xl">How Featuring Works</CardTitle>
             <CardDescription>
               Get maximum visibility for your job listings
             </CardDescription>
@@ -141,9 +141,9 @@ const Pricing = () => {
                 <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl font-bold text-blue-600">1</span>
                 </div>
-                <h3 className="font-semibold mb-2">Choose Your Boost</h3>
+                <h3 className="font-semibold mb-2">Choose Your Feature</h3>
                 <p className="text-sm text-muted-foreground">
-                  Select the boosting duration that works for your hiring timeline
+                  Select the featuring duration that works for your hiring timeline
                 </p>
               </div>
               <div className="text-center">
@@ -211,9 +211,9 @@ const Pricing = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <h3 className="font-semibold mb-2">Can I cancel or change my boost?</h3>
+              <h3 className="font-semibold mb-2">Can I cancel or change my feature?</h3>
               <p className="text-sm text-muted-foreground">
-                Yes, you can cancel your boost at any time. Refunds are prorated based on the remaining time.
+                Yes, you can cancel your feature at any time. Refunds are prorated based on the remaining time.
               </p>
             </div>
             <div>
@@ -223,9 +223,9 @@ const Pricing = () => {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Can I boost multiple listings?</h3>
+              <h3 className="font-semibold mb-2">Can I feature multiple listings?</h3>
               <p className="text-sm text-muted-foreground">
-                Yes! You can boost as many listings as needed. Premium plan includes unlimited boosts.
+                Yes! You can feature as many listings as needed. Premium plan includes unlimited featured placements.
               </p>
             </div>
             <div>

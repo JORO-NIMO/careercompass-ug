@@ -57,8 +57,16 @@ export const analyticsEventSchema = z.object({
 export const paymentIntentSchema = z.object({
   amount_cents: z.number().int().positive(),
   currency: z.string().length(3),
-  post_id: z.string().uuid(),
+  entity_id: z.string().uuid(),
+  entity_type: z.enum(['listing', 'company']).default('listing'),
   boost_duration_days: z.number().int().positive().max(90),
+});
+
+export const companyRegistrationSchema = z.object({
+  name: z.string().min(2, 'Company name must be at least 2 characters'),
+  location: z.string().min(5, 'Please provide a detailed location'),
+  website_url: z.string().min(4, 'Website is required'),
+  contact_email: z.string().email('Enter a valid contact email').optional(),
 });
 
 export type SignInInput = z.infer<typeof signInSchema>;
@@ -68,3 +76,4 @@ export type FeedbackInput = z.infer<typeof feedbackSchema>;
 export type NotificationInput = z.infer<typeof notificationSchema>;
 export type AnalyticsEventInput = z.infer<typeof analyticsEventSchema>;
 export type PaymentIntentInput = z.infer<typeof paymentIntentSchema>;
+export type CompanyRegistrationInput = z.infer<typeof companyRegistrationSchema>;

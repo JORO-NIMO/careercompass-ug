@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Building, Clock, DollarSign, Users, Bookmark, Zap } from "lucide-react";
+import { MapPin, Building, Clock, DollarSign, Users, Bookmark, Sparkles } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 
 interface PlacementCardProps {
@@ -64,8 +64,8 @@ const PlacementCard = ({
           <div className="flex flex-col items-end gap-2">
             {boosted && (
               <Badge variant="outline" className="border-primary text-primary bg-primary/10 flex items-center gap-1">
-                <Zap className="w-3 h-3" />
-                Boosted
+                <Sparkles className="w-3 h-3" />
+                Featured
               </Badge>
             )}
             <Button variant="ghost" size="icon">
@@ -128,8 +128,8 @@ const PlacementCard = ({
         </div>
         {boosted && boostEndsLabel ? (
           <div className="flex items-center gap-2 text-sm text-primary">
-            <Zap className="w-4 h-4" />
-            <span>Boost active until {boostEndsLabel}</span>
+            <Sparkles className="w-4 h-4" />
+            <span>Featured until {boostEndsLabel}</span>
           </div>
         ) : null}
         {isAuthenticated ? (

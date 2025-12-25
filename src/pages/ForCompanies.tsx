@@ -4,23 +4,34 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Zap, Clock, History } from 'lucide-react';
+import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } from 'lucide-react';
+import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
+import { companyRegistrationSchema } from '@/lib/validations';
+import { BulletWalletCard } from '@/components/BulletWalletCard';
 
 interface ActiveBoost {
   id: string;
-  postId: string;
+  entityId: string;
   placementTitle: string;
   companyName: string;
-  boostUntil: string;
-  multiplier: number | null;
-  createdAt: string | null;
+  startsAt: string;
+  endsAt: string;
+  createdAt: string;
+}
+
+interface CompanyFormState {
+  name: string;
+  location: string;
+  website_url: string;
+  contact_email: string;
 }
 
 const ForCompanies = () => {
@@ -28,6 +39,17 @@ const ForCompanies = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement | null>(null);
+  
+  const [company, setCompany] = useState<Company | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(true);
+  const [companyForm, setCompanyForm] = useState<CompanyFormState>({
+    name: '',
+    location: '',
+    website_url: '',
+    contact_email: '',
+  });
+  const [registeringCompany, setRegisteringCompany] = useState(false);
+  const [verificationMeta, setVerificationMeta] = useState<VerificationMeta | null>(null);
   
   const [positionTitle, setPositionTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -37,11 +59,8 @@ const ForCompanies = () => {
   const [stipend, setStipend] = useState('');
   const [availableSlots, setAvailableSlots] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [boostDuration, setBoostDuration] = useState<string>('none');
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
-  const [pastBoosts, setPastBoosts] = useState<ActiveBoost[]>([]);
   const [loadingBoosts, setLoadingBoosts] = useState(false);
-  const [cancelingBoostId, setCancelingBoostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -54,8 +73,63 @@ const ForCompanies = () => {
   }, [user, navigate, toast]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    if (!user) {
+      setCompany(null);
+      setVerificationMeta(null);
+      setCompanyLoading(false);
+      return;
+    }
+
+    const loadCompany = async () => {
+      setCompanyLoading(true);
+      try {
+        const record = await fetchMyCompany();
+        if (!isMounted) return;
+        setCompany(record);
+        setVerificationMeta(null);
+        if (record) {
+          setCompanyForm({
+            name: record.name,
+            location: record.formatted_address ?? record.location_raw ?? '',
+            website_url: record.website_url ?? '',
+            contact_email: record.contact_email ?? user.email ?? '',
+          });
+          setCompanyName((prev) => prev || record.name);
+        } else {
+          setCompanyForm((prev) => ({
+            ...prev,
+            contact_email: user.email ?? prev.contact_email,
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load company', error);
+        if (isMounted) {
+          toast({
+            title: 'Unable to load company',
+            description: 'Try again shortly.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setCompanyLoading(false);
+        }
+      }
+    };
+
+    loadCompany();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, toast]);
+
+  useEffect(() => {
     if (!user) {
       setActiveBoosts([]);
+      setLoadingBoosts(false);
       return;
     }
 
@@ -64,37 +138,57 @@ const ForCompanies = () => {
       setLoadingBoosts(true);
       try {
         const nowIso = new Date().toISOString();
-        const { data, error } = await supabase
-          .from('boosts')
-          .select('id, post_id, boost_until, multiplier, created_at, placements ( position_title, company_name )')
-          .eq('poster_id', user.id)
-          .order('boost_until', { ascending: false });
+        const { data: placementRows, error: placementError } = await supabase
+          .from('placements')
+          .select('id, position_title, company_name')
+          .eq('created_by', user.id);
 
-        if (error) throw error;
+        if (placementError) throw placementError;
 
-        if (!isMounted) {
+        const placementMap = new Map<string, { title: string; company: string }>();
+        (placementRows ?? []).forEach((row) => {
+          placementMap.set(row.id, {
+            title: row.position_title ?? 'Untitled placement',
+            company: row.company_name ?? 'Your company',
+          });
+        });
+
+        if (!isMounted) return;
+
+        if (placementMap.size === 0) {
+          setActiveBoosts([]);
           return;
         }
 
-        const mapped = (data ?? []).map((row) => ({
-          id: row.id,
-          postId: row.post_id,
-          placementTitle: row.placements?.position_title ?? 'Untitled placement',
-          companyName: row.placements?.company_name ?? 'Your company',
-          boostUntil: row.boost_until,
-          multiplier: row.multiplier ?? null,
-          createdAt: row.created_at ?? null,
-        })) as ActiveBoost[];
-        const now = new Date(nowIso).getTime();
-        const active = mapped
-          .filter((boost) => new Date(boost.boostUntil).getTime() > now)
-          .sort((a, b) => new Date(a.boostUntil).getTime() - new Date(b.boostUntil).getTime());
-        const expired = mapped
-          .filter((boost) => new Date(boost.boostUntil).getTime() <= now)
-          .sort((a, b) => new Date(b.boostUntil).getTime() - new Date(a.boostUntil).getTime());
+        const placementIds = Array.from(placementMap.keys());
+        const { data: boostRows, error: boostError } = await supabase
+          .from('boosts')
+          .select('id, entity_id, entity_type, starts_at, ends_at, is_active, created_at')
+          .in('entity_id', placementIds)
+          .eq('entity_type', 'listing')
+          .eq('is_active', true)
+          .lte('starts_at', nowIso)
+          .gt('ends_at', nowIso)
+          .order('ends_at', { ascending: true });
 
-        setActiveBoosts(active);
-        setPastBoosts(expired);
+        if (boostError) throw boostError;
+
+        if (!isMounted) return;
+
+        const mapped = (boostRows ?? []).map((row) => {
+          const placement = placementMap.get(row.entity_id);
+          return {
+            id: row.id,
+            entityId: row.entity_id,
+            placementTitle: placement?.title ?? 'Placement',
+            companyName: placement?.company ?? 'Your company',
+            startsAt: row.starts_at,
+            endsAt: row.ends_at,
+            createdAt: row.created_at ?? row.starts_at,
+          } as ActiveBoost;
+        });
+
+        setActiveBoosts(mapped);
       } catch (error) {
         console.error('Failed to load boosts', error);
         toast({
@@ -116,35 +210,78 @@ const ForCompanies = () => {
     };
   }, [user, toast]);
 
-  const handleCancelBoost = async (boostId: string) => {
-    if (!user || cancelingBoostId === boostId) {
+  const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (registeringCompany) {
+      return;
+    }
+    const parsed = companyRegistrationSchema.safeParse({
+      name: companyForm.name.trim(),
+      location: companyForm.location.trim(),
+      website_url: companyForm.website_url.trim(),
+      contact_email: companyForm.contact_email.trim() ? companyForm.contact_email.trim() : undefined,
+    });
+
+    if (!parsed.success) {
+      const firstError = parsed.error.errors[0]?.message ?? 'Please review the form inputs.';
+      toast({
+        title: 'Invalid company details',
+        description: firstError,
+        variant: 'destructive',
+      });
       return;
     }
 
-    setCancelingBoostId(boostId);
-
     try {
-      const { error } = await supabase.from('boosts').delete().eq('id', boostId);
-      if (error) throw error;
-
-      setActiveBoosts((prev) => prev.filter((boost) => boost.id !== boostId));
-      toast({
-        title: 'Boost cancelled',
-        description: 'Your listing will now appear without the boosted placement badge.',
+      setRegisteringCompany(true);
+      const { company: savedCompany, verification } = await registerCompany(parsed.data);
+      setCompany(savedCompany);
+      setVerificationMeta(verification);
+      setCompanyForm({
+        name: savedCompany.name,
+        location: savedCompany.formatted_address ?? savedCompany.location_raw ?? parsed.data.location,
+        website_url: savedCompany.website_url ?? parsed.data.website_url ?? '',
+        contact_email: savedCompany.contact_email ?? parsed.data.contact_email ?? user?.email ?? '',
       });
+      setCompanyName(savedCompany.name);
+
+      if (savedCompany.approved) {
+        toast({
+          title: 'Company approved automatically',
+          description: 'We verified your location and website successfully.',
+        });
+      } else {
+        const pendingReasons: string[] = [];
+        if (verification && !verification.maps.verified) {
+          pendingReasons.push('confirm your Google Maps location');
+        }
+        if (verification && !verification.web.verified) {
+          pendingReasons.push('ensure your website is reachable');
+        }
+        toast({
+          title: 'Verification pending',
+          description: pendingReasons.length
+            ? `Pending manual review — ${pendingReasons.join(' and ')}.`
+            : 'We will review your company shortly. You will receive an email once approved.',
+        });
+      }
     } catch (error: any) {
+      console.error('Company registration error', error);
       toast({
-        title: 'Unable to cancel boost',
-        description: error.message || 'Please try again in a moment.',
+        title: 'Unable to save company',
+        description: error?.message ?? 'Please try again shortly.',
         variant: 'destructive',
       });
     } finally {
-      setCancelingBoostId(null);
+      setRegisteringCompany(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) {
+      return;
+    }
 
     if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry || !availableSlots.trim()) {
       toast({
@@ -193,34 +330,6 @@ const ForCompanies = () => {
         description: "Placement submitted and is pending admin review. You will be notified once approved.",
       });
 
-      if (insertedPlacement?.id && user?.id && boostDuration !== 'none') {
-        const boostDays = Number.parseInt(boostDuration, 10);
-        const boostUntil = new Date();
-        boostUntil.setDate(boostUntil.getDate() + boostDays);
-
-        const multiplier = boostDays >= 30 ? 2.5 : boostDays >= 14 ? 2 : 1.5;
-
-        const { error: boostError } = await supabase.from('boosts').insert({
-          post_id: insertedPlacement.id,
-          poster_id: user.id,
-          boost_until: boostUntil.toISOString(),
-          multiplier,
-        });
-
-        if (boostError) {
-          toast({
-            title: "Boost not applied",
-            description: boostError.message || "We saved your placement but couldn't activate the boost.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Boost activated",
-            description: `Your listing will stay boosted for ${boostDays} day${boostDays > 1 ? 's' : ''}.`,
-          });
-        }
-      }
-
       // Reset form
       setPositionTitle('');
       setCompanyName('');
@@ -229,7 +338,6 @@ const ForCompanies = () => {
       setIndustry('');
       setStipend('');
       setAvailableSlots('');
-      setBoostDuration('none');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -261,13 +369,6 @@ const ForCompanies = () => {
     { value: 'creative', label: 'Creative & Media' },
   ];
 
-  const boostOptions = [
-    { value: 'none', label: 'No boost (listings appear normally)' },
-    { value: '7', label: 'Boost for 7 days — get a 1.5x bump' },
-    { value: '14', label: 'Boost for 14 days — stay visible longer' },
-    { value: '30', label: 'Boost for 30 days — maximum exposure' },
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -291,22 +392,214 @@ const ForCompanies = () => {
           <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Manage active boosts</CardTitle>
+                  <CardTitle>Company verification</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2 space-y-4">
+                {companyLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Checking your company record…</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        {company?.approved ? (
+                          <ShieldCheck className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Clock className="h-5 w-5 text-amber-500" />
+                        )}
+                        <span className="font-medium">
+                          {company
+                            ? company.approved
+                              ? 'Company approved'
+                              : 'Pending approval'
+                            : 'Register your company to unlock placement publishing.'}
+                        </span>
+                      </div>
+                      {company && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <Badge variant={company.maps_verified ? 'default' : 'outline'}>
+                            Google Maps {company.maps_verified ? 'verified' : 'not verified'}
+                          </Badge>
+                          <Badge variant={company.web_verified ? 'default' : 'outline'}>
+                            Website {company.web_verified ? 'verified' : 'not verified'}
+                          </Badge>
+                          <Badge variant={company.approved ? 'default' : 'secondary'}>
+                            {company.approved ? 'Approved' : 'Review pending'}
+                          </Badge>
+                        </div>
+                      )}
+                      {company?.formatted_address && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{company.formatted_address}</span>
+                        </div>
+                      )}
+                      {company?.website_url && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Globe className="h-4 w-4" />
+                          <a
+                            href={company.website_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline"
+                          >
+                            {company.website_url}
+                          </a>
+                        </div>
+                      )}
+                      {!company?.approved && company?.verification_notes && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CircleAlert className="h-4 w-4" />
+                          <span>{company.verification_notes}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <form className="space-y-4" onSubmit={handleCompanySubmit}>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="company-name">Company name</Label>
+                          <Input
+                            id="company-name"
+                            value={companyForm.name}
+                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, name: event.target.value }))}
+                            placeholder="e.g. Kampala Tech Hub"
+                            required
+                            disabled={registeringCompany}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="company-email">Contact email</Label>
+                          <Input
+                            id="company-email"
+                            type="email"
+                            value={companyForm.contact_email}
+                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, contact_email: event.target.value }))}
+                            placeholder="team@example.com"
+                            disabled={registeringCompany}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="company-location">Google Maps location</Label>
+                        <Input
+                          id="company-location"
+                          value={companyForm.location}
+                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, location: event.target.value }))}
+                          placeholder="Plot 12 Kampala Road, Kampala"
+                          required
+                          disabled={registeringCompany}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="company-website">Company website</Label>
+                        <Input
+                          id="company-website"
+                          value={companyForm.website_url}
+                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
+                          placeholder="https://yourcompany.com"
+                          required
+                          disabled={registeringCompany}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          We auto-approve once your location and website are verified.
+                        </p>
+                        <Button type="submit" disabled={registeringCompany}>
+                          {registeringCompany ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Saving…
+                            </>
+                          ) : company ? (
+                            'Update & re-verify'
+                          ) : (
+                            'Register company'
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+
+                    {verificationMeta && (
+                      <div className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                        <div>
+                          Google Maps: {verificationMeta.maps.verified
+                            ? 'Verified'
+                            : verificationMeta.maps.rawStatus ?? 'Not verified'}
+                        </div>
+                        <div>
+                          Website: {verificationMeta.web.verified
+                            ? 'Verified'
+                            : verificationMeta.web.rawError
+                              ? verificationMeta.web.rawError
+                              : verificationMeta.web.status
+                                ? `Status ${verificationMeta.web.status}`
+                                : 'Not verified'}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
+          {user ? (
+            <section className="grid gap-6 md:grid-cols-2">
+              <BulletWalletCard
+                ownerId={user.id}
+                title="Your personal bullets"
+                description="Use personal credits to experiment with boosts or share spotlighted content."
+              />
+              {company ? (
+                <BulletWalletCard
+                  ownerId={company.id}
+                  title={`${company.name} credits`}
+                  description="Spend company bullets to boost published placements and reach more students."
+                  enableBoostActions
+                />
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Placement boosts</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Register and verify your company to unlock a dedicated wallet for boosts and featured slots.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </section>
+          ) : null}
+
+          <section className="max-w-3xl mx-auto w-full">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Featured placements</CardTitle>
               </CardHeader>
               <CardContent className="pt-2 space-y-4">
                 {loadingBoosts ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Checking your boosted placements…</span>
+                    <span>Checking your featured placements…</span>
                   </div>
                 ) : activeBoosts.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    You have no active boosts. Activate one when submitting a placement to keep it highlighted.
+                    Featured placements go live automatically once your payment is confirmed. Active features appear here with their scheduled end date.
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {activeBoosts.map((boost) => {
-                      const boostEnd = new Date(boost.boostUntil).toLocaleDateString(undefined, {
+                      const boostEnd = new Date(boost.endsAt).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      });
+                      const boostStart = new Date(boost.startsAt).toLocaleDateString(undefined, {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
@@ -317,77 +610,22 @@ const ForCompanies = () => {
                           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                <Zap className="h-4 w-4" />
-                                Boosted placement
+                                <Sparkles className="h-4 w-4" />
+                                Featured placement
                               </div>
                               <h3 className="text-lg font-semibold text-foreground">{boost.placementTitle}</h3>
                               <p className="text-sm text-muted-foreground">{boost.companyName}</p>
                               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground pt-1">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
-                                  Ends {boostEnd}
+                                  Runs {boostStart} – {boostEnd}
                                 </span>
-                                {boost.multiplier ? (
-                                  <span>{boost.multiplier.toFixed(1)}x visibility bump</span>
-                                ) : null}
                               </div>
                             </div>
-                            <Button
-                              variant="outline"
-                              onClick={() => handleCancelBoost(boost.id)}
-                              disabled={cancelingBoostId === boost.id}
-                            >
-                              {cancelingBoostId === boost.id ? (
-                                <span className="flex items-center gap-2">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                  Cancelling…
-                                </span>
-                              ) : (
-                                'Cancel boost'
-                              )}
-                            </Button>
                           </div>
                         </div>
                       );
                     })}
-                  </div>
-                )}
-                {pastBoosts.length > 0 && (
-                  <div className="space-y-3 pt-4 border-t">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                      <History className="h-4 w-4" />
-                      Previous boosts
-                    </div>
-                    <div className="space-y-2">
-                      {pastBoosts.map((boost) => {
-                        const boostEnd = new Date(boost.boostUntil).toLocaleDateString(undefined, {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        });
-                        const activated = boost.createdAt
-                          ? new Date(boost.createdAt).toLocaleDateString(undefined, {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : null;
-
-                        return (
-                          <div key={boost.id} className="rounded-lg border border-border bg-background p-4">
-                            <div className="flex flex-col gap-2">
-                              <h4 className="font-semibold text-foreground">{boost.placementTitle}</h4>
-                              <p className="text-sm text-muted-foreground">{boost.companyName}</p>
-                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                {activated && <span>Activated {activated}</span>}
-                                <span>Ended {boostEnd}</span>
-                                {boost.multiplier ? <span>{boost.multiplier.toFixed(1)}x visibility</span> : null}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
                   </div>
                 )}
               </CardContent>
@@ -400,6 +638,11 @@ const ForCompanies = () => {
                 <CardTitle>Placement details</CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
+                {company && !company.approved && (
+                  <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    Your company is currently pending approval. Placements will remain hidden until verification is complete.
+                  </div>
+                )}
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -493,27 +736,8 @@ const ForCompanies = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Boost visibility</Label>
-                    <Select value={boostDuration} onValueChange={setBoostDuration}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose boost duration" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {boostOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Boosted listings jump to the top of search results with a blue badge and higher visibility.
-                    </p>
-                  </div>
-
                   <div className="text-sm text-muted-foreground">
-                    Placements are saved as drafts until an admin approves them. You will receive an email once the listing is live.
+                    Placements are saved as drafts until an admin approves them. Once approved, any boosts tied to confirmed payments will start automatically and appear above.
                   </div>
 
                   <Button type="submit" className="w-full" size="lg" disabled={submitting}>
