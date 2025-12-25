@@ -1,9 +1,27 @@
 // Supabase Edge Function Router (Deno)
-// Routes requests to appropriate subdirectory handlers
+// 
+// This is the main entry point for the `api` edge function.
+// It routes incoming requests to the appropriate subdirectory handler based on the URL path.
+//
+// Example routing:
+//   /api/ads        → ./ads/index.ts
+//   /api/jobs       → ./jobs/index.ts
+//   /api/listings   → ./listings/index.ts
+//   /api/companies  → ./companies/index.ts
+//
+// Supported routes (subdirectories):
+//   - ads, admin_ads, admin_boosts, admin_bullets, admin_listings
+//   - admin_notifications, analytics_proxy, books, boosts, boosts_maintenance
+//   - bullets, careers, companies, courses, jobs, listings, notifications
+//   - notifications_proxy, notifications_read, user_companies
+//
+// Each subdirectory must have an index.ts file that exports a default async function
+// accepting a Request and returning a Response.
+
 import { corsHeaders, handleCors } from '../_shared/auth.ts';
 
 export default async function (req: Request): Promise<Response> {
-  // Handle CORS preflight
+  // Handle CORS preflight requests (OPTIONS method)
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
