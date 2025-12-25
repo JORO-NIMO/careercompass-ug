@@ -434,7 +434,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, phone: e.target.value }
                       })}
-                      placeholder="+256 726128513"
+                      placeholder="+256 726000000"
                     />
                   </div>
                   <div>
@@ -491,7 +491,7 @@ const CVBuilder = () => {
                   rows={4}
                 />
               </CardContent>
-            </Card}
+            </Card>
             {/* Experience */}
             <Card>
               <CardHeader>
