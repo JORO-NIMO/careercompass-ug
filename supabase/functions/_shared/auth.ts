@@ -1,5 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+import { jsonError } from './responses.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -51,10 +53,7 @@ export async function verifyAuth(req: Request): Promise<AuthResult> {
  * Create an unauthorized response with CORS headers
  */
 export function unauthorizedResponse(message: string = 'Unauthorized'): Response {
-  return new Response(
-    JSON.stringify({ ok: false, error: message }),
-    { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-  );
+  return jsonError(message, 401);
 }
 
 /**

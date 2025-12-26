@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { handleCors, corsHeaders, verifyAuth, unauthorizedResponse } from '../../_shared/auth.ts';
+import { handleCors, verifyAuth, unauthorizedResponse } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 import {
   runVerificationChecks,
   normalizeWebsite,
@@ -60,20 +61,14 @@ async function ensureCompanyAccess(
   if (error) {
     console.error('company lookup error', error);
     return {
-      response: new Response(
-        JSON.stringify({ ok: false, error: 'Failed to verify company access' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      ),
+      response: jsonError('Failed to verify company access', 500),
       company: null,
     } as const;
   }
 
   if (!company) {
     return {
-      response: new Response(
-        JSON.stringify({ ok: false, error: 'Company not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      ),
+      response: jsonError('Company not found', 404),
       company: null,
     } as const;
   }
@@ -92,20 +87,14 @@ async function ensureCompanyAccess(
   if (roleError) {
     console.error('admin role check error', roleError);
     return {
-      response: new Response(
-        JSON.stringify({ ok: false, error: 'Failed to verify permissions' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      ),
+      response: jsonError('Failed to verify permissions', 500),
       company: null,
     } as const;
   }
 
   if (!adminRole) {
     return {
-      response: new Response(
-        JSON.stringify({ ok: false, error: 'Company ownership required' }),
-        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      ),
+      response: jsonError('Company ownership required', 403),
       company: null,
     } as const;
   }
@@ -122,18 +111,12 @@ async function handlePost(req: Request) {
 
   const body = await req.json().catch(() => null) as CompanyPayload | null;
   if (!body) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Invalid JSON payload' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Invalid JSON payload', 400);
   }
 
   const name = body.name?.trim();
   if (!name) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Company name is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Company name is required', 400);
   }
 
   const supabase = createSupabaseServiceClient();
@@ -147,10 +130,7 @@ async function handlePost(req: Request) {
 
   if (fetchError) {
     console.error('companies fetch error', fetchError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to load company record' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to load company record', 500);
   }
 
   const verification = await runVerificationChecks(body);
@@ -205,16 +185,10 @@ async function handlePost(req: Request) {
 
   if (error) {
     console.error('companies upsert error', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to register company' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to register company', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, item: data, verification }),
-    { status: autoApproved ? 200 : 202, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonSuccess({ item: data, verification }, autoApproved ? 200 : 202);
 }
 
 async function handlePatch(req: Request, companyId: string) {
@@ -232,18 +206,12 @@ async function handlePatch(req: Request, companyId: string) {
     .maybeSingle();
 
   if (!roleData) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Admin role required' }),
-      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Admin role required', 403);
   }
 
   const body = await req.json().catch(() => null) as { approved?: boolean; maps_verified?: boolean; web_verified?: boolean; notes?: string } | null;
   if (!body) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Invalid JSON payload' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Invalid JSON payload', 400);
   }
 
   const approved = body.approved ?? true;
@@ -272,23 +240,14 @@ async function handlePatch(req: Request, companyId: string) {
 
   if (error) {
     console.error('companies approve error', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to update company approval' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to update company approval', 500);
   }
 
   if (!data) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Company not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Company not found', 404);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, item: data }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonSuccess({ item: data });
 }
 
 async function handleListMedia(req: Request, companyId: string) {
@@ -302,17 +261,11 @@ async function handleListMedia(req: Request, companyId: string) {
 
   if (companyError) {
     console.error('company media company lookup error', companyError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to load company media' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to load company media', 500);
   }
 
   if (!company) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Company not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Company not found', 404);
   }
 
   const url = new URL(req.url);
@@ -332,16 +285,10 @@ async function handleListMedia(req: Request, companyId: string) {
 
   if (error) {
     console.error('company media list error', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to load media' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to load media', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, items: data ?? [] }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonSuccess({ items: data ?? [] });
 }
 
 async function handleUploadMedia(req: Request, companyId: string) {
@@ -356,40 +303,25 @@ async function handleUploadMedia(req: Request, companyId: string) {
 
   const formData = await req.formData().catch(() => null);
   if (!formData) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Invalid form payload' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Invalid form payload', 400);
   }
 
   const filePart = formData.get('file');
   if (!(filePart instanceof File)) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Media file is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Media file is required', 400);
   }
 
   if (filePart.size === 0) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Uploaded file is empty' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Uploaded file is empty', 400);
   }
 
   if (filePart.size > MAX_MEDIA_BYTES) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'File exceeds 5MB limit' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('File exceeds 5MB limit', 400);
   }
 
   const mediaType = detectMediaType(filePart);
   if (!mediaType) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Only image or PDF files are allowed' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Only image or PDF files are allowed', 400);
   }
 
   const placementPart = formData.get('placement_id');
@@ -404,17 +336,11 @@ async function handleUploadMedia(req: Request, companyId: string) {
 
     if (placementError) {
       console.error('company media placement lookup error', placementError);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Failed to verify placement' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonError('Failed to verify placement', 500);
     }
 
     if (!placement || placement.company_id !== companyId) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Placement does not belong to this company' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonError('Placement does not belong to this company', 400);
     }
   }
 
@@ -430,10 +356,7 @@ async function handleUploadMedia(req: Request, companyId: string) {
 
   if (uploadError) {
     console.error('company media upload error', uploadError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to upload media' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to upload media', 500);
   }
 
   const { data: publicUrlData } = supabase.storage.from(COMPANY_MEDIA_BUCKET).getPublicUrl(storagePath);
@@ -455,16 +378,10 @@ async function handleUploadMedia(req: Request, companyId: string) {
   if (error) {
     console.error('company media insert error', error);
     await supabase.storage.from(COMPANY_MEDIA_BUCKET).remove([storagePath]).catch(() => undefined);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to save media record' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to save media record', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, item: data }),
-    { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonSuccess({ item: data }, 201);
 }
 
 async function handleDeleteMedia(req: Request, companyId: string, mediaId: string) {
@@ -482,17 +399,11 @@ async function handleDeleteMedia(req: Request, companyId: string, mediaId: strin
 
   if (mediaError) {
     console.error('company media fetch error', mediaError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to load media record' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to load media record', 500);
   }
 
   if (!mediaRow || mediaRow.company_id !== companyId) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Media not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Media not found', 404);
   }
 
   const access = await ensureCompanyAccess(supabase, authResult.user.id, companyId);
@@ -506,15 +417,12 @@ async function handleDeleteMedia(req: Request, companyId: string, mediaId: strin
 
   if (deleteError) {
     console.error('company media delete error', deleteError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to delete media' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to delete media', 500);
   }
 
   await supabase.storage.from(COMPANY_MEDIA_BUCKET).remove([mediaRow.path]).catch(() => undefined);
 
-  return new Response(null, { status: 204, headers: { ...corsHeaders } });
+  return jsonSuccess({});
 }
 
 export default async function (req: Request) {
@@ -546,8 +454,5 @@ export default async function (req: Request) {
     return await handlePatch(req, subSegments[0]);
   }
 
-  return new Response(
-    JSON.stringify({ ok: false, error: 'Not found' }),
-    { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonError('Not found', 404);
 }

@@ -1,15 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { AdminBoost, AdminBoostsCollection } from '@/types/admin';
+export type { AdminBoost as Boost } from '@/types/admin';
 
-export interface Boost {
-  id: string;
-  entity_id: string;
-  entity_type: 'company' | 'listing';
-  starts_at: string;
-  ends_at: string;
-  is_active: boolean;
-  payment_id: string | null;
-  created_at: string;
-}
+type Boost = AdminBoost;
 
 async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
   const {
@@ -23,11 +16,18 @@ async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
   const headers = new Headers(init.headers ?? {});
   headers.set('Authorization', `Bearer ${session.access_token}`);
   headers.set('Accept', 'application/json');
+  if (!headers.has('Content-Type') && init.body && !(init.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   return fetch(input, { ...init, headers });
 }
 
-async function parseJsonResponse(response: Response) {
+async function parseJsonResponse<T>(response: Response): Promise<{
+  success: boolean;
+  data: T | undefined;
+  error?: string;
+}> {
   const contentType = response.headers.get('Content-Type') ?? '';
   const rawBody = await response.text();
 
@@ -40,7 +40,7 @@ async function parseJsonResponse(response: Response) {
   }
 
   try {
-    const parsed = JSON.parse(rawBody);
+    const parsed = JSON.parse(rawBody) as T & { error?: string };
     return { success: response.ok, data: parsed, error: response.ok ? undefined : parsed?.error ?? 'Request failed' };
   } catch (error) {
     return { success: false, data: undefined, error: 'Invalid JSON response from server' };
@@ -49,7 +49,7 @@ async function parseJsonResponse(response: Response) {
 
 export async function fetchAdminBoosts(): Promise<Boost[]> {
   const response = await authorizedFetch('/api/admin/boosts', { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<AdminBoostsCollection>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to load boosts');
   }
@@ -68,11 +68,14 @@ export async function createBoost(payload: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Boost }>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to create boost');
   }
-  return data?.item;
+  if (!data?.item) {
+    throw new Error('Failed to create boost');
+  }
+  return data.item;
 }
 
 export async function updateBoost(id: string, payload: Partial<Pick<Boost, 'starts_at' | 'ends_at' | 'is_active'>>): Promise<Boost> {
@@ -81,25 +84,31 @@ export async function updateBoost(id: string, payload: Partial<Pick<Boost, 'star
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Boost }>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to update boost');
   }
-  return data?.item;
+  if (!data?.item) {
+    throw new Error('Failed to update boost');
+  }
+  return data.item;
 }
 
 export async function revokeBoost(id: string): Promise<Boost> {
   const response = await authorizedFetch(`/api/admin/boosts/${id}`, { method: 'DELETE' });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Boost }>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to revoke boost');
   }
-  return data?.item;
+  if (!data?.item) {
+    throw new Error('Failed to revoke boost');
+  }
+  return data.item;
 }
 
 export async function fetchActiveBoosts(): Promise<Array<{ id: string; entity_id: string; entity_type: 'company' | 'listing'; starts_at: string; ends_at: string }>> {
   const response = await fetch('/api/boosts');
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<AdminBoostsCollection>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to load boosts');
   }

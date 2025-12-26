@@ -6,10 +6,10 @@ import {
   deleteListing,
   toggleListingFeature,
   updateListingOrder,
-  type ListingWithCompany,
 } from '@/services/listingsService';
 import { listCompanies, type Company } from '@/services/companiesService';
 import { useToast } from '@/hooks/use-toast';
+import type { AdminListing } from '@/types/admin';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -56,7 +56,7 @@ const DEFAULT_FORM_STATE: ListingFormState = {
 
 export function AdminListingsManager() {
   const { toast } = useToast();
-  const [listings, setListings] = useState<ListingWithCompany[]>([]);
+  const [listings, setListings] = useState<AdminListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [formState, setFormState] = useState<ListingFormState>(DEFAULT_FORM_STATE);
@@ -65,7 +65,7 @@ export function AdminListingsManager() {
   const [submitting, setSubmitting] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ListingWithCompany | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminListing | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companiesLoading, setCompaniesLoading] = useState(false);
@@ -84,7 +84,11 @@ export function AdminListingsManager() {
 
   const loadListings = async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
-    silent ? setRefreshing(true) : setLoading(true);
+    if (silent) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
     try {
       const items = await fetchAdminListings();
       setListings(items);
@@ -94,11 +98,15 @@ export function AdminListingsManager() {
           return acc;
         }, {}),
       );
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load listings', error);
       toast({ title: 'Error', description: 'Unable to load listings', variant: 'destructive' });
     } finally {
-      silent ? setRefreshing(false) : setLoading(false);
+      if (silent) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
@@ -107,7 +115,7 @@ export function AdminListingsManager() {
       setCompaniesLoading(true);
       const records = await listCompanies();
       setCompanies(records);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load companies', error);
       toast({ title: 'Error', description: 'Unable to load companies', variant: 'destructive' });
     } finally {
@@ -130,7 +138,7 @@ export function AdminListingsManager() {
     setDialogOpen(true);
   };
 
-  const handleEdit = (listing: ListingWithCompany) => {
+  const handleEdit = (listing: AdminListing) => {
     setCurrentListingId(listing.id);
     setFormState({
       title: listing.title,
@@ -185,11 +193,11 @@ export function AdminListingsManager() {
       }
       closeDialog();
       await loadListings({ silent: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save listing', error);
       toast({
         title: 'Save failed',
-        description: error?.message ?? 'Unable to save listing.',
+        description: error instanceof Error ? error.message : 'Unable to save listing.',
         variant: 'destructive',
       });
     } finally {
@@ -197,7 +205,7 @@ export function AdminListingsManager() {
     }
   };
 
-  const handleFeatureToggle = async (listing: ListingWithCompany, value: boolean) => {
+  const handleFeatureToggle = async (listing: AdminListing, value: boolean) => {
     try {
       setTogglingId(listing.id);
       await toggleListingFeature(listing.id, value);
@@ -208,11 +216,11 @@ export function AdminListingsManager() {
           ? `${listing.title} will appear in the featured carousel.`
           : `${listing.title} removed from featured placements.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to toggle feature state', error);
       toast({
         title: 'Update failed',
-        description: error?.message ?? 'Unable to update feature status.',
+        description: error instanceof Error ? error.message : 'Unable to update feature status.',
         variant: 'destructive',
       });
     } finally {
@@ -224,7 +232,7 @@ export function AdminListingsManager() {
     setOrderDrafts((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleOrderSave = async (listing: ListingWithCompany) => {
+  const handleOrderSave = async (listing: AdminListing) => {
     const rawValue = orderDrafts[listing.id]?.trim() ?? '';
     if (rawValue === '') {
       toast({ title: 'Missing order', description: 'Enter a numeric display order before saving.', variant: 'destructive' });
@@ -242,11 +250,11 @@ export function AdminListingsManager() {
       await updateListingOrder(listing.id, parsed);
       toast({ title: 'Order updated', description: `${listing.title} will render with the new order.` });
       await loadListings({ silent: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update display order', error);
       toast({
         title: 'Update failed',
-        description: error?.message ?? 'Unable to update display order.',
+        description: error instanceof Error ? error.message : 'Unable to update display order.',
         variant: 'destructive',
       });
     } finally {
@@ -263,11 +271,11 @@ export function AdminListingsManager() {
       toast({ title: 'Listing deleted', description: `${target.title} has been removed.` });
       setDeleteTarget(null);
       await loadListings({ silent: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete listing', error);
       toast({
         title: 'Delete failed',
-        description: error?.message ?? 'Unable to delete listing.',
+        description: error instanceof Error ? error.message : 'Unable to delete listing.',
         variant: 'destructive',
       });
     } finally {

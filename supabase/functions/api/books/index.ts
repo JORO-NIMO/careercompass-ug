@@ -1,4 +1,5 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 export default async function (req: Request) {
   try {
@@ -12,7 +13,8 @@ export default async function (req: Request) {
     // check cache
     const { data: cached } = await supabase.from('external_cache').select('response,expires_at').eq('key', key).maybeSingle();
     if (cached && new Date(cached.expires_at) > new Date()) {
-      return new Response(JSON.stringify(cached.response), { status: 200 });
+      const payload = (cached.response && typeof cached.response === 'object') ? cached.response : { results: cached.response };
+      return jsonSuccess(payload as Record<string, unknown>);
     }
 
     const apiUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20`;
@@ -22,9 +24,10 @@ export default async function (req: Request) {
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
     await supabase.from('external_cache').upsert({ key, response: json, expires_at: expiresAt });
 
-    return new Response(JSON.stringify(json), { status: 200 });
+    const payload = (json && typeof json === 'object') ? json : { results: json };
+    return jsonSuccess(payload as Record<string, unknown>);
   } catch (err) {
     console.error('books function error', err);
-    return new Response(JSON.stringify({ ok: false, error: String(err) }), { status: 500 });
+    return jsonError(String(err), 500);
   }
 }

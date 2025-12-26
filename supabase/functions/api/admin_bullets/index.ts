@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 async function ensureAdmin(userId: string, supabase: ReturnType<typeof createSupabaseServiceClient>) {
   const { data, error } = await supabase
@@ -24,10 +25,7 @@ export default async function (req: Request) {
   const supabase = createSupabaseServiceClient();
   const isAdmin = await ensureAdmin(user.id, supabase);
   if (!isAdmin) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Admin role required' }),
-      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Admin role required', 403);
   }
 
   if (req.method === 'GET') {
@@ -43,10 +41,7 @@ export default async function (req: Request) {
 
       if (balanceError) {
         console.error('admin bullets fetch balance error', balanceError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to load bullet balance' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to load bullet balance', 500);
       }
 
       const { data: transactions, error: txError } = await supabase
@@ -58,20 +53,13 @@ export default async function (req: Request) {
 
       if (txError) {
         console.error('admin bullets fetch transactions error', txError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to load bullet transactions' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to load bullet transactions', 500);
       }
 
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          balance: balanceRow ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null },
-          transactions: transactions ?? [],
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonSuccess({
+        balance: balanceRow ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null },
+        transactions: transactions ?? [],
+      });
     }
 
     const { data, error: listError } = await supabase
@@ -82,16 +70,10 @@ export default async function (req: Request) {
 
     if (listError) {
       console.error('admin bullets list error', listError);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Failed to load bullet balances' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonError('Failed to load bullet balances', 500);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, items: data ?? [] }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonSuccess({ items: data ?? [] });
   }
 
   if (req.method === 'POST') {
@@ -106,10 +88,7 @@ export default async function (req: Request) {
     const reason = payload?.reason?.trim();
 
     if (!ownerId || typeof delta !== 'number' || !Number.isInteger(delta) || !reason) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'owner_id, integer delta, and reason are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonError('owner_id, integer delta, and reason are required', 400);
     }
 
     try {
@@ -125,21 +104,13 @@ export default async function (req: Request) {
         throw rpcError;
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, balance: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
-    } catch (err: any) {
+      return jsonSuccess({ balance: data });
+    } catch (err: unknown) {
       console.error('admin bullets adjust error', err);
-      return new Response(
-        JSON.stringify({ ok: false, error: err?.message ?? 'Failed to adjust bullet balance' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      const message = err instanceof Error ? err.message : 'Failed to adjust bullet balance';
+      return jsonError(message, 400);
     }
   }
 
-  return new Response(
-    JSON.stringify({ ok: false, error: 'Method not allowed' }),
-    { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonError('Method not allowed', 405);
 }

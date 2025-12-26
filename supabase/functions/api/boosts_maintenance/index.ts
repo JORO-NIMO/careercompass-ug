@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { corsHeaders, handleCors } from '../../_shared/auth.ts';
+import { handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 const CRON_SECRET = Deno.env.get('BOOSTS_CRON_SECRET');
 
@@ -10,10 +11,7 @@ export default async function (req: Request) {
   if (CRON_SECRET) {
     const provided = req.headers.get('x-cron-secret');
     if (!provided || provided !== CRON_SECRET) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Unauthorized', 401);
     }
   }
 
@@ -28,21 +26,12 @@ export default async function (req: Request) {
 
     if (error) {
       console.error('boosts maintenance error', error);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Failed to deactivate boosts' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Failed to deactivate boosts', 500);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, deactivated: data?.length ?? 0 }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonSuccess({ deactivated: data?.length ?? 0 });
   } catch (err) {
     console.error('boosts maintenance handler failure', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Internal server error', 500);
   }
 }

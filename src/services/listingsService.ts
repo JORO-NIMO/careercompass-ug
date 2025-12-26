@@ -1,12 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import type { AdminListing, AdminListingsCollection, ListingWithCompany } from '@/types/admin';
+export type { ListingWithCompany } from '@/types/admin';
 
 export type Listing = Tables<'listings'>;
-export type Company = Tables<'companies'>;
-
-export interface ListingWithCompany extends Listing {
-  companies?: Pick<Company, 'id' | 'name'> | null;
-}
 
 async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
   const {
@@ -27,7 +24,11 @@ async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
   return fetch(input, { ...init, headers });
 }
 
-async function parseJsonResponse(response: Response) {
+async function parseJsonResponse<T>(response: Response): Promise<{
+  success: boolean;
+  data: T | undefined;
+  error?: string;
+}> {
   const contentType = response.headers.get('Content-Type') ?? '';
   const rawBody = await response.text();
 
@@ -40,7 +41,7 @@ async function parseJsonResponse(response: Response) {
   }
 
   try {
-    const parsed = JSON.parse(rawBody);
+    const parsed = JSON.parse(rawBody) as T & { error?: string };
     return { success: response.ok, data: parsed, error: response.ok ? undefined : parsed?.error ?? 'Request failed' };
   } catch (error) {
     return { success: false, data: undefined, error: 'Invalid JSON response from server' };
@@ -49,20 +50,20 @@ async function parseJsonResponse(response: Response) {
 
 export async function fetchListings(): Promise<ListingWithCompany[]> {
   const response = await fetch('/api/listings');
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<AdminListingsCollection>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to load listings');
   }
-  return (data?.items ?? []) as ListingWithCompany[];
+  return data?.items ?? [];
 }
 
-export async function fetchAdminListings(): Promise<ListingWithCompany[]> {
+export async function fetchAdminListings(): Promise<AdminListing[]> {
   const response = await authorizedFetch('/api/admin/listings', { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<AdminListingsCollection>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to load admin listings');
   }
-  return (data?.items ?? []) as ListingWithCompany[];
+  return data?.items ?? [];
 }
 
 export async function createListing(payload: {
@@ -84,12 +85,12 @@ export async function createListing(payload: {
     }),
   });
 
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
   if (!success || !data?.item) {
     throw new Error(error ?? 'Failed to create listing');
   }
 
-  return data.item as Listing;
+  return data.item;
 }
 
 export async function updateListing(id: string, payload: {
@@ -111,17 +112,17 @@ export async function updateListing(id: string, payload: {
     }),
   });
 
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
   if (!success || !data?.item) {
     throw new Error(error ?? 'Failed to update listing');
   }
 
-  return data.item as Listing;
+  return data.item;
 }
 
 export async function deleteListing(id: string): Promise<void> {
   const response = await authorizedFetch(`/api/admin/listings/${id}`, { method: 'DELETE' });
-  const { success, error } = await parseJsonResponse(response);
+  const { success, error } = await parseJsonResponse<Record<string, never>>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to delete listing');
   }
@@ -134,12 +135,12 @@ export async function toggleListingFeature(id: string, isFeatured: boolean): Pro
     body: JSON.stringify({ is_featured: isFeatured }),
   });
 
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
   if (!success || !data?.item) {
     throw new Error(error ?? 'Failed to update feature status');
   }
 
-  return data.item as Listing;
+  return data.item;
 }
 
 export async function updateListingOrder(id: string, displayOrder: number): Promise<Listing> {
@@ -149,10 +150,10 @@ export async function updateListingOrder(id: string, displayOrder: number): Prom
     body: JSON.stringify({ display_order: displayOrder }),
   });
 
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
   if (!success || !data?.item) {
     throw new Error(error ?? 'Failed to update display order');
   }
 
-  return data.item as Listing;
+  return data.item;
 }

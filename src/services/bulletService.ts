@@ -1,4 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
+import type {
+  AdminBulletDetail,
+  AdminBulletList,
+  AdminBulletResponse,
+  BulletBalance,
+  BulletTransaction,
+} from '@/types/admin';
+export type { BulletBalance, BulletTransaction } from '@/types/admin';
 
 async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
   const {
@@ -19,7 +27,11 @@ async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
   return fetch(input, { ...init, headers });
 }
 
-async function parseJsonResponse(response: Response) {
+async function parseJsonResponse<T>(response: Response): Promise<{
+  success: boolean;
+  data: T | undefined;
+  error?: string;
+}> {
   const contentType = response.headers.get('Content-Type') ?? '';
   const rawBody = await response.text();
 
@@ -36,7 +48,7 @@ async function parseJsonResponse(response: Response) {
   }
 
   try {
-    const parsed = JSON.parse(rawBody);
+    const parsed = JSON.parse(rawBody) as T & { error?: string };
     return {
       success: response.ok,
       data: parsed,
@@ -47,32 +59,16 @@ async function parseJsonResponse(response: Response) {
   }
 }
 
-export interface BulletBalance {
-  owner_id: string;
-  balance: number;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
-
-export interface BulletTransaction {
-  id: string;
-  owner_id: string;
-  delta: number;
-  reason: string;
-  created_at: string;
-  created_by: string;
-}
-
 export async function fetchBulletSummary(ownerId?: string) {
   const url = ownerId ? `/api/bullets/${ownerId}` : '/api/bullets';
   const response = await authorizedFetch(url, { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ balance?: BulletBalance; transactions?: BulletTransaction[] }>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to load bullet balance');
   }
   return {
-    balance: (data?.balance as BulletBalance | null) ?? { owner_id: ownerId ?? '', balance: 0 },
-    transactions: (data?.transactions as BulletTransaction[] | null) ?? [],
+    balance: data?.balance ?? { owner_id: ownerId ?? '', balance: 0, created_at: null, updated_at: null },
+    transactions: data?.transactions ?? [],
   };
 }
 
@@ -100,22 +96,36 @@ export async function spendBullets(options: {
     }),
   });
 
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ balance?: BulletBalance }>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to spend bullets');
   }
 
-  return data?.balance as BulletBalance;
+  if (!data?.balance) {
+    throw new Error('Failed to spend bullets');
+  }
+
+  return data.balance;
 }
 
+export async function fetchAdminBulletBalances(): Promise<AdminBulletList>;
+export async function fetchAdminBulletBalances(ownerId: string): Promise<AdminBulletDetail>;
 export async function fetchAdminBulletBalances(ownerId?: string) {
   const url = ownerId ? `/api/admin/bullets?owner_id=${encodeURIComponent(ownerId)}` : '/api/admin/bullets';
   const response = await authorizedFetch(url, { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<AdminBulletResponse>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to load bullet balances');
   }
-  return data;
+  if (ownerId) {
+    const detail = data as (AdminBulletDetail & Partial<AdminBulletList>) | undefined;
+    const balance = detail?.balance ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null };
+    const transactions = detail?.transactions ?? [];
+    return { balance, transactions } satisfies AdminBulletDetail;
+  }
+
+  const list = data as AdminBulletList | undefined;
+  return { items: list?.items ?? [] } satisfies AdminBulletList;
 }
 
 export async function adminAdjustBullets(payload: { ownerId: string; delta: number; reason: string }) {
@@ -128,10 +138,14 @@ export async function adminAdjustBullets(payload: { ownerId: string; delta: numb
     }),
   });
 
-  const { success, data, error } = await parseJsonResponse(response);
+  const { success, data, error } = await parseJsonResponse<{ balance?: BulletBalance }>(response);
   if (!success) {
     throw new Error(error ?? 'Failed to adjust bullets');
   }
 
-  return data?.balance as BulletBalance;
+  if (!data?.balance) {
+    throw new Error('Failed to adjust bullets');
+  }
+
+  return data.balance;
 }

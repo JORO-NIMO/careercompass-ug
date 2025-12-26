@@ -38,7 +38,7 @@ export function AdminCompaniesManager() {
       setLoading(true);
       const records = await listCompanies();
       setCompanies(sortCompanies(records));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load companies', error);
       toast({ title: 'Error', description: 'Unable to load companies', variant: 'destructive' });
     } finally {
@@ -57,11 +57,11 @@ export function AdminCompaniesManager() {
           ? `${company.name} is now published as a trusted employer.`
           : `${company.name} will require fresh verification before posting.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update company approval', error);
       toast({
         title: 'Update failed',
-        description: error?.message ?? 'Unable to update approval status',
+        description: error instanceof Error ? error.message : 'Unable to update approval status',
         variant: 'destructive',
       });
     } finally {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Ad, createAd, deleteAd, fetchAdminAds, toggleAd, updateAd } from '@/services/adsService';
+import { createAd, deleteAd, fetchAdminAds, toggleAd, updateAd } from '@/services/adsService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import type { AdminAd } from '@/types/admin';
 
 interface FormState {
   title: string;
@@ -48,14 +49,14 @@ const defaultForm: FormState = {
 
 export function AdminAdsManager() {
   const { toast } = useToast();
-  const [ads, setAds] = useState<Ad[]>([]);
+  const [ads, setAds] = useState<AdminAd[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeAd, setActiveAd] = useState<Ad | null>(null);
+  const [activeAd, setActiveAd] = useState<AdminAd | null>(null);
   const [form, setForm] = useState<FormState>(defaultForm);
   const [isSaving, setIsSaving] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Ad | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminAd | null>(null);
 
   const modalTitle = useMemo(() => (activeAd ? 'Edit Advertisement' : 'Create Advertisement'), [activeAd]);
 
@@ -96,7 +97,7 @@ export function AdminAdsManager() {
     setModalOpen(true);
   };
 
-  const handleEditClick = (ad: Ad) => {
+  const handleEditClick = (ad: AdminAd) => {
     setActiveAd(ad);
     setForm({
       title: ad.title,
@@ -168,21 +169,23 @@ export function AdminAdsManager() {
       }
       setModalOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: error.message ?? 'Failed to save advertisement.', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Failed to save advertisement.';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleToggle = async (ad: Ad) => {
+  const handleToggle = async (ad: AdminAd) => {
     try {
       const updated = await toggleAd(ad.id, !ad.is_active);
       setAds((prev) => prev.map((item) => (item.id === ad.id ? updated : item)));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: error.message ?? 'Failed to update status.', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Failed to update status.';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     }
   };
 
@@ -192,9 +195,10 @@ export function AdminAdsManager() {
       await deleteAd(deleteTarget.id);
       setAds((prev) => prev.filter((ad) => ad.id !== deleteTarget.id));
       toast({ title: 'Deleted', description: 'Advertisement deleted.' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: error.message ?? 'Failed to delete advertisement.', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Failed to delete advertisement.';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setDeleteTarget(null);
     }

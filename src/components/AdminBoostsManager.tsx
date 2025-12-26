@@ -18,13 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Plus, RefreshCcw, ShieldOff } from 'lucide-react';
-import {
-  Boost,
-  fetchAdminBoosts,
-  createBoost,
-  updateBoost,
-  revokeBoost,
-} from '@/services/boostsService';
+import { fetchAdminBoosts, createBoost, updateBoost, revokeBoost } from '@/services/boostsService';
+import type { AdminBoost } from '@/types/admin';
 
 interface FormState {
   entity_id: string;
@@ -60,12 +55,12 @@ const defaultForm = (): FormState => {
 
 export function AdminBoostsManager() {
   const { toast } = useToast();
-  const [boosts, setBoosts] = useState<Boost[]>([]);
+  const [boosts, setBoosts] = useState<AdminBoost[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [formState, setFormState] = useState<FormState>(defaultForm);
-  const [editingBoost, setEditingBoost] = useState<Boost | null>(null);
+  const [editingBoost, setEditingBoost] = useState<AdminBoost | null>(null);
 
   const modalTitle = useMemo(() => (editingBoost ? 'Edit boost' : 'Create manual boost'), [editingBoost]);
 
@@ -78,9 +73,10 @@ export function AdminBoostsManager() {
       setLoading(true);
       const items = await fetchAdminBoosts();
       setBoosts(items);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: 'Unable to load boosts', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unable to load boosts';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -96,7 +92,7 @@ export function AdminBoostsManager() {
     setModalOpen(true);
   };
 
-  const openEditModal = (boost: Boost) => {
+  const openEditModal = (boost: AdminBoost) => {
     setEditingBoost(boost);
     setFormState({
       entity_id: boost.entity_id,
@@ -138,39 +134,42 @@ export function AdminBoostsManager() {
       }
       setModalOpen(false);
       resetForm();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: error.message ?? 'Unable to save boost', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unable to save boost';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
-  const extendBoost = async (boost: Boost, days: number) => {
+  const extendBoost = async (boost: AdminBoost, days: number) => {
     try {
       const endsAt = new Date(boost.ends_at);
       endsAt.setDate(endsAt.getDate() + days);
       const updated = await updateBoost(boost.id, { ends_at: endsAt.toISOString() });
       setBoosts((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
       toast({ title: 'Boost extended', description: `Boost extended by ${days} day${days > 1 ? 's' : ''}.` });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: error.message ?? 'Unable to extend boost', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unable to extend boost';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     }
   };
 
-  const deactivateBoost = async (boost: Boost) => {
+  const deactivateBoost = async (boost: AdminBoost) => {
     try {
       const updated = await revokeBoost(boost.id);
       setBoosts((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
       toast({ title: 'Boost deactivated', description: 'Boost marked inactive.' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast({ title: 'Error', description: error.message ?? 'Unable to deactivate boost', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unable to deactivate boost';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     }
   };
 
-  const formatStatus = (boost: Boost) => {
+  const formatStatus = (boost: AdminBoost) => {
     const now = Date.now();
     const activeWindow = boost.is_active && new Date(boost.starts_at).getTime() <= now && new Date(boost.ends_at).getTime() > now;
     return activeWindow ? 'Active' : 'Inactive';

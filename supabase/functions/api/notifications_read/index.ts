@@ -1,15 +1,13 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 export default async function (req: Request) {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Method not allowed', 405);
   }
 
   const { user, error } = await verifyAuth(req);
@@ -21,10 +19,7 @@ export default async function (req: Request) {
   const notificationId = typeof payload.notification_id === 'string' ? payload.notification_id : '';
 
   if (!notificationId) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'notification_id is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('notification_id is required', 400);
   }
 
   const supabase = createSupabaseServiceClient();
@@ -38,14 +33,8 @@ export default async function (req: Request) {
 
   if (upsertError) {
     console.error('notification_reads upsert error', upsertError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to mark notification as read' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Failed to mark notification as read', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-  );
+  return jsonSuccess({});
 }

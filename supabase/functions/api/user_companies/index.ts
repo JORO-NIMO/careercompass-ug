@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { handleCors, corsHeaders, verifyAuth, unauthorizedResponse } from '../../_shared/auth.ts';
+import { handleCors, verifyAuth, unauthorizedResponse } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 import {
   runVerificationChecks,
   normalizeWebsite,
@@ -33,27 +34,18 @@ async function handleRegister(req: Request) {
 
   const payload = await req.json().catch(() => null) as RegisterPayload | null;
   if (!payload) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Invalid JSON payload' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Invalid JSON payload', 400);
   }
 
   const name = trimOrNull(payload.name ?? '');
   const location = trimOrNull(payload.location ?? '');
   if (!name || !location) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Company name and location are required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Company name and location are required', 400);
   }
 
   const normalizedWebsite = normalizeWebsite(payload.website_url);
   if (!normalizedWebsite) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Valid website URL is required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Valid website URL is required', 400);
   }
 
   const supabase = createSupabaseServiceClient();
@@ -65,10 +57,7 @@ async function handleRegister(req: Request) {
 
   if (listError) {
     console.error('load owned companies error', listError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to prepare company verification' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to prepare company verification', 500);
   }
 
   const normalizeComparable = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
@@ -126,22 +115,13 @@ async function handleRegister(req: Request) {
 
   if (error) {
     if (error.code === '23505') {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'A company with the same name and location already exists' }),
-        { status: 409, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonError('A company with the same name and location already exists', 409);
     }
     console.error('register company error', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to register company' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to register company', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, item: data, verification }),
-    { status: autoApproved ? 200 : 202, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonSuccess({ item: data, verification }, autoApproved ? 200 : 202);
 }
 
 async function handleList(req: Request) {
@@ -157,16 +137,10 @@ async function handleList(req: Request) {
 
   if (error) {
     console.error('list companies error', error);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to load companies' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Failed to load companies', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true, items: data ?? [] }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonSuccess({ items: data ?? [] });
 }
 
 export default async function (req: Request) {
@@ -186,8 +160,5 @@ export default async function (req: Request) {
     return await handleList(req);
   }
 
-  return new Response(
-    JSON.stringify({ ok: false, error: 'Not found' }),
-    { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonError('Not found', 404);
 }
