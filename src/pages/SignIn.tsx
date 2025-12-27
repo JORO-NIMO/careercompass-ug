@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || process.env.VITE_HCAPTCHA_SITEKEY || '';
 const SignIn = () => {
-  const { signIn, signUp, signInWithGoogle, signInWithGithub, user, loading } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
     const handleGoogleSignIn = async () => {
       setLoading(true);
       const { error } = await signInWithGoogle();
@@ -55,10 +55,10 @@ const SignIn = () => {
   const [captchaError, setCaptchaError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!authLoading && user) {
       navigate('/');
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
