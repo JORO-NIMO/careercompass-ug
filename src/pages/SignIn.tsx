@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import HCaptchaWidget from '@/components/HCaptchaWidget';
 import { useNavigate } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -12,6 +13,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 
+const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || process.env.VITE_HCAPTCHA_SITEKEY || '';
 const SignIn = () => {
   const { signIn, signUp, signInWithGoogle, signInWithGithub, user, loading } = useAuth();
     const handleGoogleSignIn = async () => {
@@ -49,6 +51,8 @@ const SignIn = () => {
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -58,10 +62,31 @@ const SignIn = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setCaptchaError(null);
+    if (!captchaToken) {
+      setCaptchaError('Please complete the captcha.');
+      return;
+    }
     setLoading(true);
-    
+    // Verify hCaptcha token server-side
+    try {
+      const verifyRes = await fetch('/api/verify-hcaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        setCaptchaError('Captcha verification failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setCaptchaError('Captcha verification error.');
+      setLoading(false);
+      return;
+    }
     const { error } = await signIn(signInEmail, signInPassword);
-    
     if (error) {
       toast({
         title: "Error",
@@ -75,13 +100,12 @@ const SignIn = () => {
       });
       navigate('/');
     }
-    
     setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setCaptchaError(null);
     if (signUpPassword !== signUpConfirmPassword) {
       toast({
         title: "Error",
@@ -90,11 +114,30 @@ const SignIn = () => {
       });
       return;
     }
-    
+    if (!captchaToken) {
+      setCaptchaError('Please complete the captcha.');
+      return;
+    }
     setLoading(true);
-    
+    // Verify hCaptcha token server-side
+    try {
+      const verifyRes = await fetch('/api/verify-hcaptcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        setCaptchaError('Captcha verification failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setCaptchaError('Captcha verification error.');
+      setLoading(false);
+      return;
+    }
     const { error } = await signUp(signUpEmail, signUpPassword, fullName);
-    
     if (error) {
       toast({
         title: "Error",
@@ -107,7 +150,6 @@ const SignIn = () => {
         description: "Account created successfully! You can now sign in.",
       });
     }
-    
     setLoading(false);
   };
 
@@ -173,6 +215,14 @@ const SignIn = () => {
                           required
                         />
                       </div>
+                      <HCaptchaWidget
+                        sitekey={HCAPTCHA_SITEKEY}
+                        onVerify={token => { setCaptchaToken(token); setCaptchaError(null); }}
+                        onExpire={() => { setCaptchaToken(null); setCaptchaError('Captcha expired.'); }}
+                        onError={() => setCaptchaError('Captcha error.')}
+                        disabled={loading}
+                      />
+                      {captchaError && <div className="text-red-500 text-sm mb-2">{captchaError}</div>}
                       <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? 'Signing in...' : 'Sign In'}
                       </Button>
@@ -251,6 +301,14 @@ const SignIn = () => {
                           required
                         />
                       </div>
+                      <HCaptchaWidget
+                        sitekey={HCAPTCHA_SITEKEY}
+                        onVerify={token => { setCaptchaToken(token); setCaptchaError(null); }}
+                        onExpire={() => { setCaptchaToken(null); setCaptchaError('Captcha expired.'); }}
+                        onError={() => setCaptchaError('Captcha error.')}
+                        disabled={loading}
+                      />
+                      {captchaError && <div className="text-red-500 text-sm mb-2">{captchaError}</div>}
                       <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? 'Creating account...' : 'Create Account'}
                       </Button>
