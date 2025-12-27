@@ -13,18 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 
 const SignIn = () => {
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
-    const handleGoogleSignIn = async () => {
-      setLoading(true);
-      const { error } = await signInWithGoogle();
-      if (error) {
-        toast({
-          title: "Google sign-in failed",
-          description: error.message || "Unable to sign in with Google.",
-          variant: "destructive",
-        });
-      }
-      setLoading(false);
-    };
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -35,6 +23,19 @@ const SignIn = () => {
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast({
+        title: "Google sign-in failed",
+        description: error.message || "Unable to sign in with Google.",
+        variant: "destructive",
+      });
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (user) {
