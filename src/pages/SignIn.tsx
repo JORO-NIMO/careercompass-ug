@@ -159,6 +159,18 @@ const SignIn = () => {
               
               <TabsContent value="signup">
                 <Card>
+                  <div className="flex flex-col gap-4 p-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGoogleSignIn}
+                      disabled={loading}
+                    >
+                      <FcGoogle className="w-5 h-5" />
+                      Sign up with Google
+                    </Button>
+                  </div>
                   <CardHeader>
                     <CardTitle className="text-center">Create Account</CardTitle>
                   </CardHeader>
