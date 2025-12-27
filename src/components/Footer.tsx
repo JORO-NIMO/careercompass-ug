@@ -65,7 +65,7 @@ const Footer = () => {
             <div className="flex space-x-3">
               <Button variant="ghost" size="icon" asChild>
                 <a
-                  href="https://www.linkedin.com/in/joronimo-amanya-00a516344/"
+                  href="https://www.linkedin.com/company/placementbridge/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
@@ -131,8 +131,8 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:joronimoamanya@gmail.com" className="text-sm hover:text-primary transition-colors">
-                  joronimoamanya@gmail.com
+                <a href="mailto:info@placementbridge.org" className="text-sm hover:text-primary transition-colors">
+                  info@placementbridge.org
                 </a>
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
@@ -159,7 +159,7 @@ const Footer = () => {
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Linkedin className="w-4 h-4" />
                 <a
-                  href="https://www.linkedin.com/in/placementbridge/"
+                  href="https://www.linkedin.com/company/placementbridge/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm hover:text-primary transition-colors"
