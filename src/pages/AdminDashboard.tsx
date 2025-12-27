@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Trash2, Users, Briefcase, Flag, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { AdminAdsManager } from '@/components/AdminAdsManager';
 import { AdminBoostsManager } from '@/components/AdminBoostsManager';
-import { AdminBulletManager } from '@/components/AdminBulletManager';
 import { AdminCompaniesManager } from '@/components/AdminCompaniesManager';
 import { AdminListingsManager } from '@/components/AdminListingsManager';
 
@@ -220,7 +219,6 @@ const AdminDashboard = () => {
           </div>
 
           <div className="mb-8">
-            <AdminBulletManager />
           </div>
 
           {/* Placements List */}

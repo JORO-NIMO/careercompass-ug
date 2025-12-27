@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } from 'lucide-react';
 import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
 import { companyRegistrationSchema } from '@/lib/validations';
-import { BulletWalletCard } from '@/components/BulletWalletCard';
+import { resolveApiUrl } from '@/lib/api-client';
 
 interface ActiveBoost {
   id: string;
@@ -228,7 +228,7 @@ const ForCompanies = () => {
     const parsed = companyRegistrationSchema.safeParse({
       name: companyForm.name.trim(),
       location: companyForm.location.trim(),
-      website_url: companyForm.website_url.trim(),
+      website_url: companyForm.website_url.trim() || undefined,
       contact_email: companyForm.contact_email.trim() ? companyForm.contact_email.trim() : undefined,
     });
 
@@ -255,6 +255,15 @@ const ForCompanies = () => {
       });
       setCompanyName(savedCompany.name);
 
+      const missingWebsite = !savedCompany.website_url;
+      if (missingWebsite) {
+        void notifyMissingWebsite({
+          id: savedCompany.id,
+          name: savedCompany.name,
+          contactEmail: savedCompany.contact_email ?? parsed.data.contact_email,
+        });
+      }
+
       if (savedCompany.approved) {
         toast({
           title: 'Company approved automatically',
@@ -268,12 +277,21 @@ const ForCompanies = () => {
         if (verification && !verification.web.verified) {
           pendingReasons.push('ensure your website is reachable');
         }
+        if (missingWebsite) {
+          pendingReasons.push('share a website or let us build one for you');
+        }
         toast({
           title: 'Verification pending',
           description: pendingReasons.length
             ? `Pending manual review — ${pendingReasons.join(' and ')}.`
             : 'We will review your company shortly. You will receive an email once approved.',
         });
+        if (missingWebsite) {
+          toast({
+            title: 'Website assistance queued',
+            description: 'Our team will contact you with a simple landing page brief so we can verify your organisation.',
+          });
+        }
       }
     } catch (error: unknown) {
       console.error('Company registration error', error);
@@ -365,6 +383,31 @@ const ForCompanies = () => {
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const notifyMissingWebsite = useCallback(async (payload: { id: string; name: string; contactEmail?: string | null }) => {
+    try {
+      const response = await fetch(resolveApiUrl('/api/notifications'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'company_missing_website',
+          title: 'Company requested website support',
+          body: `${payload.name} registered without a website. Reach out to help them publish a landing page.`,
+          metadata: {
+            company_id: payload.id,
+            contact_email: payload.contactEmail ?? null,
+          },
+          channel: ['in_app', 'email'],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Notification request failed');
+      }
+    } catch (error) {
+      console.error('Failed to queue website assistance notification', error);
+    }
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -647,17 +690,19 @@ const ForCompanies = () => {
                           </div>
                         </div>
                       )}
-                      <div className="space-y-2">
-                        <Label htmlFor="company-website">Company website</Label>
-                        <Input
-                          id="company-website"
-                          value={companyForm.website_url}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
-                          placeholder="https://yourcompany.com"
-                          required
-                          disabled={registeringCompany}
-                        />
-                      </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="company-website">Company website</Label>
+                            <Input
+                              id="company-website"
+                              value={companyForm.website_url}
+                              onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
+                              placeholder="https://yourcompany.com (leave blank if you need help)"
+                              disabled={registeringCompany}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              No website yet? Leave this empty and we will reach out to set up a simple landing page for verification.
+                            </p>
+                          </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-xs text-muted-foreground">
                           We auto-approve once your location and website are verified.
@@ -703,30 +748,33 @@ const ForCompanies = () => {
 
           {user ? (
             <section className="grid gap-6 md:grid-cols-2">
-              <BulletWalletCard
-                ownerId={user.id}
-                title="Your personal bullets"
-                description="Use personal credits to experiment with boosts or share spotlighted content."
-              />
-              {company ? (
-                <BulletWalletCard
-                  ownerId={company.id}
-                  title={`${company.name} credits`}
-                  description="Spend company bullets to boost published opportunities and reach more candidates."
-                  enableBoostActions
-                />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Opportunity boosts</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Register and verify your company to unlock a dedicated wallet for boosts and featured slots.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Speed up verification</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <p>Double-check these items so your opportunity goes live without delay:</p>
+                  <ul className="list-disc space-y-1 pl-4">
+                    <li>Use an official work email so we can confirm your organisation quickly.</li>
+                    <li>Capture accurate coordinates using the device location button or paste them manually.</li>
+                    <li>Share a short description for why your organisation is engaging students or graduates now.</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Need a website?</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    If you register without a website, we automatically notify the PlacementBridge admin team. Expect an
+                    email with a lightweight landing page brief so we can publish a trusted company profile for you.
+                  </p>
+                  <p>
+                    You can also email <a className="underline" href="mailto:support@placementbridge.org?subject=Website%20support%20request">support@placementbridge.org</a> with your logo and contact details to fast-track the process.
+                  </p>
+                </CardContent>
+              </Card>
             </section>
           ) : null}
 

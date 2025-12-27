@@ -1,8 +1,52 @@
+import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, Mail, Phone, MapPin, Twitter, Linkedin, MessageCircle, Music4 } from "lucide-react";
 
 const Footer = () => {
+  const { toast } = useToast();
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const email = newsletterEmail.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: "Enter a valid email",
+        description: "Add a work or personal email so we can reach you.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSubscribing(true);
+      const { error } = await supabase.from("newsletter_subscribers").insert({
+        email,
+        source: "footer",
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast({ title: "Already subscribed", description: "You're on the list — we'll keep the updates coming." });
+          return;
+        }
+        throw error;
+      }
+
+      setNewsletterEmail("");
+      toast({ title: "Subscribed", description: "Thanks! Look out for the next PlacementBridge digest." });
+    } catch (caught) {
+      console.error("Newsletter subscribe failed", caught);
+      toast({ title: "Unable to subscribe", description: "Please try again shortly.", variant: "destructive" });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   return (
     <footer className="bg-muted/30 border-t border-border">
       <div className="container mx-auto px-4 py-12">
@@ -69,7 +113,14 @@ const Footer = () => {
             <ul className="space-y-2 text-muted-foreground">
               <li><a href="/for-companies" className="hover:text-primary transition-colors">Share Opportunities</a></li>
               <li><a href="/find-talent" className="hover:text-primary transition-colors">Discover Talent</a></li>
-              <li><a href="/for-companies" className="hover:text-primary transition-colors">Partner With Us</a></li>
+              <li>
+                <a
+                  href="mailto:partnerships@placementbridge.org?subject=Request%20for%20partnership&body=Hello%20PlacementBridge%20team%2C%0A%0AI%20would%20love%20to%20partner%20with%20you%20to%20support%20learners%20and%20employers.%20Here%20are%20the%20details%3A%0A-%20Organisation%20name%3A%0A-%20Partnership%20goal%3A%0A-%20Preferred%20start%20date%3A%0A-%20Key%20contacts%3A%0A%0ALooking%20forward%20to%20hearing%20from%20you.%0A"
+                  className="hover:text-primary transition-colors"
+                >
+                  Partner With Us
+                </a>
+              </li>
               <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing & Plans</a></li>
             </ul>
           </div>
@@ -141,10 +192,20 @@ const Footer = () => {
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Subscribe for updates</p>
-              <div className="flex space-x-2">
-                <Input placeholder="Email address" className="flex-1" />
-                <Button size="sm" variant="default">Subscribe</Button>
-              </div>
+              <form className="flex space-x-2" onSubmit={handleNewsletterSubmit}>
+                <Input
+                  placeholder="Email address"
+                  className="flex-1"
+                  value={newsletterEmail}
+                  onChange={(event) => setNewsletterEmail(event.target.value)}
+                  disabled={subscribing}
+                  type="email"
+                  required
+                />
+                <Button size="sm" variant="default" type="submit" disabled={subscribing}>
+                  {subscribing ? "Sending..." : "Subscribe"}
+                </Button>
+              </form>
             </div>
           </div>
         </div>
