@@ -1,3 +1,19 @@
+import { supabase } from '@/integrations/supabase/client';
+import type { TopEntity } from '@/types/admin-analytics';
+
+/**
+ * Fetch top companies for admin analytics
+ */
+export async function getTopCompanies(limit = 10): Promise<{ data: TopEntity[] | null; error: string | null }> {
+  const { data, error } = await supabase.rpc('admin_analytics_top_entities', {
+    entity: 'companies',
+    limit_count: limit
+  });
+  return {
+    data: data as TopEntity[] | null,
+    error: error ? error.message : null
+  };
+}
 /**
  * Analytics tracking service
  * Centralized event tracking with batching and offline support
