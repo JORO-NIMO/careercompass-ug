@@ -252,10 +252,10 @@ const AdminDashboard = () => {
                         <p className="text-sm text-muted-foreground">{placement.company_name}</p>
                         <p className="text-sm leading-relaxed">{placement.description}</p>
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <span>📍 {placement.region}</span>
-                          <span>🏢 {placement.industry}</span>
-                          <span>💰 {placement.stipend}</span>
-                          <span>👥 {placement.available_slots} slots</span>
+                          <span><img src="/favicon.ico" alt="region" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.region}</span>
+                          <span><img src="/favicon.ico" alt="industry" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.industry}</span>
+                          <span><img src="/favicon.ico" alt="stipend" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.stipend}</span>
+                          <span><img src="/favicon.ico" alt="slots" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.available_slots} slots</span>
                         </div>
                         {placement.flagged && (
                           <div className="flex items-start gap-2 text-sm text-destructive">

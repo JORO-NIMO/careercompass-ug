@@ -75,7 +75,7 @@ const Footer = () => {
               </Button>
               <Button variant="ghost" size="icon" asChild>
                 <a
-                  href="https://x.com/Ishabarundo"
+                  href="https://x.com/placementbridge"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="X (Twitter)"
@@ -85,7 +85,7 @@ const Footer = () => {
               </Button>
               <Button variant="ghost" size="icon" asChild>
                 <a
-                  href="https://www.tiktok.com/@ishabarundo"
+                  href="https://www.tiktok.com/@placementbridge"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="TikTok"
@@ -154,12 +154,12 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <MapPin className="w-4 h-4" />
-                <span className="text-sm">Kampala, Uganda</span>
+                <span className="text-sm">Anywhere in Uganda</span>
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Linkedin className="w-4 h-4" />
                 <a
-                  href="https://www.linkedin.com/in/joronimo-amanya-00a516344/"
+                  href="https://www.linkedin.com/in/placementbridge/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm hover:text-primary transition-colors"
@@ -170,7 +170,7 @@ const Footer = () => {
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Twitter className="w-4 h-4" />
                 <a
-                  href="https://x.com/Ishabarundo"
+                  href="https://x.com/placementbridge"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm hover:text-primary transition-colors"
@@ -181,7 +181,7 @@ const Footer = () => {
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Music4 className="w-4 h-4" />
                 <a
-                  href="https://www.tiktok.com/@ishabarundo"
+                  href="https://www.tiktok.com/@placementbridge"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm hover:text-primary transition-colors"

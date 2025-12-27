@@ -13,4 +13,13 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
+Disallow: /private
+Disallow: /admin
+Disallow: /api
+Disallow: /profile
+Disallow: /feedback
+Disallow: /notifications
+Disallow: /user
+Disallow: /dashboard
+Disallow: /settings
 Allow: /

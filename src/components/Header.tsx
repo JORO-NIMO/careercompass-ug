@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Menu, Briefcase, LogOut, Shield } from "lucide-react";
+import { Menu, Briefcase, LogOut, Shield } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
+import { useEffect, useState } from "react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +9,15 @@ import { useAuth } from "@/hooks/useAuth";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut, isAdmin } = useAuth();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/notifications?unread=1', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data) => setUnread(data.unread ?? 0))
+      .catch(() => setUnread(0));
+  }, [user]);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -52,10 +63,7 @@ const Header = () => {
         <div className="hidden md:flex items-center space-x-3">
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></span>
-              </Button>
+              <NotificationBell unread={unread} onClick={() => navigate('/notifications')} />
               <Link to="/profile">
                 <Button variant="outline">Profile</Button>
               </Link>

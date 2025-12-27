@@ -38,7 +38,7 @@ const Support = () => {
                   For account-specific issues or data requests, contact our support inbox and include your account email.
                 </p>
                 <Button asChild>
-                  <a href="mailto:support@placementbridge.org">Email us</a>
+                  <a href="mailto:joronimoamanya@gmail.com">Email us</a>
                 </Button>
               </CardContent>
             </Card>
