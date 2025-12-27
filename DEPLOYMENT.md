@@ -194,7 +194,6 @@ VERCEL_PROJECT_ID
 - **Pull Requests**: Runs linting and type checking
 - **Push to `develop`**: Deploys to staging (Netlify)
 - **Push to `main`**: Deploys to production (Netlify or Vercel depending on configuration)
-- **Push to `main`**: Deploys to production
 
 ### Manual Migration Deployment
 
