@@ -1,3 +1,7 @@
+  const signInWithGoogle = async (): Promise<{ error: AuthError | null }> => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    return { error };
+  };
 import { useEffect, useState, type ReactNode } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 
@@ -88,7 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );

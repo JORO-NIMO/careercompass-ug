@@ -8,10 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
+import { FcGoogle } from 'react-icons/fc';
 import { useToast } from '@/hooks/use-toast';
 
 const SignIn = () => {
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
+    const handleGoogleSignIn = async () => {
+      setLoading(true);
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast({
+          title: "Google sign-in failed",
+          description: error.message || "Unable to sign in with Google.",
+          variant: "destructive",
+        });
+      }
+      setLoading(false);
+    };
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -98,6 +111,18 @@ const SignIn = () => {
               
               <TabsContent value="signin">
                 <Card>
+                  <div className="flex flex-col gap-4 p-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGoogleSignIn}
+                      disabled={loading}
+                    >
+                      <FcGoogle className="w-5 h-5" />
+                      Continue with Google
+                    </Button>
+                  </div>
                   <CardHeader>
                     <CardTitle className="text-center">Welcome Back</CardTitle>
                   </CardHeader>
@@ -108,7 +133,7 @@ const SignIn = () => {
                         <Input 
                           id="email" 
                           type="email" 
-                          placeholder="your@email.com"
+                          placeholder="your@/gmail.com"
                           value={signInEmail}
                           onChange={(e) => setSignInEmail(e.target.value)}
                           required
