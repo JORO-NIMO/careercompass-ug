@@ -1,3 +1,40 @@
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  message: string;
+  read: boolean;
+  channel: string[];
+  metadata: Record<string, any>;
+  created_at: string;
+  sent_at?: string;
+  push_sent?: boolean;
+}
+
+export interface NotificationPreference {
+  id: string;
+  user_id: string;
+  channel: string;
+  type: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+  created_at: string;
+}
+
+export interface NotificationEvent {
+  id: string;
+  notification_id: string;
+  user_id: string;
+  event_type: string;
+  timestamp: string;
+}
 import type { JsonValue } from '@/lib/api-client';
 
 export type NotificationChannel = 'in_app' | 'email' | 'push';

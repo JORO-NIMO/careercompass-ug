@@ -13,7 +13,7 @@ import { FaGithub } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 
 const SignIn = () => {
-  const { signIn, signUp, signInWithGoogle, signInWithGithub, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithGithub, user, loading } = useAuth();
     const handleGoogleSignIn = async () => {
       setLoading(true);
       const { error } = await signInWithGoogle();
@@ -51,10 +51,10 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
