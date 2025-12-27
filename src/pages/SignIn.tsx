@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
 import { FcGoogle } from 'react-icons/fc';
+import { FaGithub } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
 
 const SignIn = () => {
-  const { signIn, signUp, signInWithGoogle, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithGithub, user } = useAuth();
     const handleGoogleSignIn = async () => {
       setLoading(true);
       const { error } = await signInWithGoogle();
@@ -20,6 +21,19 @@ const SignIn = () => {
         toast({
           title: "Google sign-in failed",
           description: error.message || "Unable to sign in with Google.",
+          variant: "destructive",
+        });
+      }
+      setLoading(false);
+    };
+
+    const handleGithubSignIn = async () => {
+      setLoading(true);
+      const { error } = await signInWithGithub();
+      if (error) {
+        toast({
+          title: "GitHub sign-in failed",
+          description: error.message || "Unable to sign in with GitHub.",
           variant: "destructive",
         });
       }
@@ -122,6 +136,16 @@ const SignIn = () => {
                       <FcGoogle className="w-5 h-5" />
                       Continue with Google
                     </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGithubSignIn}
+                      disabled={loading}
+                    >
+                      <FaGithub className="w-5 h-5" />
+                      Continue with GitHub
+                    </Button>
                   </div>
                   <CardHeader>
                     <CardTitle className="text-center">Welcome Back</CardTitle>
@@ -169,6 +193,16 @@ const SignIn = () => {
                     >
                       <FcGoogle className="w-5 h-5" />
                       Sign up with Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGithubSignIn}
+                      disabled={loading}
+                    >
+                      <FaGithub className="w-5 h-5" />
+                      Sign up with GitHub
                     </Button>
                   </div>
                   <CardHeader>

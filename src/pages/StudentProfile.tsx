@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { Loader2, Plus, X, MapPin } from "lucide-react";
+// ...existing imports...
+// For reverse geocoding
+const REVERSE_GEOCODE_API = "https://nominatim.openstreetmap.org/reverse?format=jsonv2";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import QuickNavigation from "@/components/QuickNavigation";
@@ -77,6 +81,54 @@ const AVAILABILITY_OPTIONS = [
 const getExtraStorageKey = (userId: string) => `placementbridge-profile-extra:${userId}`;
 
 const StudentProfile = () => {
+		const [geoLoading, setGeoLoading] = useState(false);
+		// Helper: Reverse geocode lat/lon to district/region
+		const reverseGeocode = async (lat: number, lon: number) => {
+			const url = `${REVERSE_GEOCODE_API}&lat=${lat}&lon=${lon}`;
+			const res = await fetch(url);
+			if (!res.ok) throw new Error("Failed to reverse geocode");
+			const data = await res.json();
+			// Try to extract district and region from address
+			const address = data.address || {};
+			const district = address.county || address.state_district || address.district || address.city || address.town || address.village || "";
+			const region = address.state || address.region || "";
+			return { district: district.trim(), region: region.trim() };
+		};
+
+		// Handler: Get device location and update fields
+		const handleGetDeviceLocation = async () => {
+			if (!navigator.geolocation) {
+				toast({ title: "Geolocation not supported", description: "Your browser does not support geolocation.", variant: "destructive" });
+				return;
+			}
+			setGeoLoading(true);
+			navigator.geolocation.getCurrentPosition(
+				async (pos) => {
+					try {
+						const { latitude, longitude } = pos.coords;
+						const { district: foundDistrict, region: foundRegion } = await reverseGeocode(latitude, longitude);
+						if (foundDistrict) {
+							setDistrict(foundDistrict);
+							setLocation(`${foundDistrict}${foundRegion ? ` (${foundRegion})` : ""}`);
+							setRegion(foundRegion as UgandaRegion);
+							setLegacyLocation("");
+							toast({ title: "Location captured", description: `Detected: ${foundDistrict}${foundRegion ? ` (${foundRegion})` : ""}` });
+						} else {
+							toast({ title: "Location not found", description: "Could not determine your district.", variant: "destructive" });
+						}
+					} catch (err) {
+						toast({ title: "Location error", description: "Could not resolve your location.", variant: "destructive" });
+					} finally {
+						setGeoLoading(false);
+					}
+				},
+				(err) => {
+					toast({ title: "Location denied", description: "Permission denied or unavailable.", variant: "destructive" });
+					setGeoLoading(false);
+				},
+				{ enableHighAccuracy: true, timeout: 10000 }
+			);
+		};
 	const { user } = useAuth();
 	const { toast } = useToast();
 
@@ -543,7 +595,20 @@ const StudentProfile = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label>Region in Uganda</Label>
+										<div className="flex items-center gap-2">
+											<Label>Region in Uganda</Label>
+											<Button
+												type="button"
+												size="icon"
+												variant="outline"
+												className="ml-2"
+												onClick={handleGetDeviceLocation}
+												disabled={geoLoading || loadingProfile || saving}
+												title="Use my device location"
+											>
+												{geoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+											</Button>
+										</div>
 										<Select value={region || undefined} onValueChange={handleRegionSelect} disabled={loadingProfile || saving}>
 											<SelectTrigger>
 												<SelectValue placeholder="Select region" />

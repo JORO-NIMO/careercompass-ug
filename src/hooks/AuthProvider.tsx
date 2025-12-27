@@ -2,6 +2,11 @@
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
     return { error };
   };
+
+  const signInWithGithub = async (): Promise<{ error: AuthError | null }> => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'github' });
+    return { error };
+  };
 import { useEffect, useState, type ReactNode } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 
@@ -92,7 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut, signInWithGoogle, signInWithGithub }}>
       {children}
     </AuthContext.Provider>
   );
