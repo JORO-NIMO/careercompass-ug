@@ -1,5 +1,5 @@
 const NOMINATIM_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
-const NOMINATIM_USER_AGENT = Deno.env.get('NOMINATIM_USER_AGENT') ?? 'careercompass-internal/1.0';
+const NOMINATIM_USER_AGENT = Deno.env.get('NOMINATIM_USER_AGENT') ?? 'placementbridge-internal/1.0';
 const NOMINATIM_CONTACT_EMAIL = Deno.env.get('NOMINATIM_CONTACT_EMAIL');
 const WEB_REQUEST_TIMEOUT_MS = 6000;
 

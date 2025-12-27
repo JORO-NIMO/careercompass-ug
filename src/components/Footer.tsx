@@ -13,7 +13,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">PlacementsBridge</span>
+              <span className="text-xl font-bold text-foreground">PlacementBridge</span>
             </div>
             <p className="text-muted-foreground">
               Connecting Uganda's learners, professionals, and organizations with opportunities that power lifelong growth.
@@ -160,7 +160,7 @@ const Footer = () => {
           </nav>
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-muted-foreground text-sm">
-              © 2024 PlacementsBridge. All rights reserved.
+              © 2026 PlacementBridge. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm text-muted-foreground">
               <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>

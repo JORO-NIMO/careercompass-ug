@@ -11,7 +11,7 @@ import { useState } from "react";
 
 const FindPlacements = () => {
   const [queries, setQueries] = useState<PlacementQuery[]>([]);
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://careercompass.ug";
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://placementbridge.org";
 
   const handleSearch = (filters: PlacementFilters) => {
     const built = buildPlacementQueries({
@@ -28,7 +28,7 @@ const FindPlacements = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Find Internships and Graduate Placements in Uganda | CareerCompass"
+        title="Find Internships and Graduate Placements in Uganda | PlacementBridge"
         description="Search internships, apprenticeships, and early-career placements across Uganda. Filter by sector, region, study field, and programme type to uncover roles tailored to you."
         keywords={[
           "Uganda internships search",

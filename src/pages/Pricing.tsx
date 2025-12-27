@@ -1,7 +1,21 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles, Crown, Star } from "lucide-react";
+
+const ADMIN_EMAIL = "support@placementbridge.org";
+
+const SITE_LINKS = [
+  { label: "Find Placements", href: "/find-placements" },
+  { label: "Find Talent", href: "/find-talent" },
+  { label: "Career Guides", href: "/guides/how-to-write-a-cv" },
+  { label: "Interview Tips", href: "/guides/interview-tips-uganda" },
+  { label: "Learning Hub", href: "/learning" },
+  { label: "Career Trends", href: "/insights/career-trends" },
+  { label: "For Companies", href: "/for-companies" },
+  { label: "Support", href: "/support" },
+];
 
 const Pricing = () => {
   const plans = [
@@ -17,8 +31,12 @@ const Pricing = () => {
         "Email notifications",
         "Basic analytics"
       ],
-      cta: "Get Started",
-      variant: "outline" as const,
+      cta: {
+        label: "Get Started",
+        href: "/for-companies#post-opportunity",
+        variant: "outline" as const,
+        external: false,
+      },
       popular: false
     },
     {
@@ -34,8 +52,12 @@ const Pricing = () => {
         "Advanced analytics",
         "Highlighted border & badge"
       ],
-      cta: "Feature Your Listing",
-      variant: "default" as const,
+      cta: {
+        label: "Feature Your Listing",
+        href: "/for-companies?mode=feature#post-opportunity",
+        variant: "default" as const,
+        external: false,
+      },
       popular: true,
       badge: <Sparkles className="h-4 w-4" />
     },
@@ -53,8 +75,12 @@ const Pricing = () => {
         "Custom branding options",
         "Monthly recruitment report"
       ],
-      cta: "Go Premium",
-      variant: "default" as const,
+      cta: {
+        label: "Go Premium",
+        href: `mailto:${ADMIN_EMAIL}?subject=PlacementBridge%20Premium%20Package`,
+        variant: "default" as const,
+        external: true,
+      },
       popular: false,
       badge: <Crown className="h-4 w-4 text-yellow-500" />
     }
@@ -115,17 +141,39 @@ const Pricing = () => {
                     </li>
                   ))}
                 </ul>
-                <Button
-                  className="w-full"
-                  variant={plan.variant}
-                  size="lg"
-                >
-                  {plan.cta}
+                <Button className="w-full" variant={plan.cta.variant} size="lg" asChild>
+                  {plan.cta.external ? (
+                    <a href={plan.cta.href}>{plan.cta.label}</a>
+                  ) : (
+                    <Link to={plan.cta.href}>{plan.cta.label}</Link>
+                  )}
                 </Button>
               </CardContent>
             </Card>
           ))}
         </div>
+
+        {/* Site Links */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl">Explore PlacementBridge</CardTitle>
+            <CardDescription>Quickly navigate to our most requested pages and resources.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {SITE_LINKS.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="group rounded-lg border border-border/70 bg-background/80 p-4 text-sm font-medium text-foreground transition hover:border-primary hover:bg-primary/5"
+                >
+                  <span>{link.label}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground group-hover:text-primary">{link.href}</span>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* How Featuring Works */}
         <Card className="mb-12">
@@ -243,8 +291,8 @@ const Pricing = () => {
           <p className="text-muted-foreground mb-6">
             Contact us for enterprise pricing and custom recruitment packages
           </p>
-          <Button size="lg" variant="outline">
-            Contact Sales
+          <Button size="lg" variant="outline" asChild>
+            <a href={`mailto:${ADMIN_EMAIL}?subject=PlacementBridge%20Enterprise%20Support`}>Contact Sales</a>
           </Button>
         </div>
       </div>

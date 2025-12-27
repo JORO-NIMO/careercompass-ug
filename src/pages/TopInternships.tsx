@@ -114,10 +114,10 @@ const INDUSTRY_DATA: Record<string, {
 const fallbackIndustry = {
   title: "Emerging Opportunities",
   description:
-    "Explore placements across agribusiness, tourism, renewable energy, and creative industries. PlacementsBridge curates fresh opportunities weekly.",
+    "Explore placements across agribusiness, tourism, renewable energy, and creative industries. PlacementBridge curates fresh opportunities weekly.",
   highlights: [
     {
-      organisation: "PlacementsBridge Community",
+      organisation: "PlacementBridge Community",
       location: "Nationwide",
       program: "Subscribe to our job alerts for curated internships, fellowships, and apprenticeships across Uganda.",
     },
@@ -153,7 +153,7 @@ const TopInternships = () => {
   }, [key]);
 
   const locationName = NormalisedIndustryTitle(industry);
-  const pageTitle = `Top internships in ${locationName} | PlacementsBridge`;
+  const pageTitle = `Top internships in ${locationName} | PlacementBridge`;
   const pageDescription = `${data.title} internships you can apply to in Uganda. Discover programmes offering mentorship, real projects, and pathways to full-time roles.`;
 
   return (
@@ -234,11 +234,11 @@ const TopInternships = () => {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  Subscribe to PlacementsBridge alerts, monitor LinkedIn job posts, and follow sector associations. Attend career fairs hosted by innovation hubs such as Refactory, Design Hub Kampala, or Industry-specific accelerators.
+                  Subscribe to PlacementBridge alerts, monitor LinkedIn job posts, and follow sector associations. Attend career fairs hosted by innovation hubs such as Refactory, Design Hub Kampala, or Industry-specific accelerators.
                 </p>
                 <Separator />
                 <p>
-                  Need access to more leads? Email <a href="mailto:joronimoamanya@gmail.com" className="text-primary underline">support@placementsbridge.org</a> to join our premium internship intelligence brief.
+                  Need access to more leads? Email <a href="mailto:joronimoamanya@gmail.com" className="text-primary underline">support@placementbridge.org</a> to join our premium internship intelligence brief.
                 </p>
               </CardContent>
             </Card>

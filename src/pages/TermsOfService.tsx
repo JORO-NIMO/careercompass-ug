@@ -11,7 +11,7 @@ const TermsOfService = () => {
           <section className="space-y-4">
             <h1 className="text-4xl font-bold">Terms of Service</h1>
             <p className="text-muted-foreground">
-              These Terms govern your use of PlacementsBridge. By accessing our services you agree to comply with the responsibilities outlined here and with all applicable laws in Uganda.
+              These Terms govern your use of PlacementBridge. By accessing our services you agree to comply with the responsibilities outlined here and with all applicable laws in Uganda.
             </p>
             <p className="text-sm text-muted-foreground">Effective date: December 24, 2025</p>
           </section>
@@ -19,7 +19,7 @@ const TermsOfService = () => {
           <Card>
             <CardContent className="space-y-6 pt-6">
               <div className="space-y-2">
-                <h2 className="text-2xl font-semibold">Using PlacementsBridge</h2>
+                <h2 className="text-2xl font-semibold">Using PlacementBridge</h2>
                 <p className="text-muted-foreground">
                   You must provide accurate information when creating an account, sharing opportunities, or applying to them. We reserve the right to moderate content that violates our code of conduct or misrepresents an experience.
                 </p>
@@ -35,21 +35,21 @@ const TermsOfService = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Prohibited Conduct</h2>
                 <p className="text-muted-foreground">
-                  You may not use PlacementsBridge for fraudulent listings, spam outreach, or any activity that harms other users. Attempts to bypass security controls or harvest data are strictly prohibited and may lead to legal action.
+                  You may not use PlacementBridge for fraudulent listings, spam outreach, or any activity that harms other users. Attempts to bypass security controls or harvest data are strictly prohibited and may lead to legal action.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Service Changes</h2>
                 <p className="text-muted-foreground">
-                  We may update or discontinue elements of PlacementsBridge as we improve the platform. Material changes to these Terms will be announced through the site or by email with reasonable notice.
+                  We may update or discontinue elements of PlacementBridge as we improve the platform. Material changes to these Terms will be announced through the site or by email with reasonable notice.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Contact</h2>
                 <p className="text-muted-foreground">
-                  For questions about these Terms or to report misuse, email support@placementsbridge.com. We review all reports promptly and work to maintain a safe hiring community.
+                  For questions about these Terms or to report misuse, email support@placementbridge.org. We review all reports promptly and work to maintain a safe hiring community.
                 </p>
               </div>
             </CardContent>

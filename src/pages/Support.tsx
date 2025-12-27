@@ -13,7 +13,7 @@ const Support = () => {
           <section className="text-center space-y-4">
             <h1 className="text-4xl font-bold">Support</h1>
             <p className="text-lg text-muted-foreground">
-              Need help navigating PlacementsBridge? Reach out to our team for platform guidance, account questions, or reporting concerns across learning and employment journeys.
+              Need help navigating PlacementBridge? Reach out to our team for platform guidance, account questions, or reporting concerns across learning and employment journeys.
             </p>
           </section>
 
@@ -38,7 +38,7 @@ const Support = () => {
                   For account-specific issues or data requests, contact our support inbox and include your account email.
                 </p>
                 <Button asChild>
-                  <a href="mailto:support@placementsbridge.com">Email us</a>
+                  <a href="mailto:support@placementbridge.org">Email us</a>
                 </Button>
               </CardContent>
             </Card>

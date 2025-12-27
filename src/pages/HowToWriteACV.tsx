@@ -53,7 +53,7 @@ const HowToWriteACV = () => {
   return (
     <>
       <SEO
-        title="How to Write a CV that Lands Internships in Uganda | PlacementsBridge"
+        title="How to Write a CV that Lands Internships in Uganda | PlacementBridge"
         description="Step-by-step CV writing guide for Ugandan students and graduates seeking internships, apprenticeships, and early-career placements."
         keywords={[
           "how to write a cv in uganda",
@@ -71,7 +71,7 @@ const HowToWriteACV = () => {
             "Practical CV writing advice for students and graduates in Uganda covering structure, tone, and impact-driven bullet points.",
           author: {
             "@type": "Organization",
-            name: "PlacementsBridge",
+            name: "PlacementBridge",
           },
           mainEntityOfPage: {
             "@type": "WebPage",

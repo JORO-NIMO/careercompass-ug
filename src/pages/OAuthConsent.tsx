@@ -109,7 +109,7 @@ const OAuthConsent = () => {
             </div>
             <h1 className="text-3xl font-bold text-foreground">Authorize {applicationName}</h1>
             <p className="text-muted-foreground">
-              Review the information this application is requesting before granting access to your PlacementsBridge account.
+              Review the information this application is requesting before granting access to your PlacementBridge account.
             </p>
           </div>
 

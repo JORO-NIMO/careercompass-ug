@@ -13,7 +13,7 @@ const About = () => {
           <div className="container mx-auto px-4 py-16">
             <div className="text-center space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold">
-                About PlacementsBridge
+                About PlacementBridge
               </h1>
               <p className="text-xl text-primary-foreground/90 max-w-3xl mx-auto">
                 Bridging Uganda's learners, professionals, and organizations with opportunities that shape the future of work
@@ -28,7 +28,7 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center space-y-6">
               <h2 className="text-3xl font-bold">Our Mission</h2>
               <p className="text-lg text-muted-foreground">
-                PlacementsBridge exists to close the gap between education, talent, and opportunity. We empower students, graduates, career switchers, and experienced professionals while giving institutions and employers a trusted channel to engage emerging and established talent.
+                PlacementBridge exists to close the gap between education, talent, and opportunity. We empower students, graduates, career switchers, and experienced professionals while giving institutions and employers a trusted channel to engage emerging and established talent.
               </p>
             </div>
           </div>

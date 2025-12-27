@@ -11,7 +11,7 @@ const PrivacyPolicy = () => {
           <section className="space-y-4">
             <h1 className="text-4xl font-bold">Privacy Policy</h1>
             <p className="text-muted-foreground">
-              This Privacy Policy explains how PlacementsBridge collects, uses, and protects your information when you interact with our platform. We are committed to safeguarding your privacy while helping you discover opportunities and talent across Uganda.
+              This Privacy Policy explains how PlacementBridge collects, uses, and protects your information when you interact with our platform. We are committed to safeguarding your privacy while helping you discover opportunities and talent across Uganda.
             </p>
             <p className="text-sm text-muted-foreground">Last updated: December 24, 2025</p>
           </section>
@@ -28,7 +28,7 @@ const PrivacyPolicy = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">How We Use Your Information</h2>
                 <p className="text-muted-foreground">
-                  We use your information to operate and improve PlacementsBridge, facilitate matches between candidates and employers, send service updates, and provide support. We may also use aggregated, anonymised data for insights that help our community understand hiring trends.
+                  We use your information to operate and improve PlacementBridge, facilitate matches between candidates and employers, send service updates, and provide support. We may also use aggregated, anonymised data for insights that help our community understand hiring trends.
                 </p>
               </div>
 
@@ -42,7 +42,7 @@ const PrivacyPolicy = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Your Choices</h2>
                 <p className="text-muted-foreground">
-                  You can update or delete your profile at any time from the account dashboard. To request a full export or deletion of your data, contact support@placementsbridge.com and we will respond within ten working days.
+                  You can update or delete your profile at any time from the account dashboard. To request a full export or deletion of your data, contact support@placementbridge.org and we will respond within ten working days.
                 </p>
               </div>
 

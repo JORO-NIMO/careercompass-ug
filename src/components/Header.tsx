@@ -19,8 +19,8 @@ const Header = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/favicon.ico" alt="PlacementsBridge" className="w-8 h-8 rounded-md object-cover" />
-          <span className="text-xl font-bold text-foreground">PlacementsBridge</span>
+          <img src="/favicon.ico" alt="PlacementBridge" className="w-8 h-8 rounded-md object-cover" />
+          <span className="text-xl font-bold text-foreground">PlacementBridge</span>
         </Link>
 
         {/* Desktop Navigation */}

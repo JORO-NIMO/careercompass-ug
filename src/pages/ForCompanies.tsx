@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
@@ -39,9 +39,10 @@ interface CompanyFormState {
 const ForCompanies = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement | null>(null);
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://careercompass.ug';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://placementbridge.org';
   
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
@@ -64,6 +65,14 @@ const ForCompanies = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [loadingBoosts, setLoadingBoosts] = useState(false);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [geolocationLoading, setGeolocationLoading] = useState(false);
+  const [geolocationError, setGeolocationError] = useState<string | null>(null);
+  const [geolocationCapturedAt, setGeolocationCapturedAt] = useState<string | null>(null);
+  const featureMode = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('mode') === 'feature';
+  }, [location.search]);
 
   useEffect(() => {
     if (!user) {
@@ -357,6 +366,73 @@ const ForCompanies = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'feature') {
+      scrollToForm();
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    const locationValue = companyForm.location;
+    if (!locationValue) {
+      setCoordinates(null);
+      return;
+    }
+    const normalized = locationValue.toLowerCase();
+    if (!normalized.includes('coordinate')) {
+      return;
+    }
+    const matches = locationValue.match(/-?\d+\.\d+/g);
+    if (matches && matches.length >= 2) {
+      const [latRaw, lngRaw] = matches;
+      const lat = Number.parseFloat(latRaw);
+      const lng = Number.parseFloat(lngRaw);
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+        setCoordinates({ lat, lng });
+      }
+    }
+  }, [companyForm.location]);
+
+  const mapEmbedUrl = useMemo(() => {
+    if (!coordinates) return null;
+    const delta = 0.01;
+    const south = coordinates.lat - delta;
+    const north = coordinates.lat + delta;
+    const west = coordinates.lng - delta;
+    const east = coordinates.lng + delta;
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${west}%2C${south}%2C${east}%2C${north}&layer=mapnik&marker=${coordinates.lat}%2C${coordinates.lng}`;
+  }, [coordinates]);
+
+  const handleUseDeviceLocation = () => {
+    if (!navigator.geolocation) {
+      setGeolocationError('Geolocation is not supported on this device.');
+      return;
+    }
+
+    setGeolocationLoading(true);
+    setGeolocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const formatted = `Coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        setCompanyForm((prev) => ({ ...prev, location: formatted }));
+        setCoordinates({ lat: latitude, lng: longitude });
+        setGeolocationCapturedAt(new Date().toLocaleTimeString());
+        setGeolocationLoading(false);
+      },
+      (error) => {
+        setGeolocationLoading(false);
+        setGeolocationError(error.message || 'Unable to capture device location.');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      },
+    );
+  };
+
   const regionOptions = [
     { value: 'central', label: 'Central Region' },
     { value: 'eastern', label: 'Eastern Region' },
@@ -376,7 +452,7 @@ const ForCompanies = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Hire Interns and Early Talent in Uganda | CareerCompass for Companies"
+        title="Hire Interns and Early Talent in Uganda | PlacementBridge for Companies"
         description="Publish internships and early-career roles across Uganda with instant moderation, verified companies, and built-in talent sourcing tools."
         keywords={[
           'post internships Uganda',
@@ -388,7 +464,7 @@ const ForCompanies = () => {
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'Service',
-          name: 'CareerCompass Employer Portal',
+          name: 'PlacementBridge Employer Portal',
           url: `${baseUrl}/for-companies`,
           areaServed: {
             '@type': 'Country',
@@ -396,7 +472,7 @@ const ForCompanies = () => {
           },
           provider: {
             '@type': 'Organization',
-            name: 'CareerCompass',
+            name: 'PlacementBridge',
             url: baseUrl,
           },
           serviceType: 'Internship and early-career recruitment',
@@ -514,16 +590,63 @@ const ForCompanies = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="company-location">Google Maps location</Label>
-                        <Input
-                          id="company-location"
-                          value={companyForm.location}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, location: event.target.value }))}
-                          placeholder="Plot 12 Kampala Road, Kampala"
-                          required
-                          disabled={registeringCompany}
-                        />
+                        <Label htmlFor="company-location">Company location</Label>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Input
+                            id="company-location"
+                            value={companyForm.location}
+                            readOnly
+                            placeholder="Capture your coordinates using the button"
+                            required
+                            disabled={registeringCompany}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleUseDeviceLocation}
+                            disabled={registeringCompany || geolocationLoading}
+                          >
+                            {geolocationLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Capturing…
+                              </>
+                            ) : (
+                              'Use my device location'
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          We store precise coordinates to validate your organization. You can open the previewed map to confirm accuracy.
+                        </p>
+                        {geolocationCapturedAt && (
+                          <p className="text-xs text-primary">Captured at {geolocationCapturedAt}</p>
+                        )}
+                        {geolocationError && <p className="text-xs text-destructive">{geolocationError}</p>}
                       </div>
+                      {mapEmbedUrl && (
+                        <div className="overflow-hidden rounded-lg border border-border/70">
+                          <iframe
+                            title="Company location preview"
+                            src={mapEmbedUrl}
+                            className="h-56 w-full"
+                            loading="lazy"
+                          />
+                          <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
+                            <span>OpenStreetMap preview</span>
+                            {coordinates && (
+                              <a
+                                href={`https://www.openstreetmap.org/?mlat=${coordinates.lat}&mlon=${coordinates.lng}#map=15/${coordinates.lat}/${coordinates.lng}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-medium text-primary hover:underline"
+                              >
+                                View full map
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <Label htmlFor="company-website">Company website</Label>
                         <Input
@@ -702,6 +825,11 @@ const ForCompanies = () => {
                 {company && !company.approved && (
                   <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                     Your organization is currently pending approval. Opportunities stay live, but our team may flag them for manual review until verification is complete.
+                  </div>
+                )}
+                {featureMode && (
+                  <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary-dark">
+                    Feature mode enabled. Submit your opportunity and it will publish immediately with a spotlight badge once payment is confirmed.
                   </div>
                 )}
                 <form className="space-y-6" onSubmit={handleSubmit}>

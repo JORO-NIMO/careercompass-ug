@@ -12,6 +12,19 @@ import { Plus, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { instituteCategories, getInstitutesByCategory, publicUniversities, privateUniversities, Institution } from "@/lib/institutions";
 
+const RECOMMENDED_INTERESTS = [
+  "Technology",
+  "Finance",
+  "Healthcare",
+  "Engineering",
+  "Education",
+  "Creative Arts",
+  "Energy & Climate",
+  "Agriculture",
+  "Tourism",
+  "Social Impact",
+];
+
 const StudentProfile = () => {
   const [interests, setInterests] = useState(["Technology", "Finance"]);
   const [newInterest, setNewInterest] = useState("");
@@ -26,14 +39,23 @@ const StudentProfile = () => {
   };
 
   const addInterest = () => {
-    if (newInterest.trim() && !interests.includes(newInterest.trim())) {
-      setInterests([...interests, newInterest.trim()]);
+    const trimmed = newInterest.trim();
+    if (trimmed && !interests.includes(trimmed)) {
+      setInterests([...interests, trimmed]);
       setNewInterest("");
     }
   };
 
   const removeInterest = (interest: string) => {
-    setInterests(interests.filter(i => i !== interest));
+    setInterests(interests.filter((i) => i !== interest));
+  };
+
+  const toggleRecommendedInterest = (interest: string) => {
+    if (interests.includes(interest)) {
+      removeInterest(interest);
+    } else {
+      setInterests([...interests, interest]);
+    }
   };
 
   return (
@@ -174,6 +196,27 @@ const StudentProfile = () => {
                   <CardTitle>Areas of Interest</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">Select suggested focus areas</p>
+                  <div className="flex flex-wrap gap-2">
+                    {RECOMMENDED_INTERESTS.map((interest) => {
+                      const active = interests.includes(interest);
+                      return (
+                        <Button
+                          key={interest}
+                          type="button"
+                          variant={active ? "secondary" : "outline"}
+                          size="sm"
+                          className="rounded-full"
+                          onClick={() => toggleRecommendedInterest(interest)}
+                        >
+                          {interest}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="flex flex-wrap gap-2">
                   {interests.map((interest) => (
                     <Badge key={interest} variant="secondary" className="flex items-center gap-1">

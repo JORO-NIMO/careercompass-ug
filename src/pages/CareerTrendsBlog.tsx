@@ -47,13 +47,13 @@ const CareerTrendsBlog = () => {
   return (
     <>
       <SEO
-        title="Career Trends in Uganda 2025 | PlacementsBridge Insights"
+        title="Career Trends in Uganda 2025 | PlacementBridge Insights"
         description="Quarterly report tracking internship and placement trends across Uganda including tech, sustainability, and creative economy opportunities."
         keywords={[
           "career trends uganda",
           "uganda internship statistics",
           "graduate employment insights",
-          "placementsbridge career report",
+          "placementbridge career report",
         ]}
         canonical="/insights/career-trends"
         jsonLd={{
@@ -61,10 +61,10 @@ const CareerTrendsBlog = () => {
           "@type": "BlogPosting",
           headline: "Career Trends in Uganda 2025",
           description:
-            "Insights from PlacementsBridge on the fastest-growing internship sectors, in-demand skills, and hiring statistics for Ugandan graduates.",
+            "Insights from PlacementBridge on the fastest-growing internship sectors, in-demand skills, and hiring statistics for Ugandan graduates.",
           author: {
             "@type": "Organization",
-            name: "PlacementsBridge",
+            name: "PlacementBridge",
           },
           datePublished: "2025-12-27",
           mainEntityOfPage: {
@@ -78,7 +78,7 @@ const CareerTrendsBlog = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto space-y-10">
             <div className="space-y-4 text-center">
-              <Badge variant="secondary" className="mx-auto w-fit">PlacementsBridge Insights</Badge>
+              <Badge variant="secondary" className="mx-auto w-fit">PlacementBridge Insights</Badge>
               <h1 className="text-4xl font-bold text-foreground">Career trends reshaping internships in Uganda</h1>
               <p className="text-lg text-muted-foreground">
                 Our quarterly insights blend marketplace data, employer interviews, and student surveys. Use these signals to tailor your skills, CV, and opportunity pipeline.
@@ -146,7 +146,7 @@ const CareerTrendsBlog = () => {
             <Separator />
             <div className="rounded-2xl border border-border/70 bg-background/80 p-6 text-sm text-muted-foreground">
               <p>
-                PlacementsBridge aggregates opportunities from verified organisations. Subscribe to our newsletter for fresh internships, fellowships, and graduate programmes across Uganda every Monday morning.
+                PlacementBridge aggregates opportunities from verified organisations. Subscribe to our newsletter for fresh internships, fellowships, and graduate programmes across Uganda every Monday morning.
               </p>
             </div>
 

@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
-import { toast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
 type ProfileRow = Tables<"profiles">;
@@ -58,6 +57,7 @@ const FindTalent = () => {
   const [selectedExperience, setSelectedExperience] = useState("all");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const hasFetchedRef = useRef(false);
 
@@ -91,6 +91,7 @@ const FindTalent = () => {
     const loadCandidates = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const { data, error } = await supabase
           .from("profiles")
           .select(
@@ -108,11 +109,7 @@ const FindTalent = () => {
       } catch (error) {
         console.error("Failed to load candidates", error);
         if (isMounted) {
-          toast({
-            title: "Unable to load candidates",
-            description: "Please try again shortly.",
-            variant: "destructive",
-          });
+          setLoadError("We could not refresh the candidate directory. Please retry in a moment.");
         }
       } finally {
         if (isMounted) {
@@ -212,6 +209,12 @@ const FindTalent = () => {
             </Button>
           </div>
         </div>
+
+        {loadError && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            {loadError}
+          </div>
+        )}
 
         <Card id="feature-faq" className="mb-10 border-primary/20 bg-primary/5">
           <CardHeader className="pb-4">
