@@ -1,22 +1,4 @@
-export type PlacementSector =
-  | "Agribusiness & Forestry"
-  | "Healthcare & Medical"
-  | "Media & ICT"
-  | "Finance & Commerce"
-  | "Tourism & Hospitality"
-  | "Engineering & Technical"
-  | "Legal & Professional Services";
-
-export type PlacementType = "Industrial Training" | "Undergraduate Internship" | "Graduate Trainee";
-
-export interface PlacementFilters {
-  keywords?: string;
-  sector?: PlacementSector;
-  region?: string;
-  placementType?: PlacementType;
-  field?: string;
-  year?: string;
-}
+import type { PlacementFilters, PlacementQuery, PlacementSector, PlacementType } from '@/types/placements';
 
 const baseUserAgent =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36";
@@ -43,7 +25,8 @@ function buildDork(filters: PlacementFilters) {
   if (filters.keywords) parts.push(filters.keywords);
   if (filters.sector) parts.push(filters.sector);
   if (filters.placementType) parts.push(filters.placementType);
-  parts.push("industrial training");
+  parts.push("career opportunity");
+  parts.push("professional development");
   // Geo bias if provided
   if (filters.region) parts.push(filters.region);
   // Only current/future
@@ -51,28 +34,22 @@ function buildDork(filters: PlacementFilters) {
   return parts.filter(Boolean).join(" ");
 }
 
-export interface BotQuery {
-  label: string;
-  url: string;
-  notes: string;
-}
-
-export function buildPlacementQueries(filters: PlacementFilters): BotQuery[] {
+export function buildPlacementQueries(filters: PlacementFilters): PlacementQuery[] {
   const dork = buildDork(filters);
   const sector = filters.sector ?? "";
 
   const google = `https://www.google.com/search?q=${encodeQuery(dork)}`;
   const googleAllDomains = `https://www.google.com/search?q=${encodeQuery(`${dork} site:(.ug OR .com OR .org OR .net OR .dev OR .co.ug OR .ac.ug)`)}`;
-  const googleOrgGov = `https://www.google.com/search?q=${encodeQuery(`${dork} internship (site:org.ug OR site:go.ug OR site:org OR site:gov)`)}`;
-  const googleGraduate = `https://www.google.com/search?q=${encodeQuery(`${sector} graduate trainee Uganda 2025 -job-boards`)}`;
-  const googleCities = `https://www.google.com/search?q=${encodeQuery(`${dork} (Kampala OR Entebbe OR Mbarara OR Jinja)`)}`;
+  const googleOrgGov = `https://www.google.com/search?q=${encodeQuery(`${dork} opportunity (site:org.ug OR site:go.ug OR site:org OR site:gov)`)}`;
+  const googleProfessional = `https://www.google.com/search?q=${encodeQuery(`${sector} career development Uganda 2025 -job-boards`)}`;
+  const googleCities = `https://www.google.com/search?q=${encodeQuery(`${dork} opportunity (Kampala OR Entebbe OR Mbarara OR Jinja)`)}`;
 
   return [
-    { label: "Global search - all domains (.ug, .com, .org, .dev, etc.)", url: google, notes: "Searches across all domain extensions for Uganda-based placements." },
+    { label: "Global search - all domains (.ug, .com, .org, .dev, etc.)", url: google, notes: "Searches across all domain extensions for Uganda-based opportunities." },
     { label: "All Uganda domains (.ug, .co.ug, .ac.ug, .com, .org, .net, .dev)", url: googleAllDomains, notes: "Explicitly targets multiple Ugandan-related domain extensions." },
-    { label: "NGO & Govt internships", url: googleOrgGov, notes: "Focuses on org/gov domains for public and NGO placements worldwide." },
-    { label: "Graduate trainee tracks", url: googleGraduate, notes: "Looks for graduate trainee pages, excludes job boards." },
-    { label: "City-focused internships", url: googleCities, notes: "Bias toward key cities (Kampala, Entebbe, Mbarara, Jinja) for field attachment sites." },
+    { label: "NGO & Govt opportunities", url: googleOrgGov, notes: "Focuses on org/gov domains for public and NGO opportunities worldwide." },
+    { label: "Professional development tracks", url: googleProfessional, notes: "Looks for professional growth programs and excludes generic job boards." },
+    { label: "City-focused opportunities", url: googleCities, notes: "Bias toward key cities (Kampala, Entebbe, Mbarara, Jinja) for on-the-ground experience." },
   ];
 }
 

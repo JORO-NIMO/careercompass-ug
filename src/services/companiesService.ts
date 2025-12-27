@@ -47,6 +47,9 @@ async function parseJsonResponse(response: Response) {
   }
 
   if (!contentType.includes('application/json')) {
+    if (response.ok) {
+      return { success: true, data: undefined };
+    }
     return { success: false, data: undefined, error: 'Server returned non-JSON response' };
   }
 

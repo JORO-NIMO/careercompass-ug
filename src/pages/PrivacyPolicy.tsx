@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Information We Collect</h2>
                 <p className="text-muted-foreground">
-                  We collect the information you provide when creating an account, completing a profile, posting a placement, or contacting our team. This includes identifiers such as your name, email address, and organisation details, as well as optional profile data like experience level, skills, and availability.
+                  We collect the information you provide when creating an account, completing a profile, publishing an opportunity, or contacting our team. This includes identifiers such as your name, email address, and organisation details, as well as optional profile data like experience level, skills, and availability.
                 </p>
               </div>
 
@@ -35,7 +35,7 @@ const PrivacyPolicy = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Sharing Your Data</h2>
                 <p className="text-muted-foreground">
-                  We only share personal information with your consent, to deliver placement introductions, or when required by law. Employers can view candidate profiles that have opted into discovery, and candidates can view company details included in published placements.
+                  We only share personal information with your consent, to deliver opportunity introductions, or when required by law. Employers can view candidate profiles that have opted into discovery, and candidates can view organization details included in published opportunities.
                 </p>
               </div>
 

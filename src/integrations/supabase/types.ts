@@ -45,6 +45,73 @@ export type Database = {
         Relationships: []
       }
       placements: {
+        Row: {
+          approved: boolean
+          available_slots: number
+          company_name: string
+          contact_info: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          flag_reason: string | null
+          flagged: boolean
+          flagged_at: string | null
+          flagged_by: string | null
+          id: string
+          industry: string
+          position_title: string
+          region: string
+          stipend: string
+          updated_at: string | null
+        }
+        Insert: {
+          approved?: boolean
+          available_slots: number
+          company_name: string
+          contact_info?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          flag_reason?: string | null
+          flagged?: boolean
+          flagged_at?: string | null
+          flagged_by?: string | null
+          id?: string
+          industry: string
+          position_title: string
+          region: string
+          stipend: string
+          updated_at?: string | null
+        }
+        Update: {
+          approved?: boolean
+          available_slots?: number
+          company_name?: string
+          contact_info?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          flag_reason?: string | null
+          flagged?: boolean
+          flagged_at?: string | null
+          flagged_by?: string | null
+          id?: string
+          industry?: string
+          position_title?: string
+          region?: string
+          stipend?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "placements_flagged_by_fkey"
+            columns: ["flagged_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       bullets: {
         Row: {
           id: string
@@ -93,53 +160,6 @@ export type Database = {
           reason?: string
           created_at?: string
           created_by?: string
-        }
-        Relationships: []
-      }
-        Row: {
-          approved: boolean
-          available_slots: number
-          company_name: string
-          created_at: string | null
-          created_by: string | null
-          contact_info: string | null
-          description: string
-          id: string
-          industry: string
-          position_title: string
-          region: string
-          stipend: string
-          updated_at: string | null
-        }
-        Insert: {
-          approved?: boolean
-          available_slots: number
-          company_name: string
-          created_at?: string | null
-          created_by?: string | null
-          contact_info?: string | null
-          description: string
-          id?: string
-          industry: string
-          position_title: string
-          region: string
-          stipend: string
-          updated_at?: string | null
-        }
-        Update: {
-          approved?: boolean
-          available_slots?: number
-          company_name?: string
-          created_at?: string | null
-          created_by?: string | null
-          contact_info?: string | null
-          description?: string
-          id?: string
-          industry?: string
-          position_title?: string
-          region?: string
-          stipend?: string
-          updated_at?: string | null
         }
         Relationships: []
       }

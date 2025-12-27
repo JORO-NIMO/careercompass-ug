@@ -13,7 +13,7 @@ const Support = () => {
           <section className="text-center space-y-4">
             <h1 className="text-4xl font-bold">Support</h1>
             <p className="text-lg text-muted-foreground">
-              Need help navigating PlacementsBridge? Reach out to our team for platform guidance, account questions, or reporting concerns.
+              Need help navigating PlacementsBridge? Reach out to our team for platform guidance, account questions, or reporting concerns across learning and employment journeys.
             </p>
           </section>
 
@@ -23,7 +23,7 @@ const Support = () => {
                 <LifeBuoy className="h-8 w-8 text-primary mx-auto" />
                 <h2 className="text-xl font-semibold">Help Centre</h2>
                 <p className="text-sm text-muted-foreground">
-                  Browse walkthroughs on posting placements, managing applications, and building candidate profiles.
+                  Browse walkthroughs on publishing opportunities, managing applications, and building talent profiles.
                 </p>
                 <Button variant="outline" asChild>
                   <a href="/learning">Visit the resource hub</a>
@@ -47,7 +47,7 @@ const Support = () => {
                 <MessageCircle className="h-8 w-8 text-primary mx-auto" />
                 <h2 className="text-xl font-semibold">Feedback</h2>
                 <p className="text-sm text-muted-foreground">
-                  Share product ideas or report bugs so we can keep improving the experience for students and employers.
+                  Share product ideas or report bugs so we can keep improving the experience for learners, professionals, and partners.
                 </p>
                 <Button variant="ghost" asChild>
                   <a href="/feedback">Submit feedback</a>
@@ -63,7 +63,7 @@ const Support = () => {
                 Our support team replies within two working days. If your request is urgent—such as reporting fraudulent activity—include "URGENT" in the subject line so we can prioritise it.
               </p>
               <p className="text-muted-foreground">
-                For routine questions, please check the help centre first. Most common issues, like resetting a password or updating placement details, have step-by-step guides available.
+                For routine questions, please check the help centre first. Most common issues, like resetting a password or updating opportunity details, have step-by-step guides available.
               </p>
             </CardContent>
           </Card>

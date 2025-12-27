@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { formatDistanceToNow, addDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -64,11 +64,7 @@ export function AdminBoostsManager() {
 
   const modalTitle = useMemo(() => (editingBoost ? 'Edit boost' : 'Create manual boost'), [editingBoost]);
 
-  useEffect(() => {
-    loadBoosts();
-  }, []);
-
-  const loadBoosts = async () => {
+  const loadBoosts = useCallback(async () => {
     try {
       setLoading(true);
       const items = await fetchAdminBoosts();
@@ -80,7 +76,11 @@ export function AdminBoostsManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadBoosts();
+  }, [loadBoosts]);
 
   const resetForm = () => {
     setFormState(defaultForm());

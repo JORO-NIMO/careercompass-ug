@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listCompanies, approveCompany, type Company } from '@/services/companiesService';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,11 +29,7 @@ export function AdminCompaniesManager() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCompanies();
-  }, []);
-
-  const loadCompanies = async () => {
+  const loadCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const records = await listCompanies();
@@ -44,7 +40,11 @@ export function AdminCompaniesManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadCompanies();
+  }, [loadCompanies]);
 
   const handleApproval = async (company: Company, desired: boolean) => {
     try {

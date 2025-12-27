@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,15 +32,11 @@ export function AdminBulletManager() {
   const [submitting, setSubmitting] = useState(false);
   const detailRequestRef = useRef(0);
 
-  useEffect(() => {
-    loadBalances();
-  }, []);
-
   const sortedBalances = useMemo(() => {
     return [...balances].sort((a, b) => b.balance - a.balance);
   }, [balances]);
 
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async () => {
     try {
       setLoadingBalances(true);
       const data = await fetchAdminBulletBalances();
@@ -52,7 +48,11 @@ export function AdminBulletManager() {
     } finally {
       setLoadingBalances(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadBalances();
+  }, [loadBalances]);
 
   const loadDetails = async (ownerId: string) => {
     if (detailLoading && loadingDetailsFor === ownerId) {

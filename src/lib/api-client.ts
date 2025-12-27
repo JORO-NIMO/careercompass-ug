@@ -3,6 +3,32 @@
  */
 import type { AnalyticsEventEnvelope } from '@/types/analytics';
 import type { NotificationPayload } from '@/types/notifications';
+const rawApiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const fallbackBase = typeof window !== 'undefined' ? window.location.origin : '';
+const apiBase = (() => {
+  if (!rawApiBase) {
+    return fallbackBase.replace(/\/+$/, '');
+  }
+  try {
+    const normalized = new URL(rawApiBase).toString();
+    return normalized.replace(/\/+$/, '');
+  } catch (error) {
+    console.warn('Invalid VITE_API_BASE_URL provided, falling back to window.location.origin.', error);
+    return fallbackBase.replace(/\/+$/, '');
+  }
+})();
+
+export function resolveApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (!apiBase) {
+    return normalizedPath;
+  }
+  return `${apiBase}${normalizedPath}`;
+}
+
 
 export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -48,7 +74,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean>): string {
-  const url = new URL(path, window.location.origin);
+  const url = new URL(resolveApiUrl(path));
   
   if (params) {
     Object.entries(params).forEach(([key, value]) => {

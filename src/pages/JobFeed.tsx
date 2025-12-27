@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { searchJobsJSearch } from '@/services/jsearchService';
 import { searchJobsAdzuna } from '@/services/adzunaService';
 
@@ -22,42 +22,62 @@ interface AdzunaResponse {
   results?: JobResult[];
 }
 
+const DEFAULT_QUERY = 'software engineer in uganda';
+const DEFAULT_PROVIDER: 'jsearch' | 'adzuna' = 'jsearch';
+
 const JobFeed: React.FC = () => {
-  const [query, setQuery] = useState('software engineer in uganda');
-  const [provider, setProvider] = useState<'jsearch' | 'adzuna'>('jsearch');
+  const [query, setQuery] = useState(DEFAULT_QUERY);
+  const [provider, setProvider] = useState<'jsearch' | 'adzuna'>(DEFAULT_PROVIDER);
   const [jobs, setJobs] = useState<JobResult[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const runSearch = async () => {
+  const runSearch = useCallback(async (searchQuery: string, searchProvider: 'jsearch' | 'adzuna') => {
     setLoading(true);
     try {
-      if (provider === 'jsearch') {
-        const res = (await searchJobsJSearch(query)) as JSearchResponse;
+      if (searchProvider === 'jsearch') {
+        const res = (await searchJobsJSearch(searchQuery)) as JSearchResponse;
         setJobs(res?.data ?? res?.results ?? []);
       } else {
-        const res = (await searchJobsAdzuna(query)) as AdzunaResponse;
+        const res = (await searchJobsAdzuna(searchQuery)) as AdzunaResponse;
         setJobs(res?.results ?? []);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error: unknown) {
+      console.error('Job search failed', error);
       setJobs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { runSearch(); }, []);
+  useEffect(() => {
+    void runSearch(DEFAULT_QUERY, DEFAULT_PROVIDER);
+  }, [runSearch]);
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-semibold mb-4">Job Feed</h1>
       <div className="flex gap-2 mb-4">
         <input className="flex-1 p-2 border rounded" value={query} onChange={(e) => setQuery(e.target.value)} />
-        <select value={provider} onChange={(e) => setProvider(e.target.value as 'jsearch' | 'adzuna')} className="p-2 border rounded">
+        <select
+          value={provider}
+          onChange={(event) => {
+            const nextProvider = event.target.value as 'jsearch' | 'adzuna';
+            setProvider(nextProvider);
+            void runSearch(query, nextProvider);
+          }}
+          className="p-2 border rounded"
+        >
           <option value="jsearch">JSearch</option>
           <option value="adzuna">Adzuna</option>
         </select>
-        <button onClick={runSearch} className="px-3 py-1 rounded bg-primary text-white">Search</button>
+        <button
+          onClick={() => {
+            void runSearch(query, provider);
+          }}
+          className="px-3 py-1 rounded bg-primary text-white"
+        >
+          Search
+        </button>
       </div>
 
       {loading && <div>Loading...</div>}

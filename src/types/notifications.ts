@@ -63,6 +63,10 @@ export type NotificationPayload = NotificationPayloadMap[NotificationType];
 
 export type ExtractNotificationPayload<Type extends NotificationType> = NotificationPayloadMap[Type];
 
+export type NotificationPreferenceChannels = Partial<Record<NotificationChannel, boolean>>;
+
+export type NotificationPreferencesState = Partial<Record<NotificationType, NotificationPreferenceChannels>>;
+
 export function createNotificationPayload<Type extends NotificationType>(
   type: Type,
   payload: Omit<ExtractNotificationPayload<Type>, 'type'>,

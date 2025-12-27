@@ -57,10 +57,11 @@ const FeaturedPlacements = () => {
         if (!mounted) return;
         setCuratedListings(listings);
         setError(null);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading curated listings', err);
+        const message = err instanceof Error ? err.message : 'Unable to load featured listings.';
         if (!mounted) return;
-        setError(err?.message ?? 'Unable to load featured listings.');
+        setError(message);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -93,7 +94,7 @@ const FeaturedPlacements = () => {
         const placementIds = approvedRows.map((p) => p.id);
 
         const nowIso = new Date().toISOString();
-        let boostsByPost = new Map<string, BoostData>();
+        const boostsByPost = new Map<string, BoostData>();
 
         if (placementIds.length > 0) {
           const { data: boostRows, error: boostError } = await supabase
@@ -144,7 +145,7 @@ const FeaturedPlacements = () => {
         });
 
         setPlacements(sorted);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Fallback load failed', err);
       } finally {
         if (mounted) {
@@ -167,10 +168,10 @@ const FeaturedPlacements = () => {
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground">
-            Featured Placements
+            Featured Opportunities
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover exciting internship opportunities from top companies across Uganda
+            Discover curated opportunities from leading institutions and employers across Uganda
           </p>
         </div>
 
@@ -206,7 +207,7 @@ const FeaturedPlacements = () => {
         {/* View All Button */}
         <div className="text-center">
           <Button variant="outline" size="lg" className="min-w-[200px]">
-            View All Placements
+            View All Opportunities
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>

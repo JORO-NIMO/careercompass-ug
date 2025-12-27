@@ -16,7 +16,7 @@ const About = () => {
                 About PlacementsBridge
               </h1>
               <p className="text-xl text-primary-foreground/90 max-w-3xl mx-auto">
-                Connecting Uganda's brightest students with leading companies to build the future together
+                Bridging Uganda's learners, professionals, and organizations with opportunities that shape the future of work
               </p>
             </div>
           </div>
@@ -28,9 +28,7 @@ const About = () => {
             <div className="max-w-4xl mx-auto text-center space-y-6">
               <h2 className="text-3xl font-bold">Our Mission</h2>
               <p className="text-lg text-muted-foreground">
-                PlacementsBridge was created to solve the gap between talented university students in Uganda 
-                and companies seeking fresh talent. We believe that every student deserves access to quality 
-                internship opportunities, and every company should be able to find the right candidates easily.
+                PlacementsBridge exists to close the gap between education, talent, and opportunity. We empower students, graduates, career switchers, and experienced professionals while giving institutions and employers a trusted channel to engage emerging and established talent.
               </p>
             </div>
           </div>
@@ -44,28 +42,28 @@ const About = () => {
                 <CardContent className="pt-8 pb-6">
                   <Users className="w-12 h-12 text-primary mx-auto mb-4" />
                   <div className="text-3xl font-bold text-foreground">1000+</div>
-                  <p className="text-muted-foreground">Students Registered</p>
+                  <p className="text-muted-foreground">Learners & Professionals</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Target className="w-12 h-12 text-primary mx-auto mb-4" />
                   <div className="text-3xl font-bold text-foreground">200+</div>
-                  <p className="text-muted-foreground">Companies</p>
+                  <p className="text-muted-foreground">Hiring & Training Partners</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Globe className="w-12 h-12 text-primary mx-auto mb-4" />
                   <div className="text-3xl font-bold text-foreground">50+</div>
-                  <p className="text-muted-foreground">Universities</p>
+                  <p className="text-muted-foreground">Institutions & Campuses</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Award className="w-12 h-12 text-primary mx-auto mb-4" />
                   <div className="text-3xl font-bold text-foreground">500+</div>
-                  <p className="text-muted-foreground">Successful Placements</p>
+                  <p className="text-muted-foreground">Career Transitions Supported</p>
                 </CardContent>
               </Card>
             </div>
@@ -80,19 +78,19 @@ const About = () => {
               <div className="text-center space-y-4">
                 <h3 className="text-xl font-semibold">Accessibility</h3>
                 <p className="text-muted-foreground">
-                  Making internship opportunities accessible to students from all backgrounds across Uganda
+                  Making education-to-employment pathways accessible to people from every background across Uganda
                 </p>
               </div>
               <div className="text-center space-y-4">
                 <h3 className="text-xl font-semibold">Quality</h3>
                 <p className="text-muted-foreground">
-                  Ensuring high-quality placements that provide real learning and growth opportunities
+                  Ensuring every match delivers meaningful learning, mentorship, and career advancement
                 </p>
               </div>
               <div className="text-center space-y-4">
                 <h3 className="text-xl font-semibold">Innovation</h3>
                 <p className="text-muted-foreground">
-                  Using technology to create smarter matching between students and companies
+                  Using technology to create smarter matching between education partners, talent, and employers
                 </p>
               </div>
             </div>

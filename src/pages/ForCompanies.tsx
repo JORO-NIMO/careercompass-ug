@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,6 +41,7 @@ const ForCompanies = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement | null>(null);
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://careercompass.ug';
   
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
@@ -66,7 +69,7 @@ const ForCompanies = () => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to post placements",
+        description: "Please sign in to post opportunities",
       });
       navigate('/signin');
     }
@@ -103,7 +106,7 @@ const ForCompanies = () => {
             contact_email: user.email ?? prev.contact_email,
           }));
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to load company', error);
         if (isMounted) {
           toast({
@@ -148,8 +151,8 @@ const ForCompanies = () => {
         const placementMap = new Map<string, { title: string; company: string }>();
         (placementRows ?? []).forEach((row) => {
           placementMap.set(row.id, {
-            title: row.position_title ?? 'Untitled placement',
-            company: row.company_name ?? 'Your company',
+            title: row.position_title ?? 'Untitled opportunity',
+            company: row.company_name ?? 'Your organization',
           });
         });
 
@@ -180,8 +183,8 @@ const ForCompanies = () => {
           return {
             id: row.id,
             entityId: row.entity_id,
-            placementTitle: placement?.title ?? 'Placement',
-            companyName: placement?.company ?? 'Your company',
+            placementTitle: placement?.title ?? 'Opportunity',
+            companyName: placement?.company ?? 'Your organization',
             startsAt: row.starts_at,
             endsAt: row.ends_at,
             createdAt: row.created_at ?? row.starts_at,
@@ -189,13 +192,11 @@ const ForCompanies = () => {
         });
 
         setActiveBoosts(mapped);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to load boosts', error);
-        toast({
-          title: 'Unable to load boosts',
-          description: 'Refresh the page or try again shortly.',
-          variant: 'destructive',
-        });
+        if (isMounted) {
+          setActiveBoosts([]);
+        }
       } finally {
         if (isMounted) {
           setLoadingBoosts(false);
@@ -265,11 +266,12 @@ const ForCompanies = () => {
             : 'We will review your company shortly. You will receive an email once approved.',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Company registration error', error);
+      const message = error instanceof Error ? error.message : 'Please try again shortly.';
       toast({
         title: 'Unable to save company',
-        description: error?.message ?? 'Please try again shortly.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -317,7 +319,8 @@ const ForCompanies = () => {
           stipend: stipend.trim(),
           available_slots: slotsNumber,
           created_by: user?.id,
-          approved: false,
+          approved: true,
+          flagged: false,
           contact_info: user?.email || null,
         })
         .select('id')
@@ -326,8 +329,8 @@ const ForCompanies = () => {
       if (error) throw error;
 
       toast({
-        title: "Submitted",
-        description: "Placement submitted and is pending admin review. You will be notified once approved.",
+        title: "Published",
+        description: "Opportunity posted and is live. We'll contact you if it needs additional review.",
       });
 
       // Reset form
@@ -338,10 +341,11 @@ const ForCompanies = () => {
       setIndustry('');
       setStipend('');
       setAvailableSlots('');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to post opportunity";
       toast({
         title: "Error",
-        description: error.message || "Failed to post placement",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -371,13 +375,40 @@ const ForCompanies = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Hire Interns and Early Talent in Uganda | CareerCompass for Companies"
+        description="Publish internships and early-career roles across Uganda with instant moderation, verified companies, and built-in talent sourcing tools."
+        keywords={[
+          'post internships Uganda',
+          'hire graduates Kampala',
+          'Uganda early talent marketplace',
+          'student placements employers',
+        ]}
+        canonical="/for-companies"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: 'CareerCompass Employer Portal',
+          url: `${baseUrl}/for-companies`,
+          areaServed: {
+            '@type': 'Country',
+            name: 'Uganda',
+          },
+          provider: {
+            '@type': 'Organization',
+            name: 'CareerCompass',
+            url: baseUrl,
+          },
+          serviceType: 'Internship and early-career recruitment',
+        }}
+      />
       <Header />
       <main className="py-16">
         <div className="container mx-auto px-4 space-y-16">
           <section className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold">Post a Placement</h1>
+            <h1 className="text-4xl md:text-5xl font-bold">Post an Opportunity</h1>
             <p className="text-lg text-muted-foreground">
-              Share your internship or graduate opportunities with thousands of motivated students across Uganda. Provide the details below and our team will review before publishing.
+              Share your internships, fellowships, apprenticeships, and roles with thousands of motivated learners and professionals across Uganda. Provide the details below and your opportunity will go live instantly while our team monitors for anything suspicious.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button size="lg" onClick={scrollToForm} disabled={submitting}>
@@ -414,7 +445,7 @@ const ForCompanies = () => {
                             ? company.approved
                               ? 'Company approved'
                               : 'Pending approval'
-                            : 'Register your company to unlock placement publishing.'}
+                            : 'Register your company to unlock opportunity publishing.'}
                         </span>
                       </div>
                       {company && (
@@ -558,13 +589,13 @@ const ForCompanies = () => {
                 <BulletWalletCard
                   ownerId={company.id}
                   title={`${company.name} credits`}
-                  description="Spend company bullets to boost published placements and reach more students."
+                  description="Spend company bullets to boost published opportunities and reach more candidates."
                   enableBoostActions
                 />
               ) : (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Placement boosts</CardTitle>
+                    <CardTitle>Opportunity boosts</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
@@ -579,17 +610,17 @@ const ForCompanies = () => {
           <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Featured placements</CardTitle>
+                <CardTitle>Featured opportunities</CardTitle>
               </CardHeader>
               <CardContent className="pt-2 space-y-4">
                 {loadingBoosts ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Checking your featured placements…</span>
+                    <span>Checking your featured opportunities…</span>
                   </div>
                 ) : activeBoosts.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Featured placements go live automatically once your payment is confirmed. Active features appear here with their scheduled end date.
+                    Featured opportunities go live automatically once your payment is confirmed. Active features appear here with their scheduled end date.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -611,7 +642,7 @@ const ForCompanies = () => {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                 <Sparkles className="h-4 w-4" />
-                                Featured placement
+                                Featured opportunity
                               </div>
                               <h3 className="text-lg font-semibold text-foreground">{boost.placementTitle}</h3>
                               <p className="text-sm text-muted-foreground">{boost.companyName}</p>
@@ -632,15 +663,45 @@ const ForCompanies = () => {
             </Card>
           </section>
 
-          <section ref={formRef} className="max-w-3xl mx-auto w-full">
+          <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Placement details</CardTitle>
+                <CardTitle>Frequently asked questions</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="timeline">
+                    <AccordionTrigger>How long does it take for opportunities to go live?</AccordionTrigger>
+                    <AccordionContent>
+                      Most listings are reviewed within one to two business days. Verified partners are typically approved instantly, while new organizations may require additional checks before publishing.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="boosts">
+                    <AccordionTrigger>What do boosts include?</AccordionTrigger>
+                    <AccordionContent>
+                      Boosted opportunities receive priority placement in search, a featured badge, and inclusion in highlight emails sent to active candidates. You can manage boosts from your company wallet at any time.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="payments">
+                    <AccordionTrigger>Can we pay with mobile money or invoice?</AccordionTrigger>
+                    <AccordionContent>
+                      Yes. Our billing flow supports mobile money, cards, and invoicing for enterprise partners. Reach out via support if you need a tailored payment arrangement.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
+          </section>
+
+          <section id="post-opportunity" ref={formRef} className="max-w-3xl mx-auto w-full">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Opportunity details</CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
                 {company && !company.approved && (
                   <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    Your company is currently pending approval. Placements will remain hidden until verification is complete.
+                    Your organization is currently pending approval. Opportunities stay live, but our team may flag them for manual review until verification is complete.
                   </div>
                 )}
                 <form className="space-y-6" onSubmit={handleSubmit}>
@@ -737,11 +798,11 @@ const ForCompanies = () => {
                   </div>
 
                   <div className="text-sm text-muted-foreground">
-                    Placements are saved as drafts until an admin approves them. Once approved, any boosts tied to confirmed payments will start automatically and appear above.
+                    Opportunities publish immediately. If we flag a listing, it will pause until resolved, and any boosts resume once it is cleared.
                   </div>
 
                   <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                    {submitting ? 'Submitting placement…' : 'Submit for review'}
+                    {submitting ? 'Submitting opportunity…' : 'Submit for review'}
                   </Button>
                 </form>
               </CardContent>

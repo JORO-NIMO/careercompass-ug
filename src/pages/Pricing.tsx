@@ -9,7 +9,7 @@ const Pricing = () => {
       name: "Basic Listing",
       price: "Free",
       period: "",
-      description: "Perfect for posting standard job openings and internships",
+      description: "Perfect for posting standard openings across jobs, internships, and training",
       features: [
         "Post unlimited jobs",
         "Standard listing visibility",
@@ -29,7 +29,7 @@ const Pricing = () => {
       features: [
         "All Basic features",
         "3x visibility lift",
-        "Featured placement in search",
+        "Featured opportunity in search",
         "Priority support",
         "Advanced analytics",
         "Highlighted border & badge"
@@ -225,7 +225,7 @@ const Pricing = () => {
             <div>
               <h3 className="font-semibold mb-2">Can I feature multiple listings?</h3>
               <p className="text-sm text-muted-foreground">
-                Yes! You can feature as many listings as needed. Premium plan includes unlimited featured placements.
+                Yes! You can feature as many listings as needed. Premium plan includes unlimited featured opportunities.
               </p>
             </div>
             <div>

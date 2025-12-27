@@ -21,14 +21,14 @@ const TermsOfService = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Using PlacementsBridge</h2>
                 <p className="text-muted-foreground">
-                  You must provide accurate information when creating an account, posting placements, or applying to opportunities. We reserve the right to moderate content that violates our code of conduct or misrepresents an opportunity.
+                  You must provide accurate information when creating an account, sharing opportunities, or applying to them. We reserve the right to moderate content that violates our code of conduct or misrepresents an experience.
                 </p>
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">User Responsibilities</h2>
                 <p className="text-muted-foreground">
-                  Candidates agree to apply respectfully and provide truthful qualifications. Employers agree to share legitimate placement opportunities, honour interviews offered, and keep applicant data confidential.
+                  Candidates agree to apply respectfully and provide truthful qualifications. Employers agree to share legitimate opportunities, honour interviews offered, and keep applicant data confidential.
                 </p>
               </div>
 

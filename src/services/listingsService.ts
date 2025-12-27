@@ -37,6 +37,9 @@ async function parseJsonResponse<T>(response: Response): Promise<{
   }
 
   if (!contentType.includes('application/json')) {
+    if (response.ok) {
+      return { success: true, data: undefined };
+    }
     return { success: false, data: undefined, error: 'Server returned non-JSON response' };
   }
 
@@ -49,12 +52,22 @@ async function parseJsonResponse<T>(response: Response): Promise<{
 }
 
 export async function fetchListings(): Promise<ListingWithCompany[]> {
-  const response = await fetch('/api/listings');
-  const { success, data, error } = await parseJsonResponse<AdminListingsCollection>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load listings');
+  try {
+    const response = await fetch('/api/listings');
+    if (!response.ok) {
+      console.warn('fetchListings received non-OK status', response.status);
+      return [];
+    }
+    const { success, data, error } = await parseJsonResponse<AdminListingsCollection>(response);
+    if (!success) {
+      console.warn('fetchListings failed to parse response', error);
+      return [];
+    }
+    return data?.items ?? [];
+  } catch (error) {
+    console.error('fetchListings request failed', error);
+    return [];
   }
-  return data?.items ?? [];
 }
 
 export async function fetchAdminListings(): Promise<AdminListing[]> {

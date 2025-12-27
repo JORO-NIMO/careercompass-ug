@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import QuickNavigation from "@/components/QuickNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,13 @@ const StudentProfile = () => {
   const [newInterest, setNewInterest] = useState("");
   const [institutionType, setInstitutionType] = useState<"University" | "Institute">("University");
   const [institutionId, setInstitutionId] = useState<string | undefined>(undefined);
+
+  const handleInstitutionTypeChange = (value: string) => {
+    if (value === "University" || value === "Institute") {
+      setInstitutionType(value);
+      setInstitutionId(undefined);
+    }
+  };
 
   const addInterest = () => {
     if (newInterest.trim() && !interests.includes(newInterest.trim())) {
@@ -35,8 +43,8 @@ const StudentProfile = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center">
-              <h1 className="text-3xl font-bold">Student Profile</h1>
-              <p className="text-muted-foreground">Complete your profile to get better placement matches</p>
+              <h1 className="text-3xl font-bold">Talent Profile</h1>
+              <p className="text-muted-foreground">Complete your profile to unlock tailored learning and career matches</p>
             </div>
 
             <Card>
@@ -47,35 +55,38 @@ const StudentProfile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstname">First Name</Label>
-                    <Input id="firstname" placeholder="John" />
+                    <Input id="firstname" placeholder="Stephen" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastname">Last Name</Label>
-                    <Input id="lastname" placeholder="Doe" />
+                    <Input id="lastname" placeholder="Aine" />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="amanya.othername@university.ac.ug" />
+                  <Input id="email" type="email" placeholder="aine.othername@company.com" />
+                  <p className="text-xs text-muted-foreground">
+                    Examples: aine.othername@company.com, aine.othername@gmail.com, aine.othername@school.ac.ug
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" placeholder="+256 726128513" />
+                  <Input id="phone" placeholder="+256 756128513" />
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Academic Information</CardTitle>
+                <CardTitle>Learning & Experience</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Institution Type</Label>
-                    <Select value={institutionType} onValueChange={(v) => { setInstitutionType(v as any); setInstitutionId(undefined); }}>
+                    <Select value={institutionType} onValueChange={handleInstitutionTypeChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
@@ -126,23 +137,23 @@ const StudentProfile = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Year of Study</Label>
+                    <Label>Stage</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select year" />
+                        <SelectValue placeholder="Select stage" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="2">2nd Year</SelectItem>
-                        <SelectItem value="3">3rd Year</SelectItem>
-                        <SelectItem value="4">4th Year</SelectItem>
+                        <SelectItem value="entry">Learner / Emerging Talent</SelectItem>
+                        <SelectItem value="graduate">Recent Graduate</SelectItem>
+                        <SelectItem value="professional">Experienced Professional</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Field of Study</Label>
+                    <Label>Focus Area</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select field" />
+                        <SelectValue placeholder="Select focus" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="computer-science">Computer Science</SelectItem>
@@ -160,7 +171,7 @@ const StudentProfile = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Areas of Interest</CardTitle>
+                  <CardTitle>Areas of Interest</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-2">
@@ -188,7 +199,7 @@ const StudentProfile = () => {
                 </div>
                 
                 <p className="text-sm text-muted-foreground">
-                  Add your areas of interest to receive relevant placement recommendations
+                  Add your areas of interest to receive relevant opportunity recommendations
                 </p>
               </CardContent>
             </Card>
@@ -207,12 +218,14 @@ const StudentProfile = () => {
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea 
                     id="bio" 
-                    placeholder="Tell us about yourself, your goals, and what you're looking for in an internship..."
+                    placeholder="Tell us about yourself, your goals, and the opportunities you're aiming for..."
                     rows={4}
                   />
                 </div>
               </CardContent>
             </Card>
+
+            <QuickNavigation />
 
             <div className="flex gap-4">
               <Button className="flex-1">Save Profile</Button>

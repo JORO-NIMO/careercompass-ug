@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createAd, deleteAd, fetchAdminAds, toggleAd, updateAd } from '@/services/adsService';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -60,11 +60,7 @@ export function AdminAdsManager() {
 
   const modalTitle = useMemo(() => (activeAd ? 'Edit Advertisement' : 'Create Advertisement'), [activeAd]);
 
-  useEffect(() => {
-    loadAds();
-  }, []);
-
-  const loadAds = async () => {
+  const loadAds = useCallback(async () => {
     try {
       setLoading(true);
       const items = await fetchAdminAds();
@@ -75,7 +71,11 @@ export function AdminAdsManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadAds();
+  }, [loadAds]);
 
   const resetForm = () => {
     setForm(defaultForm);

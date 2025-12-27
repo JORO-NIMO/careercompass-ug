@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchAdminListings,
   createListing,
@@ -77,12 +77,7 @@ export function AdminListingsManager() {
     return [...companies].sort((a, b) => a.name.localeCompare(b.name));
   }, [companies]);
 
-  useEffect(() => {
-    loadListings();
-    loadCompanies();
-  }, []);
-
-  const loadListings = async (options?: { silent?: boolean }) => {
+  const loadListings = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
     if (silent) {
       setRefreshing(true);
@@ -108,9 +103,9 @@ export function AdminListingsManager() {
         setLoading(false);
       }
     }
-  };
+  }, [toast]);
 
-  const loadCompanies = async () => {
+  const loadCompanies = useCallback(async () => {
     try {
       setCompaniesLoading(true);
       const records = await listCompanies();
@@ -121,7 +116,12 @@ export function AdminListingsManager() {
     } finally {
       setCompaniesLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadListings();
+    void loadCompanies();
+  }, [loadListings, loadCompanies]);
 
   const resetForm = () => {
     setFormState(DEFAULT_FORM_STATE);
@@ -214,7 +214,7 @@ export function AdminListingsManager() {
         title: value ? 'Listing featured' : 'Listing updated',
         description: value
           ? `${listing.title} will appear in the featured carousel.`
-          : `${listing.title} removed from featured placements.`,
+          : `${listing.title} removed from featured opportunities.`,
       });
     } catch (error: unknown) {
       console.error('Failed to toggle feature state', error);
@@ -290,7 +290,7 @@ export function AdminListingsManager() {
           <div>
             <CardTitle>Homepage listings</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Curate featured placements and control their order on the student portal.
+              Curate featured opportunities and control their order across the opportunity portal.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -426,7 +426,7 @@ export function AdminListingsManager() {
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Edit listing' : 'New listing'}</DialogTitle>
             <DialogDescription>
-              Provide the headline, supporting copy, and optional company for the curated placement.
+              Provide the headline, supporting copy, and optional company for the curated opportunity.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -489,7 +489,7 @@ export function AdminListingsManager() {
               <div>
                 <p className="text-sm font-medium">Feature this listing</p>
                 <p className="text-xs text-muted-foreground">
-                  Featured listings surface prominently on the placements page.
+                  Featured listings surface prominently on the opportunities page.
                 </p>
               </div>
               <Switch

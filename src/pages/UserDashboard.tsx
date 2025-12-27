@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CompanyMediaManager from '@/components/CompanyMediaManager';
@@ -71,13 +71,15 @@ const UserDashboard = () => {
     setFormState((prev) => defaultFormState(user.email ?? prev.contact_email));
   }, [user, navigate]);
 
-  const loadCompanies = async () => {
-    if (!user) return;
+  const loadCompanies = useCallback(async () => {
+    if (!user) {
+      return;
+    }
     try {
       setLoading(true);
       const items = await listOwnedCompanies();
       setCompanies(items);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load companies', error);
       toast({
         title: 'Unable to load companies',
@@ -87,12 +89,11 @@ const UserDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast, user]);
 
   useEffect(() => {
-    loadCompanies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+    void loadCompanies();
+  }, [loadCompanies]);
 
   const hasPendingCompany = useMemo(() => companies.some((company) => !company.approved), [companies]);
 
@@ -129,11 +130,12 @@ const UserDashboard = () => {
           description: 'We will review your company shortly. You will be notified once approved.',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Company registration failed', error);
+      const message = error instanceof Error ? error.message : 'Please try again.';
       toast({
         title: 'Unable to register company',
-        description: error?.message ?? 'Please try again.',
+        description: message,
         variant: 'destructive',
       });
     } finally {

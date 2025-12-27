@@ -16,7 +16,7 @@ const Footer = () => {
               <span className="text-xl font-bold text-foreground">PlacementsBridge</span>
             </div>
             <p className="text-muted-foreground">
-              Connecting Uganda's brightest students with leading companies for meaningful internship experiences.
+              Connecting Uganda's learners, professionals, and organizations with opportunities that power lifelong growth.
             </p>
             <div className="flex space-x-3">
               <Button variant="ghost" size="icon" asChild>
@@ -52,25 +52,25 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* For Students */}
+          {/* For Individuals */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">For Students</h3>
+            <h3 className="text-lg font-semibold text-foreground">For Individuals</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="/find-placements" className="hover:text-primary transition-colors">Find Placements</a></li>
+              <li><a href="/find-placements" className="hover:text-primary transition-colors">Explore Opportunities</a></li>
               <li><a href="/profile" className="hover:text-primary transition-colors">Create Profile</a></li>
-              <li><a href="/application-tips" className="hover:text-primary transition-colors">Application Tips</a></li>
-              <li><a href="/cv-builder" className="hover:text-primary transition-colors">CV Builder</a></li>
+              <li><a href="/application-tips" className="hover:text-primary transition-colors">Career Resources</a></li>
+              <li><a href="/cv-builder" className="hover:text-primary transition-colors">Build Your CV</a></li>
             </ul>
           </div>
 
-          {/* For Companies */}
+          {/* For Organizations */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground">For Companies</h3>
+            <h3 className="text-lg font-semibold text-foreground">For Organizations</h3>
             <ul className="space-y-2 text-muted-foreground">
-              <li><a href="/for-companies" className="hover:text-primary transition-colors">Post Placements</a></li>
-              <li><a href="/find-talent" className="hover:text-primary transition-colors">Find Talent</a></li>
-              <li><a href="/for-companies" className="hover:text-primary transition-colors">Company Verification</a></li>
-              <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing</a></li>
+              <li><a href="/for-companies" className="hover:text-primary transition-colors">Share Opportunities</a></li>
+              <li><a href="/find-talent" className="hover:text-primary transition-colors">Discover Talent</a></li>
+              <li><a href="/for-companies" className="hover:text-primary transition-colors">Partner With Us</a></li>
+              <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing & Plans</a></li>
             </ul>
           </div>
 
@@ -150,14 +150,23 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <p className="text-muted-foreground text-sm">
-            © 2024 PlacementsBridge. All rights reserved.
-          </p>
-          <div className="flex space-x-6 text-sm text-muted-foreground">
-            <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>
-            <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
-            <a href="/support" className="hover:text-primary transition-colors">Support</a>
+        <div className="border-t border-border mt-8 pt-8 space-y-4">
+          <nav className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+            <a href="/find-placements" className="hover:text-primary transition-colors">Find Placements</a>
+            <a href="/find-talent" className="hover:text-primary transition-colors">Find Talent</a>
+            <a href="/application-tips" className="hover:text-primary transition-colors">Resources</a>
+            <a href="/for-companies" className="hover:text-primary transition-colors">For Companies</a>
+            <a href="/pricing" className="hover:text-primary transition-colors">Pricing</a>
+          </nav>
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <p className="text-muted-foreground text-sm">
+              © 2024 PlacementsBridge. All rights reserved.
+            </p>
+            <div className="flex space-x-6 text-sm text-muted-foreground">
+              <a href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+              <a href="/support" className="hover:text-primary transition-colors">Support</a>
+            </div>
           </div>
         </div>
       </div>

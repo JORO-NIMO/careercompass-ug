@@ -3,7 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider } from "./hooks/AuthProvider";
 import { usePageTracking } from "./hooks/usePageTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -33,6 +33,11 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const Support = lazy(() => import("./pages/Support"));
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
+const HowToWriteACV = lazy(() => import("./pages/HowToWriteACV"));
+const InterviewTipsUganda = lazy(() => import("./pages/InterviewTipsUganda"));
+const TopInternships = lazy(() => import("./pages/TopInternships"));
+const CareerTrendsBlog = lazy(() => import("./pages/CareerTrendsBlog"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +85,11 @@ function AppRouter() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/support" element={<Support />} />
         <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/oauth/consent" element={<OAuthConsent />} />
+        <Route path="/guides/how-to-write-a-cv" element={<HowToWriteACV />} />
+        <Route path="/guides/interview-tips-uganda" element={<InterviewTipsUganda />} />
+        <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
+        <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

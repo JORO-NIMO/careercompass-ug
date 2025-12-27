@@ -11,7 +11,7 @@ const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img 
           src={heroImage} 
-          alt="Uganda students and professionals collaborating" 
+          alt="Uganda learners, professionals, and employers collaborating" 
           className="w-full h-full object-cover opacity-10"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 to-background/80"></div>
@@ -28,7 +28,7 @@ const HeroSection = () => {
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Connect Uganda's brightest students with leading companies. Find your perfect internship placement by region, industry, and field of study.
+              Bridge Uganda's learners, professionals, and employers with opportunities that span education and careers. Discover internships, training, and roles curated by region, industry, and focus area.
             </p>
           </div>
 
@@ -44,7 +44,7 @@ const HeroSection = () => {
               </div>
               <Link to="/find-placements">
                 <Button variant="hero" size="lg" className="h-12 px-8">
-                  Find Placements
+                  Browse Opportunities
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
@@ -58,14 +58,14 @@ const HeroSection = () => {
                 <Users className="w-8 h-8 text-primary" />
               </div>
               <div className="text-3xl font-bold text-foreground">1000+</div>
-              <p className="text-muted-foreground">Active Students</p>
+              <p className="text-muted-foreground">Active Members</p>
             </div>
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-full mx-auto">
                 <Building className="w-8 h-8 text-primary" />
               </div>
               <div className="text-3xl font-bold text-foreground">200+</div>
-              <p className="text-muted-foreground">Partner Companies</p>
+              <p className="text-muted-foreground">Partner Organizations</p>
             </div>
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-full mx-auto">
@@ -80,12 +80,12 @@ const HeroSection = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link to="/profile">
               <Button variant="hero" size="lg" className="min-w-[200px]">
-                I'm a Student
+                I’m seeking growth
               </Button>
             </Link>
             <Link to="/for-companies">
               <Button variant="outline" size="lg" className="min-w-[200px]">
-                I'm a Company
+                I represent an organization
               </Button>
             </Link>
           </div>

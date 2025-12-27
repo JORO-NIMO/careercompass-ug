@@ -2,38 +2,59 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchFilters from "@/components/SearchFilters";
 import FeaturedPlacements from "@/components/FeaturedPlacements";
+import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buildPlacementQueries, BotQuery } from "@/lib/placementBot";
+import { buildPlacementQueries } from "@/lib/placementBot";
+import type { PlacementFilters, PlacementQuery } from "@/types/placements";
 import { useState } from "react";
 
 const FindPlacements = () => {
-  const [queries, setQueries] = useState<BotQuery[]>([]);
+  const [queries, setQueries] = useState<PlacementQuery[]>([]);
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://careercompass.ug";
 
-  const handleSearch = (filters: any) => {
+  const handleSearch = (filters: PlacementFilters) => {
     const built = buildPlacementQueries({
-      keywords: filters?.keywords,
-      sector: filters?.industry as any,
-      region: filters?.region,
-      placementType: filters?.placementType,
-      field: filters?.field,
-      year: filters?.year,
+      keywords: filters.keywords,
+      sector: filters.sector,
+      region: filters.region,
+      placementType: filters.placementType,
+      field: filters.field,
+      year: filters.year,
     });
     setQueries(built);
   };
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Find Internships and Graduate Placements in Uganda | CareerCompass"
+        description="Search internships, apprenticeships, and early-career placements across Uganda. Filter by sector, region, study field, and programme type to uncover roles tailored to you."
+        keywords={[
+          "Uganda internships search",
+          "graduate job placements Uganda",
+          "student apprenticeships Kampala",
+          "entry level jobs Uganda",
+        ]}
+        canonical="/find-placements"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Find Placements",
+          url: `${baseUrl}/find-placements`,
+          description: "Discover curated internships, fellowships, and placements across Uganda.",
+        }}
+      />
       <Header />
       <main>
         <div className="bg-gradient-to-br from-primary via-primary-glow to-primary-dark text-primary-foreground">
           <div className="container mx-auto px-4 py-16">
             <div className="text-center space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold">
-                Find Your Perfect Placement
+                Discover Your Next Opportunity
               </h1>
               <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-                Search through available internship opportunities across Uganda
+                Search curated internships, projects, fellowships, and roles across Uganda
               </p>
             </div>
           </div>

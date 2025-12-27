@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { resolveApiUrl } from '@/lib/api-client';
 import type {
   AdminBulletDetail,
   AdminBulletList,
@@ -24,7 +25,8 @@ async function authorizedFetch(input: RequestInfo, init: RequestInit = {}) {
     headers.set('Content-Type', 'application/json');
   }
 
-  return fetch(input, { ...init, headers });
+  const target = typeof input === 'string' ? resolveApiUrl(input) : input;
+  return fetch(target, { ...init, headers });
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<{
@@ -44,6 +46,9 @@ async function parseJsonResponse<T>(response: Response): Promise<{
   }
 
   if (!contentType.includes('application/json')) {
+    if (response.ok) {
+      return { success: true, data: undefined };
+    }
     return { success: false, data: undefined, error: 'Server returned non-JSON response' };
   }
 

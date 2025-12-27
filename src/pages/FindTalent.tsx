@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 type ProfileRow = Tables<"profiles">;
 
@@ -42,7 +43,13 @@ const BASE_FIELD_OPTIONS = [
 
 const BASE_LOCATION_OPTIONS = ["Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu", "Mbale", "Fort Portal", "Arua"];
 
-const BASE_EXPERIENCE_OPTIONS = ["Fresh Graduate", "1-2 years", "3-5 years", "5+ years"];
+const BASE_EXPERIENCE_OPTIONS = [
+  "Emerging Talent",
+  "1-2 years",
+  "3-5 years",
+  "5+ years",
+  "Career Switcher",
+];
 
 const FindTalent = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,7 +77,7 @@ const FindTalent = () => {
         title: primaryInterest,
         location: profile.location ?? "Location not specified",
         field: primaryInterest,
-        education: profile.experience_level ? `${profile.experience_level} graduate` : "Education details not provided",
+        education: profile.experience_level ?? "Background details not provided",
         skills: interests,
         experience: profile.experience_level ?? "Experience not specified",
         email: profile.email,
@@ -188,17 +195,17 @@ const FindTalent = () => {
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Badge className="mb-4" variant="secondary">For Employers</Badge>
+          <Badge className="mb-4" variant="secondary">For Organizations</Badge>
           <h1 className="text-4xl font-bold mb-4">Find Talent</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Search for qualified candidates across Uganda. Connect with skilled professionals ready for their next opportunity.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
             <Button variant="outline" asChild>
-              <a href="/find-placements">View Placements</a>
+              <a href="/find-placements">View Opportunities</a>
             </Button>
             <Button asChild>
-              <a href="/for-companies">Post a Placement</a>
+              <a href="/for-companies">Post an Opportunity</a>
             </Button>
             <Button variant="secondary" asChild>
               <a href="/pricing">See Pricing</a>
@@ -213,7 +220,7 @@ const FindTalent = () => {
               How Featuring Works
             </CardTitle>
             <CardDescription>
-              Featured placements get a spotlight badge, float to the top of search results, and appear in employer highlight emails.
+              Featured opportunities get a spotlight badge, float to the top of search results, and appear in employer highlight emails.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -228,7 +235,7 @@ const FindTalent = () => {
               </div>
               <div className="rounded-lg border border-primary bg-white p-4 shadow-sm">
                 <p className="font-semibold mb-1">30 Day Feature</p>
-                <p className="text-sm text-muted-foreground">Dominate searches for the entire month with premium badge placement.</p>
+                <p className="text-sm text-muted-foreground">Dominate searches for the entire month with premium badge visibility.</p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3 mt-6">
@@ -477,7 +484,9 @@ const FindTalent = () => {
             <a href="mailto:joronimoamanya@gmail.com" className="flex-1">
               <Button size="lg" className="w-full">Request Recruitment Support</Button>
             </a>
-            <Button size="lg" variant="outline">Post a Job Opening</Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link to="/for-companies#post-opportunity">Post a Job Opening</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
