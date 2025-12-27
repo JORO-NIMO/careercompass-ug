@@ -136,10 +136,33 @@ supabase deploy
 
 ### Option 3: Vercel
 
+#### A. Via Vercel CLI
+
 ```bash
 npm install -g vercel
 vercel --prod
 ```
+
+#### B. Via GitHub Actions (Recommended)
+
+1. Connect your repository to Vercel:
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Import your GitHub repository
+   - Note down your Project ID and Organization ID from project settings
+
+2. Add required secrets in GitHub repository settings:
+   ```
+   VERCEL_TOKEN          # Get from Vercel Account Settings → Tokens
+   VERCEL_ORG_ID         # From Vercel project settings
+   VERCEL_PROJECT_ID     # From Vercel project settings
+   ```
+
+3. Push to `main` branch to trigger automatic deployment:
+   ```bash
+   git push origin main
+   ```
+
+4. Monitor deployment in GitHub Actions tab and Vercel dashboard
 
 ## GitHub Actions CI/CD
 
@@ -147,6 +170,7 @@ vercel --prod
 
 Add these secrets in GitHub repository settings:
 
+#### For Netlify Deployment:
 ```
 VITE_SUPABASE_URL
 VITE_SUPABASE_PUBLISHABLE_KEY
@@ -156,10 +180,20 @@ NETLIFY_AUTH_TOKEN
 NETLIFY_SITE_ID
 ```
 
+#### For Vercel Deployment:
+```
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+VERCEL_TOKEN
+VERCEL_ORG_ID
+VERCEL_PROJECT_ID
+```
+
 ### Workflow Triggers
 
 - **Pull Requests**: Runs linting and type checking
-- **Push to `develop`**: Deploys to staging
+- **Push to `develop`**: Deploys to staging (Netlify)
+- **Push to `main`**: Deploys to production (Netlify or Vercel depending on configuration)
 - **Push to `main`**: Deploys to production
 
 ### Manual Migration Deployment
