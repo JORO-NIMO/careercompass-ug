@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { registerPushSubscription } from '@/hooks/useNotifications';
-import { env } from '@/lib/env';
-import { useSession } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
-const VAPID_PUBLIC_KEY = env.vapidPublicKey || import.meta.env.VITE_VAPID_PUBLIC_KEY;
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 const PushOptIn: React.FC = () => {
-  const { user } = useSession();
+  const { user } = useAuth();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 

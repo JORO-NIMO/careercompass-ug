@@ -4,6 +4,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from './ui/button';
+import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 interface Props {
   children: ReactNode;
@@ -31,18 +32,27 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log to error reporting service (Sentry, LogRocket, etc.)
+    // Log to console
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
     });
 
-    // In production, send to error tracking service
-    if (import.meta.env.PROD) {
-      // Example: Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
-    }
+    // Send to Sentry in production
+    addBreadcrumb('Error boundary triggered', 'error', {
+      componentStack: errorInfo.componentStack,
+    });
+
+    captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+      },
+      tags: {
+        errorBoundary: 'true',
+      },
+    });
   }
 
   handleReset = () => {
@@ -65,7 +75,7 @@ class ErrorBoundary extends Component<Props, State> {
             <div className="flex justify-center">
               <AlertTriangle className="h-16 w-16 text-destructive" />
             </div>
-            
+
             <div className="space-y-2">
               <h1 className="text-2xl font-bold">Something went wrong</h1>
               <p className="text-muted-foreground">
