@@ -18,6 +18,7 @@ const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || '';
 const VERIFY_HCAPTCHA_URL = `${env.supabase.url}/functions/v1/verify-hcaptcha`;
 const SignIn = () => {
   const { signIn, signUp, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
