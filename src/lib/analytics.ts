@@ -38,7 +38,7 @@ class AnalyticsService {
 
   constructor() {
     this.sessionId = this.generateSessionId();
-    
+
     if (env.features.analytics) {
       this.startAutoFlush();
       this.setupBeforeUnload();
@@ -107,7 +107,7 @@ class AnalyticsService {
       if (sync && navigator.sendBeacon) {
         // Use sendBeacon for synchronous requests (e.g., page unload)
         const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
-        navigator.sendBeacon('/api/analytics', blob);
+        navigator.sendBeacon(`${env.supabase.url}/functions/v1/events`, blob);
       } else {
         // Regular async request
         await api.trackEvents(events);

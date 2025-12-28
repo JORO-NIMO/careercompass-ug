@@ -75,7 +75,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean>): string {
   const url = new URL(resolveApiUrl(path));
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
@@ -121,36 +121,40 @@ export const apiClient = {
 };
 
 // Specific API methods
+import { env } from './env';
+
+const FUNCTIONS_URL = `${env.supabase.url}/functions/v1`;
+
 export const api = {
   // Jobs
   searchJobs: (query: string, provider: 'jsearch' | 'adzuna' = 'jsearch') =>
-    apiClient.get('/api/jobs', { params: { query, provider } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/jobs`, { params: { query, provider } }),
 
   // Courses
   getCourses: (limit = 20) =>
-    apiClient.get('/api/courses', { params: { limit } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/courses`, { params: { limit } }),
 
   // Books
   searchBooks: (q: string, limit = 20) =>
-    apiClient.get('/api/books', { params: { q, limit } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/books`, { params: { q, limit } }),
 
   // Careers
   searchCareers: (q: string) =>
-    apiClient.get('/api/careers', { params: { q } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/careers`, { params: { q } }),
 
   getCareerByCode: (code: string) =>
-    apiClient.get('/api/careers', { params: { code } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/careers`, { params: { code } }),
 
   // Analytics
   trackEvent: <Name extends AnalyticsEventEnvelope['event_name']>(event: AnalyticsEventEnvelope<Name>) =>
-    apiClient.post('/api/analytics', event),
+    apiClient.post(`${FUNCTIONS_URL}/events`, event),
 
   trackEvents: (events: AnalyticsEventEnvelope[]) =>
-    apiClient.post('/api/analytics', { events }),
+    apiClient.post(`${FUNCTIONS_URL}/events`, { events }),
 
   // Notifications
   sendNotification: (notification: NotificationPayload) =>
-    apiClient.post('/api/notifications', notification),
+    apiClient.post(`${FUNCTIONS_URL}/notifications`, notification),
 
   // Feedback
   submitFeedback: (feedback: {
@@ -158,5 +162,5 @@ export const api = {
     category?: string;
     message: string;
     anonymous?: boolean;
-  }) => apiClient.post('/api/feedback', feedback),
+  }) => apiClient.post(`${FUNCTIONS_URL}/api/feedback`, feedback),
 };
