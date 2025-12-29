@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -64,6 +65,7 @@ const ForCompanies = () => {
   const [stipend, setStipend] = useState('');
   const [availableSlots, setAvailableSlots] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [loadingBoosts, setLoadingBoosts] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -355,6 +357,8 @@ const ForCompanies = () => {
 
       if (error) throw error;
 
+      setSubmissionSuccess(true);
+      
       toast({
         title: "Published",
         description: "Opportunity posted and is live. We'll contact you if it needs additional review.",
@@ -920,6 +924,39 @@ const ForCompanies = () => {
           </section>
         </div>
       </main>
+
+      <Dialog open={submissionSuccess} onOpenChange={setSubmissionSuccess}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Opportunity Published!
+            </DialogTitle>
+            <DialogDescription>
+              Your listing is now live. Candidates can view and apply immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="rounded-md bg-green-50 p-4 text-sm text-green-900 border border-green-200">
+              <p className="font-medium">What happens next?</p>
+              <ul className="list-disc pl-4 mt-2 space-y-1">
+                <li>Your opportunity appears in search results instantly.</li>
+                <li>We notify matched candidates via email.</li>
+                <li>You'll receive applications directly to your email.</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-start">
+            <Button type="button" variant="secondary" onClick={() => setSubmissionSuccess(false)}>
+              Post Another Opportunity
+            </Button>
+            <Button type="button" onClick={() => navigate('/find-talent')}>
+              View Live Listing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
