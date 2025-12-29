@@ -71,12 +71,18 @@ export async function fetchListings(): Promise<ListingWithCompany[]> {
 }
 
 export async function fetchAdminListings(): Promise<AdminListing[]> {
-  const response = await authorizedFetch('/api/admin/listings', { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse<AdminListingsCollection>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load admin listings');
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*, companies:companies(id, name)')
+    .order('display_order', { ascending: true })
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('fetchAdminListings error:', error);
+    throw new Error(error.message || 'Failed to load listings');
   }
-  return data?.items ?? [];
+
+  return (data || []) as AdminListing[];
 }
 
 export async function createListing(payload: {
@@ -86,24 +92,24 @@ export async function createListing(payload: {
   isFeatured?: boolean;
   displayOrder?: number;
 }): Promise<Listing> {
-  const response = await authorizedFetch('/api/admin/listings', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const { data, error } = await supabase
+    .from('listings')
+    .insert({
       title: payload.title,
       description: payload.description,
       company_id: payload.companyId ?? null,
       is_featured: payload.isFeatured ?? false,
       display_order: payload.displayOrder,
-    }),
-  });
+    })
+    .select('*')
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to create listing');
+  if (error) {
+    console.error('createListing error:', error);
+    throw new Error(error.message || 'Failed to create listing');
   }
 
-  return data.item;
+  return data;
 }
 
 export async function updateListing(id: string, payload: {
@@ -113,60 +119,67 @@ export async function updateListing(id: string, payload: {
   isFeatured?: boolean;
   displayOrder?: number;
 }): Promise<Listing> {
-  const response = await authorizedFetch(`/api/admin/listings/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const { data, error } = await supabase
+    .from('listings')
+    .update({
       title: payload.title,
       description: payload.description,
       company_id: payload.companyId,
       is_featured: payload.isFeatured,
       display_order: payload.displayOrder,
-    }),
-  });
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to update listing');
+  if (error) {
+    console.error('updateListing error:', error);
+    throw new Error(error.message || 'Failed to update listing');
   }
 
-  return data.item;
+  return data;
 }
 
 export async function deleteListing(id: string): Promise<void> {
-  const response = await authorizedFetch(`/api/admin/listings/${id}`, { method: 'DELETE' });
-  const { success, error } = await parseJsonResponse<Record<string, never>>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to delete listing');
+  const { error } = await supabase
+    .from('listings')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('deleteListing error:', error);
+    throw new Error(error.message || 'Failed to delete listing');
   }
 }
 
 export async function toggleListingFeature(id: string, isFeatured: boolean): Promise<Listing> {
-  const response = await authorizedFetch(`/api/admin/listings/${id}/feature`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ is_featured: isFeatured }),
-  });
+  const { data, error } = await supabase
+    .from('listings')
+    .update({ is_featured: isFeatured })
+    .eq('id', id)
+    .select('*')
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to update feature status');
+  if (error) {
+    console.error('toggleListingFeature error:', error);
+    throw new Error(error.message || 'Failed to update feature status');
   }
 
-  return data.item;
+  return data;
 }
 
 export async function updateListingOrder(id: string, displayOrder: number): Promise<Listing> {
-  const response = await authorizedFetch(`/api/admin/listings/${id}/order`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ display_order: displayOrder }),
-  });
+  const { data, error } = await supabase
+    .from('listings')
+    .update({ display_order: displayOrder })
+    .eq('id', id)
+    .select('*')
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: Listing }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to update display order');
+  if (error) {
+    console.error('updateListingOrder error:', error);
+    throw new Error(error.message || 'Failed to update display order');
   }
 
-  return data.item;
+  return data;
 }

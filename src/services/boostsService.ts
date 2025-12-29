@@ -51,12 +51,17 @@ async function parseJsonResponse<T>(response: Response): Promise<{
 }
 
 export async function fetchAdminBoosts(): Promise<Boost[]> {
-  const response = await authorizedFetch('/api/admin/boosts', { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse<AdminBoostsCollection>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load boosts');
+  const { data, error } = await supabase
+    .from('boosts')
+    .select('*')
+    .order('starts_at', { ascending: false });
+
+  if (error) {
+    console.error('fetchAdminBoosts error:', error);
+    throw new Error(error.message || 'Failed to load boosts');
   }
-  return data?.items ?? [];
+
+  return (data || []) as Boost[];
 }
 
 export async function createBoost(payload: {
@@ -66,54 +71,71 @@ export async function createBoost(payload: {
   ends_at: string;
   is_active?: boolean;
 }): Promise<Boost> {
-  const response = await authorizedFetch('/api/admin/boosts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const { success, data, error } = await parseJsonResponse<{ item?: Boost }>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to create boost');
+  const { data, error } = await supabase
+    .from('boosts')
+    .insert({
+      entity_id: payload.entity_id,
+      entity_type: payload.entity_type,
+      starts_at: payload.starts_at || new Date().toISOString(),
+      ends_at: payload.ends_at,
+      is_active: payload.is_active ?? true,
+    })
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('createBoost error:', error);
+    throw new Error(error.message || 'Failed to create boost');
   }
-  if (!data?.item) {
-    throw new Error('Failed to create boost');
-  }
-  return data.item;
+
+  return data as Boost;
 }
 
 export async function updateBoost(id: string, payload: Partial<Pick<Boost, 'starts_at' | 'ends_at' | 'is_active'>>): Promise<Boost> {
-  const response = await authorizedFetch(`/api/admin/boosts/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const { success, data, error } = await parseJsonResponse<{ item?: Boost }>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to update boost');
+  const { data, error } = await supabase
+    .from('boosts')
+    .update(payload)
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('updateBoost error:', error);
+    throw new Error(error.message || 'Failed to update boost');
   }
-  if (!data?.item) {
-    throw new Error('Failed to update boost');
-  }
-  return data.item;
+
+  return data as Boost;
 }
 
 export async function revokeBoost(id: string): Promise<Boost> {
-  const response = await authorizedFetch(`/api/admin/boosts/${id}`, { method: 'DELETE' });
-  const { success, data, error } = await parseJsonResponse<{ item?: Boost }>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to revoke boost');
+  const { data, error } = await supabase
+    .from('boosts')
+    .update({ is_active: false, ends_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('revokeBoost error:', error);
+    throw new Error(error.message || 'Failed to revoke boost');
   }
-  if (!data?.item) {
-    throw new Error('Failed to revoke boost');
-  }
-  return data.item;
+
+  return data as Boost;
 }
 
 export async function fetchActiveBoosts(): Promise<Array<{ id: string; entity_id: string; entity_type: 'company' | 'listing'; starts_at: string; ends_at: string }>> {
-  const response = await fetch('/api/boosts');
-  const { success, data, error } = await parseJsonResponse<AdminBoostsCollection>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load boosts');
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('boosts')
+    .select('id, entity_id, entity_type, starts_at, ends_at')
+    .eq('is_active', true)
+    .lte('starts_at', now)
+    .gt('ends_at', now);
+
+  if (error) {
+    console.error('fetchActiveBoosts error:', error);
+    throw new Error(error.message || 'Failed to load active boosts');
   }
-  return data?.items ?? [];
+
+  return data as any[];
 }
