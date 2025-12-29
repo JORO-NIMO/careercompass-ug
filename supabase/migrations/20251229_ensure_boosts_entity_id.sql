@@ -78,6 +78,19 @@ BEGIN
     USING (public.has_role(auth.uid(), 'admin'))
     WITH CHECK (public.has_role(auth.uid(), 'admin'));
   END IF;
+
+  -- Ensure the public policy exists regardless of table creation
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'listings' 
+    AND policyname = 'Public view listings'
+  ) THEN
+    CREATE POLICY "Public view listings" ON public.listings FOR SELECT USING (true);
+  END IF;
+
+  -- Ensure RLS is enabled
+  ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
 END $$;
 
 COMMIT;
