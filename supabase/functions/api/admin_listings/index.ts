@@ -76,8 +76,7 @@ export default async function (req: Request) {
 
       if (fetchError) {
         console.error('admin listings fetch error', fetchError);
-        console.error('admin listings fetch error', fetchError);
-        return jsonError('Failed to load listings', 500);
+        return jsonError(`Failed to load listings: ${fetchError.message}`, 500, fetchError);
       }
 
       return jsonSuccess({ items: data ?? [] });

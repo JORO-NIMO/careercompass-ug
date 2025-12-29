@@ -63,7 +63,7 @@ export default async function (req: Request) {
 
       if (fetchError) {
         console.error('admin boosts fetch error', fetchError);
-        return jsonError('Failed to load boosts', 500);
+        return jsonError(`Failed to load boosts: ${fetchError.message}`, 500, fetchError);
       }
 
       return jsonSuccess({ items: data ?? [] });
