@@ -14,7 +14,7 @@ export default async function (req: Request) {
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from('listings')
-      .select('*, companies:companies!listings_company_id_fkey(id, name)')
+      .select('*, companies:companies(id, name)')
       .order('is_featured', { ascending: false })
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
