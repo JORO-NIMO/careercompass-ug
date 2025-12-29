@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { handleCors } from '../_shared/auth.ts';
+import { handleCors, corsHeaders } from './_shared/auth.ts';
+import { jsonError, jsonSuccess } from './_shared/responses.ts';
 
 // Static imports for all route handlers
 import adminAdsHandler from './admin_ads/index.ts';
@@ -130,7 +131,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(errorDetails), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      },
     });
   }
 });
