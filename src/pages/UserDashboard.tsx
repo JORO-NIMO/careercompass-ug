@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, ShieldCheck, Clock, Globe, MapPin, CircleAlert } from 'lucide-react';
 import { companyRegistrationSchema } from '@/lib/validations';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 import {
   listOwnedCompanies,
   registerCompany,
@@ -186,13 +187,21 @@ const UserDashboard = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="company-location">Google Maps location</Label>
-                    <Input
-                      id="company-location"
-                      value={formState.location}
-                      onChange={(event) => setFormState((prev) => ({ ...prev, location: event.target.value }))}
-                      placeholder="Plot 12 Kampala Road, Kampala"
-                      required
-                    />
+                    <div className="flex flex-col gap-2">
+                      <LocationPicker
+                        onLocationSelect={(lat, lng) => {
+                          const formatted = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                          setFormState(prev => ({ ...prev, location: formatted }));
+                        }}
+                      />
+                    </div>
+                    <div className="hidden">
+                      <Input
+                        id="company-location"
+                        value={formState.location}
+                        readOnly
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="company-website">Company website</Label>

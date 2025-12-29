@@ -11,23 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { Link } from "react-router-dom";
 
-type ProfileRow = Tables<"profiles">;
-
-interface Candidate {
-  id: string;
-  name: string;
-  title: string;
-  location: string;
-  field: string;
-  education: string;
-  skills: string[];
-  experience: string;
-  email?: string;
-  phone?: string;
-  availability: string;
-  verified: boolean;
-  updatedAt?: string | null;
-}
+import { fetchCandidates, type Candidate } from "@/services/profilesService";
 
 const BASE_FIELD_OPTIONS = [
   "Technology",
@@ -67,45 +51,13 @@ const FindTalent = () => {
 
     let isMounted = true;
 
-    const mapProfileToCandidate = (profile: ProfileRow): Candidate => {
-      const interests = profile.areas_of_interest ?? [];
-      const primaryInterest = interests[0] ?? "Open to opportunities";
-
-      return {
-        id: profile.id,
-        name: profile.full_name ?? "Unnamed Candidate",
-        title: primaryInterest,
-        location: profile.location ?? "Location not specified",
-        field: primaryInterest,
-        education: profile.experience_level ?? "Background details not provided",
-        skills: interests,
-        experience: profile.experience_level ?? "Experience not specified",
-        email: profile.email,
-        phone: undefined,
-        availability: profile.availability_status ?? "Available upon request",
-        verified: false,
-        updatedAt: profile.updated_at,
-      };
-    };
-
     const loadCandidates = async () => {
       try {
         setLoading(true);
         setLoadError(null);
-        const { data, error } = await supabase
-          .from("profiles")
-          .select(
-            "id, full_name, email, areas_of_interest, updated_at, location, experience_level, availability_status",
-          )
-          .order("updated_at", { ascending: false })
-          .limit(100);
-
-        if (error) throw error;
-
+        const candidates = await fetchCandidates();
         if (!isMounted) return;
-
-        const mapped = (data ?? []).map(mapProfileToCandidate);
-        setCandidates(mapped);
+        setCandidates(candidates);
       } catch (error) {
         console.error("Failed to load candidates", error);
         if (isMounted) {
@@ -203,9 +155,6 @@ const FindTalent = () => {
             </Button>
             <Button asChild>
               <a href="/for-companies">Post an Opportunity</a>
-            </Button>
-            <Button variant="secondary" asChild>
-              <a href="/pricing">See Pricing</a>
             </Button>
           </div>
         </div>
@@ -345,108 +294,108 @@ const FindTalent = () => {
             ))}
           {!loading &&
             filteredCandidates.map((candidate) => (
-            <Card key={candidate.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.name}`} />
-                    <AvatarFallback>{candidate.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl mb-1">{candidate.name}</CardTitle>
-                        <CardDescription className="text-base">{candidate.title}</CardDescription>
+              <Card key={candidate.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.name}`} />
+                      <AvatarFallback>{candidate.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-xl mb-1">{candidate.name}</CardTitle>
+                          <CardDescription className="text-base">{candidate.title}</CardDescription>
+                        </div>
+                        {candidate.verified && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-700">
+                            <Award className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
                       </div>
-                      {candidate.verified && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
-                          <Award className="h-3 w-3 mr-1" />
-                          Verified
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Location & Field */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      <span>{candidate.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Briefcase className="h-4 w-4" />
+                      <span>{candidate.experience}</span>
+                    </div>
+                  </div>
+
+                  {/* Education */}
+                  <div className="flex items-start gap-2 text-sm">
+                    <GraduationCap className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{candidate.education}</span>
+                  </div>
+
+                  {/* Skills */}
+                  <div>
+                    <p className="text-sm font-medium mb-2">Skills:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {candidate.skills.slice(0, 5).map((skill, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {candidate.skills.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{candidate.skills.length - 5} more
+                        </Badge>
+                      )}
+                      {candidate.skills.length === 0 && (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                          Interests coming soon
                         </Badge>
                       )}
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Location & Field */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{candidate.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Briefcase className="h-4 w-4" />
-                    <span>{candidate.experience}</span>
-                  </div>
-                </div>
 
-                {/* Education */}
-                <div className="flex items-start gap-2 text-sm">
-                  <GraduationCap className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">{candidate.education}</span>
-                </div>
-
-                {/* Skills */}
-                <div>
-                  <p className="text-sm font-medium mb-2">Skills:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {candidate.skills.slice(0, 5).map((skill, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {candidate.skills.length > 5 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{candidate.skills.length - 5} more
-                      </Badge>
+                  {/* Contact Info */}
+                  <div className="pt-4 border-t space-y-2">
+                    {candidate.email && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">
+                          {candidate.email}
+                        </a>
+                      </div>
                     )}
-                    {candidate.skills.length === 0 && (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">
-                        Interests coming soon
-                      </Badge>
+                    {candidate.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <a href={`tel:${candidate.phone}`} className="text-blue-600 hover:underline">
+                          {candidate.phone}
+                        </a>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Available: {candidate.availability}</span>
+                    </div>
+                    {candidate.updatedAt && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock3 className="h-3 w-3" />
+                        <span>Updated {new Date(candidate.updatedAt).toLocaleDateString()}</span>
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Contact Info */}
-                <div className="pt-4 border-t space-y-2">
-                  {candidate.email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">
-                        {candidate.email}
-                      </a>
-                    </div>
-                  )}
-                  {candidate.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${candidate.phone}`} className="text-blue-600 hover:underline">
-                        {candidate.phone}
-                      </a>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Available: {candidate.availability}</span>
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <Button className="flex-1">Contact Candidate</Button>
+                    <Button variant="outline">Save</Button>
                   </div>
-                  {candidate.updatedAt && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock3 className="h-3 w-3" />
-                      <span>Updated {new Date(candidate.updatedAt).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Button className="flex-1">Contact Candidate</Button>
-                  <Button variant="outline">Save</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
         </div>
 
         {showComingSoon && (

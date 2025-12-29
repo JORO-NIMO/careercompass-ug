@@ -121,7 +121,6 @@ const Footer = () => {
                   Partner With Us
                 </a>
               </li>
-              <li><a href="/pricing" className="hover:text-primary transition-colors">Pricing & Plans</a></li>
             </ul>
           </div>
 
@@ -143,9 +142,9 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <MessageCircle className="w-4 h-4" />
-                <a 
-                  href="https://wa.me/256726128513" 
-                  target="_blank" 
+                <a
+                  href="https://wa.me/256726128513"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm hover:text-primary transition-colors"
                 >
@@ -217,7 +216,7 @@ const Footer = () => {
             <a href="/find-talent" className="hover:text-primary transition-colors">Find Talent</a>
             <a href="/application-tips" className="hover:text-primary transition-colors">Resources</a>
             <a href="/for-companies" className="hover:text-primary transition-colors">For Companies</a>
-            <a href="/pricing" className="hover:text-primary transition-colors">Pricing</a>
+
           </nav>
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-muted-foreground text-sm">

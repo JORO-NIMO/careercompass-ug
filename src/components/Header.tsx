@@ -47,9 +47,6 @@ const Header = () => {
           <Link to="/for-companies" className="text-muted-foreground hover:text-primary transition-colors">
             For Companies
           </Link>
-          <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
-            Pricing
-          </Link>
           {isAdmin && (
             <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               <Shield className="w-4 h-4" />
@@ -109,9 +106,6 @@ const Header = () => {
             </Link>
             <Link to="/for-companies" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
               For Companies
-            </Link>
-            <Link to="/pricing" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
-              Pricing
             </Link>
             {isAdmin && (
               <Link to="/admin" className="block py-2 text-muted-foreground hover:text-primary transition-colors">

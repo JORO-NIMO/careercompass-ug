@@ -22,11 +22,6 @@ const QUICK_LINKS = [
     description: "Publish opportunities and manage your organisation profile in minutes.",
     href: "/for-companies",
   },
-  {
-    title: "Pricing",
-    description: "Compare plans and boosts designed for organisations of every size.",
-    href: "/pricing",
-  },
 ];
 
 const QuickNavigation = () => {

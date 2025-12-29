@@ -42,6 +42,7 @@ import {
 	publicUniversities,
 } from "@/lib/institutions";
 import { REGION_DISTRICT_GROUPS, UgandaRegion, findRegionForDistrict } from "@/lib/uganda-districts";
+import { updateProfile } from "@/services/profilesService";
 
 const RECOMMENDED_INTERESTS = [
 	"Technology",
@@ -81,54 +82,54 @@ const AVAILABILITY_OPTIONS = [
 const getExtraStorageKey = (userId: string) => `placementbridge-profile-extra:${userId}`;
 
 const StudentProfile = () => {
-		const [geoLoading, setGeoLoading] = useState(false);
-		// Helper: Reverse geocode lat/lon to district/region
-		const reverseGeocode = async (lat: number, lon: number) => {
-			const url = `${REVERSE_GEOCODE_API}&lat=${lat}&lon=${lon}`;
-			const res = await fetch(url);
-			if (!res.ok) throw new Error("Failed to reverse geocode");
-			const data = await res.json();
-			// Try to extract district and region from address
-			const address = data.address || {};
-			const district = address.county || address.state_district || address.district || address.city || address.town || address.village || "";
-			const region = address.state || address.region || "";
-			return { district: district.trim(), region: region.trim() };
-		};
+	const [geoLoading, setGeoLoading] = useState(false);
+	// Helper: Reverse geocode lat/lon to district/region
+	const reverseGeocode = async (lat: number, lon: number) => {
+		const url = `${REVERSE_GEOCODE_API}&lat=${lat}&lon=${lon}`;
+		const res = await fetch(url);
+		if (!res.ok) throw new Error("Failed to reverse geocode");
+		const data = await res.json();
+		// Try to extract district and region from address
+		const address = data.address || {};
+		const district = address.county || address.state_district || address.district || address.city || address.town || address.village || "";
+		const region = address.state || address.region || "";
+		return { district: district.trim(), region: region.trim() };
+	};
 
-		// Handler: Get device location and update fields
-		const handleGetDeviceLocation = async () => {
-			if (!navigator.geolocation) {
-				toast({ title: "Geolocation not supported", description: "Your browser does not support geolocation.", variant: "destructive" });
-				return;
-			}
-			setGeoLoading(true);
-			navigator.geolocation.getCurrentPosition(
-				async (pos) => {
-					try {
-						const { latitude, longitude } = pos.coords;
-						const { district: foundDistrict, region: foundRegion } = await reverseGeocode(latitude, longitude);
-						if (foundDistrict) {
-							setDistrict(foundDistrict);
-							setLocation(`${foundDistrict}${foundRegion ? ` (${foundRegion})` : ""}`);
-							setRegion(foundRegion as UgandaRegion);
-							setLegacyLocation("");
-							toast({ title: "Location captured", description: `Detected: ${foundDistrict}${foundRegion ? ` (${foundRegion})` : ""}` });
-						} else {
-							toast({ title: "Location not found", description: "Could not determine your district.", variant: "destructive" });
-						}
-					} catch (err) {
-						toast({ title: "Location error", description: "Could not resolve your location.", variant: "destructive" });
-					} finally {
-						setGeoLoading(false);
+	// Handler: Get device location and update fields
+	const handleGetDeviceLocation = async () => {
+		if (!navigator.geolocation) {
+			toast({ title: "Geolocation not supported", description: "Your browser does not support geolocation.", variant: "destructive" });
+			return;
+		}
+		setGeoLoading(true);
+		navigator.geolocation.getCurrentPosition(
+			async (pos) => {
+				try {
+					const { latitude, longitude } = pos.coords;
+					const { district: foundDistrict, region: foundRegion } = await reverseGeocode(latitude, longitude);
+					if (foundDistrict) {
+						setDistrict(foundDistrict);
+						setLocation(`${foundDistrict}${foundRegion ? ` (${foundRegion})` : ""}`);
+						setRegion(foundRegion as UgandaRegion);
+						setLegacyLocation("");
+						toast({ title: "Location captured", description: `Detected: ${foundDistrict}${foundRegion ? ` (${foundRegion})` : ""}` });
+					} else {
+						toast({ title: "Location not found", description: "Could not determine your district.", variant: "destructive" });
 					}
-				},
-				(err) => {
-					toast({ title: "Location denied", description: "Permission denied or unavailable.", variant: "destructive" });
+				} catch (err) {
+					toast({ title: "Location error", description: "Could not resolve your location.", variant: "destructive" });
+				} finally {
 					setGeoLoading(false);
-				},
-				{ enableHighAccuracy: true, timeout: 10000 }
-			);
-		};
+				}
+			},
+			(err) => {
+				toast({ title: "Location denied", description: "Permission denied or unavailable.", variant: "destructive" });
+				setGeoLoading(false);
+			},
+			{ enableHighAccuracy: true, timeout: 10000 }
+		);
+	};
 	const { user } = useAuth();
 	const { toast } = useToast();
 
@@ -392,22 +393,17 @@ const StudentProfile = () => {
 			setLegacyLocation("");
 		}
 
+
 		try {
 			setSaving(true);
-			const { error } = await supabase.from("profiles").upsert({
-				id: user.id,
-				email: email || user.email,
+
+			await updateProfile({
 				full_name: fullName,
 				areas_of_interest: interestPayload,
-				location: locationPayload,
+				location: locationPayload as string | null, // Type cast compatible with service
 				experience_level: stage || null,
 				availability_status: availability || null,
-				updated_at: new Date().toISOString(),
 			});
-
-			if (error) {
-				throw error;
-			}
 
 			persistExtraFields(user.id, { region: effectiveRegion, district });
 			toast({
@@ -830,9 +826,8 @@ const StudentProfile = () => {
 							</h3>
 							<p className="text-sm text-muted-foreground">
 								{focusArea || stage
-									? `${focusArea || ""}${focusArea && stage ? " · " : ""}${
-											stage ? STAGE_OPTIONS.find((option) => option.value === stage)?.label ?? stage : ""
-										}`
+									? `${focusArea || ""}${focusArea && stage ? " · " : ""}${stage ? STAGE_OPTIONS.find((option) => option.value === stage)?.label ?? stage : ""
+									}`
 									: "Update your focus area and stage to improve matches."}
 							</p>
 						</div>

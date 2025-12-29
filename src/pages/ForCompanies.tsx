@@ -18,6 +18,7 @@ import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } fro
 import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
 import { companyRegistrationSchema } from '@/lib/validations';
 import { resolveApiUrl } from '@/lib/api-client';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 
 interface ActiveBoost {
   id: string;
@@ -43,7 +44,7 @@ const ForCompanies = () => {
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement | null>(null);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://placementbridge.org';
-  
+
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
   const [companyForm, setCompanyForm] = useState<CompanyFormState>({
@@ -54,7 +55,7 @@ const ForCompanies = () => {
   });
   const [registeringCompany, setRegisteringCompany] = useState(false);
   const [verificationMeta, setVerificationMeta] = useState<VerificationMeta | null>(null);
-  
+
   const [positionTitle, setPositionTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [description, setDescription] = useState('');
@@ -66,8 +67,7 @@ const ForCompanies = () => {
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [loadingBoosts, setLoadingBoosts] = useState(false);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [geolocationLoading, setGeolocationLoading] = useState(false);
-  const [geolocationError, setGeolocationError] = useState<string | null>(null);
+
   const [geolocationCapturedAt, setGeolocationCapturedAt] = useState<string | null>(null);
   const featureMode = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -333,7 +333,7 @@ const ForCompanies = () => {
     }
 
     setSubmitting(true);
-    
+
     try {
       const { data: insertedPlacement, error } = await supabase
         .from('placements')
@@ -437,44 +437,7 @@ const ForCompanies = () => {
     }
   }, [companyForm.location]);
 
-  const mapEmbedUrl = useMemo(() => {
-    if (!coordinates) return null;
-    const delta = 0.01;
-    const south = coordinates.lat - delta;
-    const north = coordinates.lat + delta;
-    const west = coordinates.lng - delta;
-    const east = coordinates.lng + delta;
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${west}%2C${south}%2C${east}%2C${north}&layer=mapnik&marker=${coordinates.lat}%2C${coordinates.lng}`;
-  }, [coordinates]);
-
-  const handleUseDeviceLocation = () => {
-    if (!navigator.geolocation) {
-      setGeolocationError('Geolocation is not supported on this device.');
-      return;
-    }
-
-    setGeolocationLoading(true);
-    setGeolocationError(null);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const formatted = `Coordinates: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        setCompanyForm((prev) => ({ ...prev, location: formatted }));
-        setCoordinates({ lat: latitude, lng: longitude });
-        setGeolocationCapturedAt(new Date().toLocaleTimeString());
-        setGeolocationLoading(false);
-      },
-      (error) => {
-        setGeolocationLoading(false);
-        setGeolocationError(error.message || 'Unable to capture device location.');
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      },
-    );
-  };
+  // Geolocation logic is now handled by LocationPicker component
 
   const regionOptions = [
     { value: 'central', label: 'Central Region' },
@@ -542,7 +505,7 @@ const ForCompanies = () => {
           <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                  <CardTitle>Company verification</CardTitle>
+                <CardTitle>Company verification</CardTitle>
               </CardHeader>
               <CardContent className="pt-2 space-y-4">
                 {companyLoading ? (
@@ -634,75 +597,44 @@ const ForCompanies = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="company-location">Company location</Label>
-                        <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="flex flex-col gap-2">
+                          <LocationPicker
+                            initialLat={coordinates?.lat}
+                            initialLng={coordinates?.lng}
+                            onLocationSelect={(lat, lng) => {
+                              const formatted = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                              setCompanyForm(prev => ({ ...prev, location: formatted }));
+                              setCoordinates({ lat, lng });
+                              setGeolocationCapturedAt(new Date().toLocaleTimeString());
+                            }}
+                            readOnly={registeringCompany}
+                          />
+                        </div>
+                        <div className="hidden">
+                          {/* Hidden input to keep form logic happy if needed, though we update state directly */}
                           <Input
                             id="company-location"
                             value={companyForm.location}
                             readOnly
-                            placeholder="Capture your coordinates using the button"
-                            required
-                            disabled={registeringCompany}
                           />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleUseDeviceLocation}
-                            disabled={registeringCompany || geolocationLoading}
-                          >
-                            {geolocationLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Capturing…
-                              </>
-                            ) : (
-                              'Use my device location'
-                            )}
-                          </Button>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          We store precise coordinates to validate your organization. You can open the previewed map to confirm accuracy.
+                          Use the map to pin your exact entrance. Drag the marker if needed.
                         </p>
-                        {geolocationCapturedAt && (
-                          <p className="text-xs text-primary">Captured at {geolocationCapturedAt}</p>
-                        )}
-                        {geolocationError && <p className="text-xs text-destructive">{geolocationError}</p>}
                       </div>
-                      {mapEmbedUrl && (
-                        <div className="overflow-hidden rounded-lg border border-border/70">
-                          <iframe
-                            title="Company location preview"
-                            src={mapEmbedUrl}
-                            className="h-56 w-full"
-                            loading="lazy"
-                          />
-                          <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground">
-                            <span>OpenStreetMap preview</span>
-                            {coordinates && (
-                              <a
-                                href={`https://www.openstreetmap.org/?mlat=${coordinates.lat}&mlon=${coordinates.lng}#map=15/${coordinates.lat}/${coordinates.lng}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-medium text-primary hover:underline"
-                              >
-                                View full map
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                          <div className="space-y-2">
-                            <Label htmlFor="company-website">Company website</Label>
-                            <Input
-                              id="company-website"
-                              value={companyForm.website_url}
-                              onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
-                              placeholder="https://yourcompany.com (leave blank if you need help)"
-                              disabled={registeringCompany}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                              No website yet? Leave this empty and we will reach out to set up a simple landing page for verification.
-                            </p>
-                          </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="company-website">Company website</Label>
+                        <Input
+                          id="company-website"
+                          value={companyForm.website_url}
+                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
+                          placeholder="https://yourcompany.com (leave blank if you need help)"
+                          disabled={registeringCompany}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          No website yet? Leave this empty and we will reach out to set up a simple landing page for verification.
+                        </p>
+                      </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-xs text-muted-foreground">
                           We auto-approve once your location and website are verified.
@@ -900,6 +832,8 @@ const ForCompanies = () => {
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         required
+                        disabled={!!company?.name}
+                        className={company?.name ? "bg-muted" : ""}
                       />
                     </div>
                   </div>
@@ -951,16 +885,16 @@ const ForCompanies = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="stipend">Stipend (optional)</Label>
+                      <Label htmlFor="stipend">Salary / Stipend Range</Label>
                       <Input
                         id="stipend"
-                        placeholder="e.g. 500,000 UGX/month"
+                        placeholder="e.g. 500,000 - 800,000 UGX/month"
                         value={stipend}
                         onChange={(e) => setStipend(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="slots">Available slots</Label>
+                      <Label htmlFor="slots">Open Positions</Label>
                       <Input
                         id="slots"
                         type="number"
@@ -978,7 +912,7 @@ const ForCompanies = () => {
                   </div>
 
                   <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                    {submitting ? 'Submitting opportunity…' : 'Submit for review'}
+                    {submitting ? 'Publishing…' : 'Publish Opportunity'}
                   </Button>
                 </form>
               </CardContent>
