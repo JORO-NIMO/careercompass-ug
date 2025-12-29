@@ -61,12 +61,33 @@ serve(async (req) => {
   const pathParts = path.split('/').filter(Boolean);
 
   // Find the route segment that matches a known handler
-  // This handles paths like /functions/v1/api/user/register-company -> user
-  let route = pathParts[0];
-
+  // This handles paths like /functions/v1/api/admin/listings -> admin_listings
+  // or /functions/v1/api/user/register-company -> user
   const apiIndex = pathParts.indexOf('api');
+  let route = '';
+
   if (apiIndex !== -1 && apiIndex < pathParts.length - 1) {
-    route = pathParts[apiIndex + 1];
+    // Get remaining segments after 'api' and join with underscore
+    // e.g., ['admin', 'listings'] -> 'admin_listings'
+    // e.g., ['user', 'register-company'] -> 'user' (only first segment for nested handlers)
+    const remainingParts = pathParts.slice(apiIndex + 1);
+
+    // Try progressively shorter underscore-joined routes
+    // First try: admin_listings, then: admin
+    for (let i = remainingParts.length; i > 0; i--) {
+      const candidate = remainingParts.slice(0, i).join('_');
+      if (routeHandlers[candidate]) {
+        route = candidate;
+        break;
+      }
+    }
+
+    // If no match found, use just the first segment (for handlers like 'user')
+    if (!route && remainingParts.length > 0) {
+      route = remainingParts[0];
+    }
+  } else if (pathParts.length > 0) {
+    route = pathParts[0];
   }
 
   if (!route) {

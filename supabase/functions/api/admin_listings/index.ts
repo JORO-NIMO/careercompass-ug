@@ -4,8 +4,18 @@ import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
-  const idx = parts.indexOf('admin_listings');
-  return idx === -1 ? [] : parts.slice(idx + 1);
+  // Handle both /api/admin/listings and legacy /admin_listings patterns
+  const adminIdx = parts.indexOf('admin');
+  const listingsIdx = parts.indexOf('listings');
+
+  // If /admin/listings pattern, return segments after 'listings'
+  if (adminIdx !== -1 && listingsIdx !== -1 && listingsIdx > adminIdx) {
+    return parts.slice(listingsIdx + 1);
+  }
+
+  // Fallback for legacy /admin_listings pattern
+  const legacyIdx = parts.indexOf('admin_listings');
+  return legacyIdx === -1 ? [] : parts.slice(legacyIdx + 1);
 }
 
 async function ensureAdmin(userId: string, supabase: ReturnType<typeof createSupabaseServiceClient>) {

@@ -4,8 +4,18 @@ import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
-  const idx = parts.indexOf('admin_boosts');
-  return idx === -1 ? [] : parts.slice(idx + 1);
+  // Handle both /api/admin/boosts and legacy /admin_boosts patterns
+  const adminIdx = parts.indexOf('admin');
+  const boostsIdx = parts.indexOf('boosts');
+
+  // If /admin/boosts pattern, return segments after 'boosts'
+  if (adminIdx !== -1 && boostsIdx !== -1 && boostsIdx > adminIdx) {
+    return parts.slice(boostsIdx + 1);
+  }
+
+  // Fallback for legacy /admin_boosts pattern
+  const legacyIdx = parts.indexOf('admin_boosts');
+  return legacyIdx === -1 ? [] : parts.slice(legacyIdx + 1);
 }
 
 function isValidEntityType(value: unknown): value is 'company' | 'listing' {
