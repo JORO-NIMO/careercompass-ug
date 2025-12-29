@@ -170,3 +170,36 @@ export async function deleteCompanyMedia(companyId: string, mediaId: string): Pr
     throw new Error(error.message || 'Failed to delete media');
   }
 }
+
+function assertMediaFile(file: File) {
+  const maxBytes = 5 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new Error('File exceeds 5MB limit.');
+  }
+  const mime = file.type?.toLowerCase() ?? '';
+  if (!(mime.startsWith('image/') || mime === 'application/pdf')) {
+    throw new Error('Only image or PDF files are allowed.');
+  }
+}
+
+export async function uploadCompanyMedia(companyId: string, file: File, options: { placementId?: string } = {}): Promise<CompanyMedia> {
+  assertMediaFile(file);
+
+  const formData = new FormData();
+  formData.append('file', file);
+  if (options.placementId) {
+    formData.append('placement_id', options.placementId);
+  }
+
+  const response = await authorizedFetch(`/api/companies/${companyId}/media`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const { success, data, error } = await parseJsonResponse(response);
+  if (!success || !data?.item) {
+    throw new Error(error ?? 'Failed to upload media');
+  }
+
+  return data.item as CompanyMedia;
+}
