@@ -43,7 +43,11 @@ async function parseJsonResponse(response: Response) {
   const rawBody = await response.text();
 
   if (!rawBody) {
-    return { success: response.ok, data: undefined, error: response.ok ? undefined : 'Empty response from server' };
+    return {
+      success: response.ok,
+      data: undefined,
+      error: response.ok ? undefined : `Empty response: ${response.status} ${response.statusText}`
+    };
   }
 
   if (!contentType.includes('application/json')) {
