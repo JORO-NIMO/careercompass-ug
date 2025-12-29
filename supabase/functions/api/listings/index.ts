@@ -21,7 +21,7 @@ export default async function (req: Request) {
 
     if (error) {
       console.error('public listings fetch error', error);
-      return jsonError('Failed to load listings', 500);
+      return jsonError(`Failed to load listings: ${error.message}`, 500, error);
     }
 
     return jsonSuccess({ items: data ?? [] });
