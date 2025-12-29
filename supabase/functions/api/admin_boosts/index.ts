@@ -1,6 +1,6 @@
-import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
-import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
+import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../_shared/responses.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
