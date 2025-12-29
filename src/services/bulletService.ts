@@ -65,15 +65,36 @@ async function parseJsonResponse<T>(response: Response): Promise<{
 }
 
 export async function fetchBulletSummary(ownerId?: string) {
-  const url = ownerId ? `/api/bullets/${ownerId}` : '/api/bullets';
-  const response = await authorizedFetch(url, { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse<{ balance?: BulletBalance; transactions?: BulletTransaction[] }>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load bullet balance');
+  const { data: { user } } = await supabase.auth.getUser();
+  const targetId = ownerId || user?.id;
+  if (!targetId) throw new Error('Owner ID not found');
+
+  const { data: balanceRow, error: balanceError } = await supabase
+    .from('bullets')
+    .select('owner_id, balance, updated_at, created_at')
+    .eq('owner_id', targetId)
+    .maybeSingle();
+
+  if (balanceError) {
+    console.error('fetchBulletSummary balance error:', balanceError);
+    throw new Error(balanceError.message || 'Failed to load bullet balance');
   }
+
+  const { data: transactions, error: txError } = await supabase
+    .from('bullet_transactions')
+    .select('id, delta, reason, created_at, created_by')
+    .eq('owner_id', targetId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (txError) {
+    console.error('fetchBulletSummary transactions error:', txError);
+    throw new Error(txError.message || 'Failed to load bullet transactions');
+  }
+
   return {
-    balance: data?.balance ?? { owner_id: ownerId ?? '', balance: 0, created_at: null, updated_at: null },
-    transactions: data?.transactions ?? [],
+    balance: balanceRow ?? { owner_id: targetId, balance: 0, created_at: null, updated_at: null },
+    transactions: transactions ?? [],
   };
 }
 
@@ -87,70 +108,87 @@ export async function spendBullets(options: {
     throw new Error('Amount must be positive when spending bullets');
   }
 
-  const response = await authorizedFetch(`/api/bullets/${options.ownerId}/transactions`, {
-    method: 'POST',
-    body: JSON.stringify({
-      delta: -Math.abs(Math.floor(options.amount)),
-      reason: options.reason,
-      boost: options.boost
-        ? {
-            listing_id: options.boost.listingId,
-            duration_days: options.boost.durationDays,
-          }
-        : undefined,
-    }),
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Authentication required');
+
+  const { data, error } = await (supabase.rpc as any)('adjust_bullet_balance', {
+    p_owner_id: options.ownerId,
+    p_delta: -Math.abs(Math.floor(options.amount)),
+    p_reason: options.reason,
+    p_actor: user.id
   });
 
-  const { success, data, error } = await parseJsonResponse<{ balance?: BulletBalance }>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to spend bullets');
+  if (error) {
+    console.error('spendBullets error:', error);
+    throw new Error(error.message || 'Failed to spend bullets');
   }
 
-  if (!data?.balance) {
-    throw new Error('Failed to spend bullets');
-  }
-
-  return data.balance;
+  return data;
 }
 
 export async function fetchAdminBulletBalances(): Promise<AdminBulletList>;
 export async function fetchAdminBulletBalances(ownerId: string): Promise<AdminBulletDetail>;
 export async function fetchAdminBulletBalances(ownerId?: string) {
-  const url = ownerId ? `/api/admin/bullets?owner_id=${encodeURIComponent(ownerId)}` : '/api/admin/bullets';
-  const response = await authorizedFetch(url, { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse<AdminBulletResponse>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load bullet balances');
-  }
   if (ownerId) {
-    const detail = data as (AdminBulletDetail & Partial<AdminBulletList>) | undefined;
-    const balance = detail?.balance ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null };
-    const transactions = detail?.transactions ?? [];
-    return { balance, transactions } satisfies AdminBulletDetail;
+    const { data: balanceRow, error: balanceError } = await supabase
+      .from('bullets')
+      .select('owner_id, balance, updated_at, created_at')
+      .eq('owner_id', ownerId)
+      .maybeSingle();
+
+    if (balanceError) {
+      console.error('fetchAdminBulletBalances (id) balance error:', balanceError);
+      throw new Error(balanceError.message || 'Failed to load bullet balance');
+    }
+
+    const { data: transactions, error: txError } = await supabase
+      .from('bullet_transactions')
+      .select('id, delta, reason, created_at, created_by')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (txError) {
+      console.error('fetchAdminBulletBalances (id) transactions error:', txError);
+      throw new Error(txError.message || 'Failed to load bullet transactions');
+    }
+
+    return {
+      balance: balanceRow ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null },
+      transactions: transactions ?? [],
+    } as AdminBulletDetail;
   }
 
-  const list = data as AdminBulletList | undefined;
-  return { items: list?.items ?? [] } satisfies AdminBulletList;
+  const { data, error } = await supabase
+    .from('bullets')
+    .select('owner_id, balance, updated_at, created_at')
+    .order('updated_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error('fetchAdminBulletBalances list error:', error);
+    throw new Error(error.message || 'Failed to load bullet balances');
+  }
+
+  return { items: data || [] } as AdminBulletList;
 }
 
 export async function adminAdjustBullets(payload: { ownerId: string; delta: number; reason: string }) {
-  const response = await authorizedFetch('/api/admin/bullets', {
-    method: 'POST',
-    body: JSON.stringify({
-      owner_id: payload.ownerId,
-      delta: Math.trunc(payload.delta),
-      reason: payload.reason,
-    }),
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Authentication required');
+
+  const { data, error } = await (supabase.rpc as any)('adjust_bullet_balance', {
+    p_owner_id: payload.ownerId,
+    p_delta: Math.trunc(payload.delta),
+    p_reason: payload.reason,
+    p_actor: user.id,
+    p_require_admin: true,
   });
 
-  const { success, data, error } = await parseJsonResponse<{ balance?: BulletBalance }>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to adjust bullets');
+  if (error) {
+    console.error('adminAdjustBullets error:', error);
+    throw new Error(error.message || 'Failed to adjust bullets');
   }
 
-  if (!data?.balance) {
-    throw new Error('Failed to adjust bullets');
-  }
-
-  return data.balance;
+  return data;
 }

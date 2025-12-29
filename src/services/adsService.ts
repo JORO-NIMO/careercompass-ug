@@ -50,13 +50,41 @@ async function parseJsonResponse<T>(response: Response): Promise<{
   }
 }
 
+const ADS_BUCKET = 'ads';
+
+function extractStoragePath(url: string): string | null {
+  const marker = `/storage/v1/object/public/${ADS_BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  return url.slice(index + marker.length);
+}
+
 export async function fetchAdminAds(): Promise<Ad[]> {
-  const response = await authorizedFetch('/api/admin/ads', { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse<AdminAdsCollection>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load ads');
+  const { data, error } = await supabase
+    .from('ads')
+    .select('id, title, description, image_url, link, is_active, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('fetchAdminAds error:', error);
+    throw new Error(error.message || 'Failed to load ads');
   }
-  return data?.items ?? [];
+
+  return (data || []) as Ad[];
+}
+
+async function uploadAdImage(file: File): Promise<{ url: string; path: string }> {
+  const extension = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.') + 1) : 'jpg';
+  const path = `ads/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}.${extension}`;
+
+  const { error: uploadError } = await supabase.storage.from(ADS_BUCKET).upload(path, file);
+  if (uploadError) {
+    console.error('ad image upload error', uploadError);
+    throw new Error('Failed to upload image');
+  }
+
+  const { data } = supabase.storage.from(ADS_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, path };
 }
 
 export async function createAd(payload: {
@@ -66,27 +94,26 @@ export async function createAd(payload: {
   isActive: boolean;
   image: File;
 }): Promise<Ad> {
-  const formData = new FormData();
-  formData.append('title', payload.title);
-  if (payload.description !== undefined) {
-    formData.append('description', payload.description);
-  }
-  if (payload.link !== undefined) {
-    formData.append('link', payload.link);
-  }
-  formData.append('is_active', String(payload.isActive));
-  formData.append('image', payload.image);
+  const { url: imageUrl } = await uploadAdImage(payload.image);
 
-  const response = await authorizedFetch('/api/admin/ads', {
-    method: 'POST',
-    body: formData,
-  });
+  const { data, error } = await supabase
+    .from('ads')
+    .insert({
+      title: payload.title,
+      description: payload.description,
+      image_url: imageUrl,
+      link: payload.link,
+      is_active: payload.isActive,
+    })
+    .select()
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: AdminAd }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to create ad');
+  if (error) {
+    console.error('createAd error:', error);
+    throw new Error(error.message || 'Failed to create ad');
   }
-  return data.item;
+
+  return data as Ad;
 }
 
 export async function updateAd(
@@ -99,62 +126,90 @@ export async function updateAd(
     image?: File | null;
   },
 ): Promise<Ad> {
-  const formData = new FormData();
-  if (payload.title !== undefined) {
-    formData.append('title', payload.title);
-  }
-  if (payload.description !== undefined) {
-    formData.append('description', payload.description ?? '');
-  }
-  if (payload.link !== undefined) {
-    formData.append('link', payload.link ?? '');
-  }
-  if (payload.isActive !== undefined) {
-    formData.append('is_active', String(payload.isActive));
-  }
+  const updates: any = { ...payload };
+  delete updates.image;
+
+  // Handle snake_case conversion if necessary, or just map manually
+  const dbUpdates: any = {};
+  if (payload.title !== undefined) dbUpdates.title = payload.title;
+  if (payload.description !== undefined) dbUpdates.description = payload.description;
+  if (payload.link !== undefined) dbUpdates.link = payload.link;
+  if (payload.isActive !== undefined) dbUpdates.is_active = payload.isActive;
+
+  let oldImageUrl: string | null = null;
   if (payload.image) {
-    formData.append('image', payload.image);
+    const { data: existing } = await supabase.from('ads').select('image_url').eq('id', id).single();
+    oldImageUrl = existing?.image_url || null;
+
+    const { url: imageUrl } = await uploadAdImage(payload.image);
+    dbUpdates.image_url = imageUrl;
   }
 
-  const response = await authorizedFetch(`/api/admin/ads/${id}`, {
-    method: 'PUT',
-    body: formData,
-  });
+  const { data, error } = await supabase
+    .from('ads')
+    .update(dbUpdates)
+    .eq('id', id)
+    .select()
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: AdminAd }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to update ad');
+  if (error) {
+    console.error('updateAd error:', error);
+    throw new Error(error.message || 'Failed to update ad');
   }
-  return data.item;
+
+  if (oldImageUrl) {
+    const oldPath = extractStoragePath(oldImageUrl);
+    if (oldPath) await supabase.storage.from(ADS_BUCKET).remove([oldPath]);
+  }
+
+  return data as Ad;
 }
 
 export async function toggleAd(id: string, isActive: boolean): Promise<Ad> {
-  const response = await authorizedFetch(`/api/admin/ads/${id}/toggle`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ is_active: isActive }),
-  });
+  const { data, error } = await supabase
+    .from('ads')
+    .update({ is_active: isActive })
+    .eq('id', id)
+    .select()
+    .single();
 
-  const { success, data, error } = await parseJsonResponse<{ item?: AdminAd }>(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to update status');
+  if (error) {
+    console.error('toggleAd error:', error);
+    throw new Error(error.message || 'Failed to update status');
   }
-  return data.item;
+  return data as Ad;
 }
 
 export async function deleteAd(id: string): Promise<void> {
-  const response = await authorizedFetch(`/api/admin/ads/${id}`, { method: 'DELETE' });
-  const { success, error } = await parseJsonResponse<Record<string, never>>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to delete ad');
+  const { data: existing } = await supabase.from('ads').select('image_url').eq('id', id).single();
+
+  const { error } = await supabase
+    .from('ads')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('deleteAd error:', error);
+    throw new Error(error.message || 'Failed to delete ad');
+  }
+
+  if (existing?.image_url) {
+    const path = extractStoragePath(existing.image_url);
+    if (path) await supabase.storage.from(ADS_BUCKET).remove([path]);
   }
 }
 
 export async function fetchPublicAds(): Promise<Ad[]> {
-  const response = await fetch('/api/ads', { method: 'GET' });
-  const { success, data, error } = await parseJsonResponse<AdminAdsCollection>(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load ads');
+  const { data, error } = await supabase
+    .from('ads')
+    .select('id, title, description, image_url, link, is_active, created_at')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('fetchPublicAds error:', error);
+    throw new Error(error.message || 'Failed to load ads');
   }
-  return data?.items ?? [];
+
+  return (data || []) as Ad[];
 }

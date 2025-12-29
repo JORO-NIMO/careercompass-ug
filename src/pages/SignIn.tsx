@@ -87,7 +87,7 @@ const SignIn = () => {
       }
     } catch (err) {
       setCaptchaError('Captcha verification error.');
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
     const { error } = await signIn(signInEmail, signInPassword);
@@ -104,7 +104,7 @@ const SignIn = () => {
       });
       navigate('/');
     }
-    setLoading(false);
+    setIsSubmitting(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -122,7 +122,7 @@ const SignIn = () => {
       setCaptchaError('Please complete the captcha.');
       return;
     }
-    setLoading(true);
+    setIsSubmitting(true);
     // Verify hCaptcha token server-side
     try {
       const verifyRes = await fetch(VERIFY_HCAPTCHA_URL, {
@@ -138,7 +138,7 @@ const SignIn = () => {
       }
     } catch (err) {
       setCaptchaError('Captcha verification error.');
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
     const { error } = await signUp(signUpEmail, signUpPassword, fullName);
@@ -151,10 +151,10 @@ const SignIn = () => {
     } else {
       toast({
         title: "Success",
-        description: "Account created successfully! You can now sign in.",
+        description: "Account created successfully! Please check your email for a verification link.",
       });
     }
-    setLoading(false);
+    setIsSubmitting(false);
   };
 
   return (
