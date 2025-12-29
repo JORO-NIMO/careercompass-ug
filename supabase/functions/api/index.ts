@@ -114,12 +114,21 @@ serve(async (req) => {
   try {
     return await handler(req);
   } catch (error) {
+    console.error(`[api router] Handler error for route '${route}':`, error);
+
+    const errorDetails: Record<string, unknown> = {
+      error: "Handler error",
+      route,
+      message: error instanceof Error ? error.message : String(error),
+    };
+
+    // Include stack trace in development
+    if (error instanceof Error && error.stack) {
+      errorDetails.stack = error.stack.split('\n').slice(0, 5); // First 5 lines
+    }
+
     return new Response(
-      JSON.stringify({
-        error: "Handler error",
-        route,
-        message: error.message
-      }), {
+      JSON.stringify(errorDetails), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
