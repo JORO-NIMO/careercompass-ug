@@ -4,7 +4,8 @@ import { jsonError } from './responses.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, prefer',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
 };
 
 export interface AuthResult {
@@ -17,20 +18,20 @@ export interface AuthResult {
  */
 export async function verifyAuth(req: Request): Promise<AuthResult> {
   const authHeader = req.headers.get('Authorization');
-  
+
   if (!authHeader) {
     return { user: null, error: 'Missing Authorization header' };
   }
 
   const token = authHeader.replace('Bearer ', '');
-  
+
   if (!token) {
     return { user: null, error: 'Invalid token format' };
   }
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || Deno.env.get('VITE_SUPABASE_URL');
   const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY');
-  
+
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return { user: null, error: 'Server configuration error' };
   }

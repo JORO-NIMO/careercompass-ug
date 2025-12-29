@@ -54,13 +54,9 @@ async function parseJsonResponse<T>(response: Response): Promise<{
 export async function fetchListings(): Promise<ListingWithCompany[]> {
   try {
     const response = await fetch('/api/listings');
-    if (!response.ok) {
-      console.warn('fetchListings received non-OK status', response.status);
-      return [];
-    }
     const { success, data, error } = await parseJsonResponse<AdminListingsCollection>(response);
     if (!success) {
-      console.warn('fetchListings failed to parse response', error);
+      console.warn('fetchListings failed:', error, 'Status:', response.status);
       return [];
     }
     return data?.items ?? [];
