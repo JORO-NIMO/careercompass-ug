@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, Briefcase, LogOut, Shield } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,10 +13,24 @@ const Header = () => {
 
   useEffect(() => {
     if (!user) return;
-    fetch('/api/notifications?unread=1', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => setUnread(data.unread ?? 0))
-      .catch(() => setUnread(0));
+    const loadUnread = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        const response = await fetch('/api/notifications?unread=1', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const data = await response.json();
+        setUnread(data.unread ?? 0);
+      } catch (err) {
+        console.error('Failed to fetch unread notifications:', err);
+        setUnread(0);
+      }
+    };
+    loadUnread();
   }, [user]);
   const navigate = useNavigate();
 

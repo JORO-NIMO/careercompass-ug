@@ -50,7 +50,7 @@ const routeHandlers: Record<string, (req: Request) => Promise<Response>> = {
   'user': userHandler,
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight - crucial for browser calls
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -61,20 +61,12 @@ serve(async (req) => {
   // Extract the route segment after 'api'
   const pathParts = path.split('/').filter(Boolean);
 
-  // Find the route segment that matches a known handler
-  // This handles paths like /functions/v1/api/admin/listings -> admin_listings
-  // or /functions/v1/api/user/register-company -> user
   const apiIndex = pathParts.indexOf('api');
   let route = '';
 
   if (apiIndex !== -1 && apiIndex < pathParts.length - 1) {
-    // Get remaining segments after 'api' and join with underscore
-    // e.g., ['admin', 'listings'] -> 'admin_listings'
-    // e.g., ['user', 'register-company'] -> 'user' (only first segment for nested handlers)
     const remainingParts = pathParts.slice(apiIndex + 1);
 
-    // Try progressively shorter underscore-joined routes
-    // First try: admin_listings, then: admin
     for (let i = remainingParts.length; i > 0; i--) {
       const candidate = remainingParts.slice(0, i).join('_');
       if (routeHandlers[candidate]) {
@@ -83,7 +75,6 @@ serve(async (req) => {
       }
     }
 
-    // If no match found, use just the first segment (for handlers like 'user')
     if (!route && remainingParts.length > 0) {
       route = remainingParts[0];
     }
@@ -94,7 +85,10 @@ serve(async (req) => {
   if (!route) {
     return new Response(JSON.stringify({ error: "No route specified" }), {
       status: 400,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      },
     });
   }
 
@@ -108,12 +102,24 @@ serve(async (req) => {
         availableRoutes: Object.keys(routeHandlers),
       }), {
       status: 404,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      },
     });
   }
 
   try {
-    return await handler(req);
+    const response = await handler(req);
+    // Ensure all success responses also have CORS headers if they don't already
+    if (response) {
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        if (!response.headers.has(key)) {
+          response.headers.set(key, value);
+        }
+      });
+    }
+    return response;
   } catch (error) {
     console.error(`[api router] Handler error for route '${route}':`, error);
 
@@ -123,9 +129,8 @@ serve(async (req) => {
       message: error instanceof Error ? error.message : String(error),
     };
 
-    // Include stack trace in development
     if (error instanceof Error && error.stack) {
-      errorDetails.stack = error.stack.split('\n').slice(0, 5); // First 5 lines
+      errorDetails.stack = error.stack.split('\n').slice(0, 5);
     }
 
     return new Response(
