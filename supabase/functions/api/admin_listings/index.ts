@@ -239,9 +239,11 @@ export default async function (req: Request) {
       return jsonSuccess({ item: data });
     }
 
-    return jsonError('Not found', 404);
   } catch (err) {
-    console.error('admin listings handler error', err);
-    return jsonError('Internal server error', 500);
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error('admin listings handler error', error);
+    return jsonError(error.message, 500, {
+      stack: error.stack?.split('\n').slice(0, 5)
+    });
   }
 }

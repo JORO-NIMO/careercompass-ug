@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } from 'lucide-react';
 import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
+import { createPlacement } from '@/services/placementsService';
 import { companyRegistrationSchema } from '@/lib/validations';
 import { resolveApiUrl } from '@/lib/api-client';
 import { LocationPicker } from '@/components/ui/LocationPicker';
@@ -337,28 +338,20 @@ const ForCompanies = () => {
     setSubmitting(true);
 
     try {
-      const { data: insertedPlacement, error } = await supabase
-        .from('placements')
-        .insert({
-          position_title: positionTitle.trim(),
-          company_name: companyName.trim(),
-          description: description.trim(),
-          region,
-          industry,
-          stipend: stipend.trim(),
-          available_slots: slotsNumber,
-          created_by: user?.id,
-          approved: true,
-          flagged: false,
-          contact_info: user?.email || null,
-        })
-        .select('id')
-        .single();
-
-      if (error) throw error;
+      await createPlacement({
+        position_title: positionTitle.trim(),
+        company_name: companyName.trim(),
+        description: description.trim(),
+        region,
+        industry,
+        stipend: stipend.trim(),
+        available_slots: slotsNumber,
+        created_by: user?.id,
+        contact_info: user?.email || null,
+      });
 
       setSubmissionSuccess(true);
-      
+
       toast({
         title: "Published",
         description: "Opportunity posted and is live. We'll contact you if it needs additional review.",

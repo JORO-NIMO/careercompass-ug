@@ -39,15 +39,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
-          set -euo pipefail
-          echo "Deploying functions to project ${{ secrets.SUPABASE_PROJECT_REF }}"
-          # Deploy each function directory under supabase/functions (excluding _shared)
-          for fn in $(ls supabase/functions | grep -v _shared | grep -v migrations | grep -v tsconfig.json); do
-            if [ -f "supabase/functions/$fn/index.ts" ] || [ -f "supabase/functions/$fn/index.js" ]; then
-              echo "-- Deploying $fn"
-              supabase functions deploy "$fn"
-            fi
-          done
+          echo "Deploying all functions to project ${{ secrets.SUPABASE_PROJECT_REF }}"
+          supabase functions deploy --no-verify-jwt
 
       - name: List deployed functions
         run: supabase functions list
