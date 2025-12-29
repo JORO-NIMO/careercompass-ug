@@ -25,7 +25,7 @@ interface HCaptchaResponse {
     'error-codes'?: string[];
 }
 
-export default async function handler(req: Request): Promise<Response> {
+const handler = async (req: Request): Promise<Response> => {
     // Handle CORS preflight
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
@@ -108,4 +108,6 @@ export default async function handler(req: Request): Promise<Response> {
             ...rateLimitHeaders(rateLimit.remaining, rateLimit.resetAt),
         });
     }
-}
+};
+
+Deno.serve(handler);

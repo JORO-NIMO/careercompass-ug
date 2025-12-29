@@ -14,7 +14,7 @@ interface NotificationPayload {
   metadata?: Record<string, unknown> | null;
 }
 
-export default async function (req: Request) {
+const handler = async (req: Request) => {
   // Handle CORS preflight
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -40,7 +40,7 @@ export default async function (req: Request) {
 
       // Ensure user can only create notifications for themselves unless admin
       const targetUserId = payload.user_id || user.id;
-      
+
       if (targetUserId !== user.id) {
         const { data: roleData } = await supabase
           .from('user_roles')
@@ -48,7 +48,7 @@ export default async function (req: Request) {
           .eq('user_id', user.id)
           .eq('role', 'admin')
           .maybeSingle();
-        
+
         if (!roleData) {
           return jsonError('Cannot create notifications for other users', 403);
         }
@@ -104,4 +104,6 @@ export default async function (req: Request) {
   }
 
   return jsonError('Method not allowed', 405);
-}
+};
+
+Deno.serve(handler);

@@ -45,7 +45,7 @@ const MAX_EVENTS = 100;
 const MAX_EVENT_NAME_LENGTH = 100;
 const MAX_PROPS_SIZE = 10000; // 10KB
 
-export default async function (req: Request) {
+const handler = async (req: Request) => {
   // Handle CORS preflight
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
@@ -114,4 +114,6 @@ export default async function (req: Request) {
     console.error('events function error:', err);
     return jsonError(err instanceof Error ? err.message : 'Internal server error', 500);
   }
-}
+};
+
+Deno.serve(handler);
