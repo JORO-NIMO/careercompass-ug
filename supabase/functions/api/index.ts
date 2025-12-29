@@ -1,6 +1,54 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { handleCors } from '../_shared/auth.ts';
 
+// Static imports for all route handlers
+import adminAdsHandler from './admin_ads/index.ts';
+import adminBoostsHandler from './admin_boosts/index.ts';
+import adminBulletsHandler from './admin_bullets/index.ts';
+import adminListingsHandler from './admin_listings/index.ts';
+import adminNotificationsHandler from './admin_notifications/index.ts';
+import adsHandler from './ads/index.ts';
+import analyticsProxyHandler from './analytics_proxy/index.ts';
+import booksHandler from './books/index.ts';
+import boostsHandler from './boosts/index.ts';
+import boostsMaintenanceHandler from './boosts_maintenance/index.ts';
+import bulletsHandler from './bullets/index.ts';
+import careersHandler from './careers/index.ts';
+import companiesHandler from './companies/index.ts';
+import coursesHandler from './courses/index.ts';
+import jobsHandler from './jobs/index.ts';
+import listingsHandler from './listings/index.ts';
+import notificationsHandler from './notifications/index.ts';
+import notificationsProxyHandler from './notifications_proxy/index.ts';
+import notificationsReadHandler from './notifications_read/index.ts';
+import profilesHandler from './profiles/index.ts';
+import userHandler from './user/index.ts';
+
+// Route map for O(1) lookup
+const routeHandlers: Record<string, (req: Request) => Promise<Response>> = {
+  'admin_ads': adminAdsHandler,
+  'admin_boosts': adminBoostsHandler,
+  'admin_bullets': adminBulletsHandler,
+  'admin_listings': adminListingsHandler,
+  'admin_notifications': adminNotificationsHandler,
+  'ads': adsHandler,
+  'analytics_proxy': analyticsProxyHandler,
+  'books': booksHandler,
+  'boosts': boostsHandler,
+  'boosts_maintenance': boostsMaintenanceHandler,
+  'bullets': bulletsHandler,
+  'careers': careersHandler,
+  'companies': companiesHandler,
+  'courses': coursesHandler,
+  'jobs': jobsHandler,
+  'listings': listingsHandler,
+  'notifications': notificationsHandler,
+  'notifications_proxy': notificationsProxyHandler,
+  'notifications_read': notificationsReadHandler,
+  'profiles': profilesHandler,
+  'user': userHandler,
+};
+
 serve(async (req) => {
   // Handle CORS preflight - crucial for browser calls
   const corsResponse = handleCors(req);
@@ -9,15 +57,13 @@ serve(async (req) => {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  // Extract the route options
+  // Extract the route segment after 'api'
   const pathParts = path.split('/').filter(Boolean);
 
-  // Find the route segment that matches a known handler or is after 'api'
-  // This handles paths like /functions/v1/api/jobs -> jobs
+  // Find the route segment that matches a known handler
+  // This handles paths like /functions/v1/api/user/register-company -> user
   let route = pathParts[0];
 
-  // If invoked via Supabase Functions, path includes /functions/v1/api/...
-  // We want the part after 'api' if present, or just the last part if feasible
   const apiIndex = pathParts.indexOf('api');
   if (apiIndex !== -1 && apiIndex < pathParts.length - 1) {
     route = pathParts[apiIndex + 1];
@@ -30,20 +76,30 @@ serve(async (req) => {
     });
   }
 
-  try {
-    // Dynamically import the appropriate handler based on the route
-    const handler = await import(`./${route}/index.ts`);
+  const handler = routeHandlers[route];
 
-    // Forward the request to the specific route handler
-    return await handler.default(req);
+  if (!handler) {
+    return new Response(
+      JSON.stringify({
+        error: "Route not found",
+        route,
+        availableRoutes: Object.keys(routeHandlers),
+      }), {
+      status: 404,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    return await handler(req);
   } catch (error) {
     return new Response(
       JSON.stringify({
-        error: "Route not found or handler error",
+        error: "Handler error",
         route,
         message: error.message
       }), {
-      status: 404,
+      status: 500,
       headers: { "Content-Type": "application/json" },
     });
   }
