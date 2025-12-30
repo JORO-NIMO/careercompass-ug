@@ -7,6 +7,8 @@ import QuickNavigation from "@/components/QuickNavigation";
 import SEO from "@/components/SEO";
 import { HomepageAdsBanner } from "@/components/HomepageAdsBanner";
 
+import { PlatformNews } from "@/components/PlatformNews";
+
 const RESOURCE_HIGHLIGHTS = [
   {
     href: "/guides/how-to-write-a-cv",
@@ -100,6 +102,7 @@ const Index = () => {
         <div className="container mx-auto px-4 -mt-16 relative z-20">
           <SearchFilters />
         </div>
+        <PlatformNews />
         <HomepageAdsBanner />
         <FeaturedPlacements />
         <HowItWorks />

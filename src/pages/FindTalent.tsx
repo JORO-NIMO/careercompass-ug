@@ -415,7 +415,9 @@ const FindTalent = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    <Button className="flex-1">Contact Candidate</Button>
+                    <Button className="flex-1" asChild>
+                      <a href={`mailto:${candidate.email}`}>Contact Candidate</a>
+                    </Button>
                     <Button variant="outline">Save</Button>
                   </div>
                 </CardContent>
