@@ -87,6 +87,13 @@ export async function createListing(payload: {
   companyId?: string | null;
   isFeatured?: boolean;
   displayOrder?: number;
+  opportunity_type?: string;
+  application_deadline?: string;
+  application_method?: string;
+  whatsapp_number?: string;
+  application_email?: string;
+  application_url?: string;
+  region?: string;
 }): Promise<Listing> {
   const { data, error } = await supabase
     .from('listings')
@@ -96,6 +103,13 @@ export async function createListing(payload: {
       company_id: payload.companyId ?? null,
       is_featured: payload.isFeatured ?? false,
       display_order: payload.displayOrder,
+      opportunity_type: payload.opportunity_type,
+      application_deadline: payload.application_deadline,
+      application_method: payload.application_method,
+      whatsapp_number: payload.whatsapp_number,
+      application_email: payload.application_email,
+      application_url: payload.application_url,
+      region: payload.region,
     })
     .select('*')
     .single();
@@ -114,6 +128,13 @@ export async function updateListing(id: string, payload: {
   companyId?: string | null;
   isFeatured?: boolean;
   displayOrder?: number;
+  opportunity_type?: string;
+  application_deadline?: string;
+  application_method?: string;
+  whatsapp_number?: string;
+  application_email?: string;
+  application_url?: string;
+  region?: string;
 }): Promise<Listing> {
   const { data, error } = await supabase
     .from('listings')
@@ -123,6 +144,13 @@ export async function updateListing(id: string, payload: {
       company_id: payload.companyId,
       is_featured: payload.isFeatured,
       display_order: payload.displayOrder,
+      opportunity_type: payload.opportunity_type,
+      application_deadline: payload.application_deadline,
+      application_method: payload.application_method,
+      whatsapp_number: payload.whatsapp_number,
+      application_email: payload.application_email,
+      application_url: payload.application_url,
+      region: payload.region,
     })
     .eq('id', id)
     .select('*')

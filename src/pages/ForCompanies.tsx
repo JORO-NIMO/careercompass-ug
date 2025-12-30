@@ -65,6 +65,12 @@ const ForCompanies = () => {
   const [industry, setIndustry] = useState('');
   const [stipend, setStipend] = useState('');
   const [availableSlots, setAvailableSlots] = useState('');
+  const [opportunityType, setOpportunityType] = useState('job');
+  const [applicationDeadline, setApplicationDeadline] = useState('');
+  const [applicationMethod, setApplicationMethod] = useState('website');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [applicationEmail, setApplicationEmail] = useState('');
+  const [applicationUrl, setApplicationUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
@@ -315,7 +321,7 @@ const ForCompanies = () => {
       return;
     }
 
-    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry || !availableSlots.trim()) {
+    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry) {
       toast({
         title: "Missing information",
         description: "Please complete all required fields before submitting.",
@@ -324,47 +330,43 @@ const ForCompanies = () => {
       return;
     }
 
-    const slotsNumber = Number.parseInt(availableSlots, 10);
-
-    if (Number.isNaN(slotsNumber) || slotsNumber <= 0) {
-      toast({
-        title: "Invalid slot count",
-        description: "Enter how many positions you have available.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setSubmitting(true);
 
     try {
-      await createPlacement({
-        position_title: positionTitle.trim(),
-        company_name: companyName.trim(),
+      // Use the new listings system instead of legacy placements
+      const { createListing } = await import('@/services/listingsService');
+
+      await createListing({
+        title: positionTitle.trim(),
         description: description.trim(),
-        region,
-        industry,
-        stipend: stipend.trim(),
-        available_slots: slotsNumber,
-        created_by: user?.id,
-        contact_info: user?.email || null,
+        companyId: company?.id,
+        opportunity_type: opportunityType,
+        application_deadline: applicationDeadline || undefined,
+        application_method: applicationMethod,
+        whatsapp_number: applicationMethod === 'whatsapp' ? whatsappNumber.trim() : undefined,
+        application_email: applicationMethod === 'email' ? applicationEmail.trim() : undefined,
+        application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
+        region: region,
       });
 
       setSubmissionSuccess(true);
 
       toast({
         title: "Published",
-        description: "Opportunity posted and is live. We'll contact you if it needs additional review.",
+        description: "Opportunity posted and is live. You can manage it from the dashboard.",
       });
 
       // Reset form
       setPositionTitle('');
-      setCompanyName('');
       setDescription('');
       setRegion('');
       setIndustry('');
       setStipend('');
       setAvailableSlots('');
+      setApplicationDeadline('');
+      setWhatsappNumber('');
+      setApplicationEmail('');
+      setApplicationUrl('');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to post opportunity";
       toast({
@@ -812,26 +814,18 @@ const ForCompanies = () => {
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Position title</Label>
-                      <Input
-                        id="title"
-                        placeholder="e.g. Software Engineer Intern"
-                        value={positionTitle}
-                        onChange={(e) => setPositionTitle(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company">Company name</Label>
-                      <Input
-                        id="company"
-                        placeholder="Your company name"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        required
-                        disabled={!!company?.name}
-                        className={company?.name ? "bg-muted" : ""}
-                      />
+                      <Label htmlFor="opportunity-type">Opportunity type</Label>
+                      <Select value={opportunityType} onValueChange={setOpportunityType}>
+                        <SelectTrigger id="opportunity-type">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="job">Job</SelectItem>
+                          <SelectItem value="internship">Internship</SelectItem>
+                          <SelectItem value="apprenticeship">Apprenticeship</SelectItem>
+                          <SelectItem value="fellowship">Fellowship</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -860,9 +854,80 @@ const ForCompanies = () => {
                               {option.label}
                             </SelectItem>
                           ))}
+                          <SelectItem value="online">Online / Remote</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deadline">Application deadline</Label>
+                      <Input
+                        id="deadline"
+                        type="date"
+                        value={applicationDeadline}
+                        onChange={(e) => setApplicationDeadline(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-border p-4 bg-muted/20">
+                    <div className="space-y-2">
+                      <Label htmlFor="app-method">How should users apply?</Label>
+                      <Select value={applicationMethod} onValueChange={setApplicationMethod}>
+                        <SelectTrigger id="app-method">
+                          <SelectValue placeholder="Select application method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="website">Internal (via PlacementBridge)</SelectItem>
+                          <SelectItem value="whatsapp">WhatsApp Connect</SelectItem>
+                          <SelectItem value="email">Email Application</SelectItem>
+                          <SelectItem value="url">External Website / Form</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {applicationMethod === 'whatsapp' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="whatsapp">WhatsApp Number (with country code)</Label>
+                        <Input
+                          id="whatsapp"
+                          placeholder="e.g. +256700000000"
+                          value={whatsappNumber}
+                          onChange={(e) => setWhatsappNumber(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {applicationMethod === 'email' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="email">Application Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="jobs@company.com"
+                          value={applicationEmail}
+                          onChange={(e) => setApplicationEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {(applicationMethod === 'url' || applicationMethod === 'website') && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="url">{applicationMethod === 'url' ? 'External URL' : 'Website URL (Optional)'}</Label>
+                        <Input
+                          id="url"
+                          type="url"
+                          placeholder="https://company.com/apply"
+                          value={applicationUrl}
+                          onChange={(e) => setApplicationUrl(e.target.value)}
+                          required={applicationMethod === 'url'}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Industry</Label>
                       <Select value={industry || undefined} onValueChange={setIndustry}>
@@ -878,9 +943,6 @@ const ForCompanies = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="stipend">Salary / Stipend Range</Label>
                       <Input
@@ -888,18 +950,6 @@ const ForCompanies = () => {
                         placeholder="e.g. 500,000 - 800,000 UGX/month"
                         value={stipend}
                         onChange={(e) => setStipend(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="slots">Open Positions</Label>
-                      <Input
-                        id="slots"
-                        type="number"
-                        min={1}
-                        placeholder="e.g. 5"
-                        value={availableSlots}
-                        onChange={(e) => setAvailableSlots(e.target.value)}
-                        required
                       />
                     </div>
                   </div>

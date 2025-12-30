@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ShieldCheck, Clock, Globe, MapPin, CircleAlert } from 'lucide-react';
+import { Loader2, ShieldCheck, Clock, Globe, MapPin, CircleAlert, Users, ExternalLink, FileText } from 'lucide-react';
 import { companyRegistrationSchema } from '@/lib/validations';
 import { LocationPicker } from '@/components/ui/LocationPicker';
 import {
@@ -20,6 +20,7 @@ import {
   type Company,
   type VerificationMeta,
 } from '@/services/companiesService';
+import { fetchRecruiterApplications } from '@/services/applicationsService';
 
 interface CompanyFormState {
   name: string;
@@ -52,13 +53,33 @@ const StatusBadge = ({ company }: { company: Company }) => {
   );
 };
 
+interface RecruiterApplication {
+  id: string;
+  created_at: string;
+  listings: {
+    id: string;
+    title: string;
+    company_id: string;
+  };
+  profiles: {
+    id: string;
+    full_name: string;
+    school_name: string;
+    course_of_study: string;
+    cv_url: string;
+    portfolio_url: string;
+  };
+}
+
 const UserDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [applications, setApplications] = useState<RecruiterApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingApps, setLoadingApps] = useState(false);
   const [saving, setSaving] = useState(false);
   const [verification, setVerification] = useState<VerificationMeta | null>(null);
   const [formState, setFormState] = useState<CompanyFormState>(defaultFormState(user?.email));
@@ -95,6 +116,26 @@ const UserDashboard = () => {
   useEffect(() => {
     void loadCompanies();
   }, [loadCompanies]);
+
+  useEffect(() => {
+    async function loadApps() {
+      const approvedIds = companies.filter(c => c.approved).map(c => c.id);
+      if (approvedIds.length === 0) return;
+
+      try {
+        setLoadingApps(true);
+        const apps = await fetchRecruiterApplications(approvedIds);
+        setApplications(apps);
+      } catch (err) {
+        console.error('Failed to load applications', err);
+      } finally {
+        setLoadingApps(false);
+      }
+    }
+    if (companies.length > 0) {
+      loadApps();
+    }
+  }, [companies]);
 
   const hasPendingCompany = useMemo(() => companies.some((company) => !company.approved), [companies]);
 
@@ -325,7 +366,85 @@ const UserDashboard = () => {
                 )}
               </CardContent>
             </Card>
-          </section>
+            <section>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Applications Received
+                  </CardTitle>
+                  <Badge variant="secondary">{applications.length}</Badge>
+                </CardHeader>
+                <CardContent>
+                  {loadingApps ? (
+                    <div className="flex h-32 items-center justify-center text-muted-foreground gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Loading applications…
+                    </div>
+                  ) : applications.length === 0 ? (
+                    <p className="text-muted-foreground text-sm text-center py-8">
+                      Applicants for your approved listings will appear here.
+                      {companies.every(c => !c.approved) && " (Unlock this by getting your company verified)"}
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left font-medium text-muted-foreground">
+                            <th className="pb-3 pr-4 text-xs uppercase tracking-wider">Candidate</th>
+                            <th className="pb-3 pr-4 text-xs uppercase tracking-wider">Opportunity</th>
+                            <th className="pb-3 pr-4 text-xs uppercase tracking-wider">Institution</th>
+                            <th className="pb-3 text-right text-xs uppercase tracking-wider">Contact & CV</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {applications.map((app) => (
+                            <tr key={app.id} className="group hover:bg-muted/50 transition-colors">
+                              <td className="py-4 pr-4">
+                                <div className="font-medium text-foreground">{app.profiles?.full_name}</div>
+                                <div className="text-[10px] text-muted-foreground">Applied {new Date(app.created_at).toLocaleDateString()}</div>
+                              </td>
+                              <td className="py-4 pr-4">
+                                <Badge variant="outline" className="font-normal bg-background">{app.listings?.title}</Badge>
+                              </td>
+                              <td className="py-4 pr-4 text-muted-foreground">
+                                <div className="max-w-[150px] truncate" title={app.profiles?.school_name || "N/A"}>
+                                  {app.profiles?.school_name || "N/A"}
+                                </div>
+                                {app.profiles?.course_of_study && (
+                                  <div className="text-[10px] font-light truncate max-w-[150px]" title={app.profiles.course_of_study}>
+                                    {app.profiles.course_of_study}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {app.profiles?.portfolio_url && (
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild title="Portfolio">
+                                      <a href={app.profiles.portfolio_url} target="_blank" rel="noreferrer">
+                                        <Globe className="h-4 w-4" />
+                                      </a>
+                                    </Button>
+                                  )}
+                                  {app.profiles?.cv_url && (
+                                    <Button variant="outline" size="sm" className="h-8 gap-1" asChild>
+                                      <a href={app.profiles.cv_url} target="_blank" rel="noreferrer">
+                                        <FileText className="h-3.5 w-3.5" />
+                                        View CV
+                                      </a>
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
         </div>
       </main>
       <Footer />

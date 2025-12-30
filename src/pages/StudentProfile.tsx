@@ -150,6 +150,10 @@ const StudentProfile = () => {
 	const [legacyLocation, setLegacyLocation] = useState("");
 	const [cvLink, setCvLink] = useState("");
 	const [bio, setBio] = useState("");
+	const [schoolName, setSchoolName] = useState("");
+	const [courseOfStudy, setCourseOfStudy] = useState("");
+	const [yearOfStudy, setYearOfStudy] = useState("");
+	const [portfolioUrl, setPortfolioUrl] = useState("");
 	const [loadingProfile, setLoadingProfile] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [previewOpen, setPreviewOpen] = useState(false);
@@ -322,6 +326,21 @@ const StudentProfile = () => {
 				if (data.email) {
 					setEmail(data.email);
 				}
+				if (data.cv_url) {
+					setCvLink(data.cv_url);
+				}
+				if (data.school_name) {
+					setSchoolName(data.school_name);
+				}
+				if (data.course_of_study) {
+					setCourseOfStudy(data.course_of_study);
+				}
+				if (data.year_of_study) {
+					setYearOfStudy(data.year_of_study);
+				}
+				if (data.portfolio_url) {
+					setPortfolioUrl(data.portfolio_url);
+				}
 			}
 
 			setLoadingProfile(false);
@@ -403,6 +422,11 @@ const StudentProfile = () => {
 				location: locationPayload as string | null, // Type cast compatible with service
 				experience_level: stage || null,
 				availability_status: availability || null,
+				cv_url: cvLink.trim() || null,
+				school_name: schoolName.trim() || null,
+				course_of_study: courseOfStudy.trim() || null,
+				year_of_study: yearOfStudy || null,
+				portfolio_url: portfolioUrl.trim() || null,
 			});
 
 			persistExtraFields(user.id, { region: effectiveRegion, district });
@@ -486,6 +510,30 @@ const StudentProfile = () => {
 										disabled={loadingProfile || saving}
 									/>
 								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2">
+										<Label htmlFor="cv-link">CV Link (Google Drive / Online)</Label>
+										<Input
+											id="cv-link"
+											placeholder="https://drive.google.com/..."
+											value={cvLink}
+											onChange={(event) => setCvLink(event.target.value)}
+											disabled={loadingProfile || saving}
+										/>
+										<p className="text-[10px] text-muted-foreground">Recruiters will use this to view your professional history.</p>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="portfolio">Portfolio / Website (Optional)</Label>
+										<Input
+											id="portfolio"
+											placeholder="https://yourwork.com"
+											value={portfolioUrl}
+											onChange={(event) => setPortfolioUrl(event.target.value)}
+											disabled={loadingProfile || saving}
+										/>
+									</div>
+								</div>
 							</CardContent>
 						</Card>
 
@@ -558,6 +606,43 @@ const StudentProfile = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
+										<Label htmlFor="school-name">Official School / Faculty Name</Label>
+										<Input
+											id="school-name"
+											placeholder="e.g. Faculty of Computing"
+											value={schoolName}
+											onChange={(event) => setSchoolName(event.target.value)}
+											disabled={loadingProfile || saving}
+										/>
+									</div>
+									<div className="space-y-2">
+										<Label htmlFor="course">Course of Study</Label>
+										<Input
+											id="course"
+											placeholder="e.g. B.Sc in Software Engineering"
+											value={courseOfStudy}
+											onChange={(event) => setCourseOfStudy(event.target.value)}
+											disabled={loadingProfile || saving}
+										/>
+									</div>
+								</div>
+
+								<div className="space-y-2">
+									<Label htmlFor="year">Year of Study / Graduation</Label>
+									<Select value={yearOfStudy || undefined} onValueChange={setYearOfStudy} disabled={loadingProfile || saving}>
+										<SelectTrigger id="year">
+											<SelectValue placeholder="Select year" />
+										</SelectTrigger>
+										<SelectContent>
+											{["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Finalist", "Graduate"].map((y) => (
+												<SelectItem key={y} value={y}>{y}</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2">
 										<Label>Stage</Label>
 										<Select value={stage || undefined} onValueChange={setStage} disabled={loadingProfile || saving}>
 											<SelectTrigger>
@@ -615,6 +700,7 @@ const StudentProfile = () => {
 														{group.region} region
 													</SelectItem>
 												))}
+												<SelectItem value="online">Online / Remote</SelectItem>
 											</SelectContent>
 										</Select>
 									</div>

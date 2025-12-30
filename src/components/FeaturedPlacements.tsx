@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PlacementCard from "./PlacementCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -183,11 +184,19 @@ const FeaturedPlacements = () => {
             curatedListings.map((listing) => (
               <CuratedListingCard
                 key={listing.id}
+                id={listing.id}
                 title={listing.title}
                 description={listing.description}
                 companyName={listing.companies?.name}
                 featured={listing.is_featured}
                 updatedAt={listing.updated_at}
+                opportunityType={listing.opportunity_type}
+                applicationDeadline={listing.application_deadline}
+                region={listing.region}
+                applicationMethod={listing.application_method}
+                whatsappNumber={listing.whatsapp_number}
+                applicationEmail={listing.application_email}
+                applicationUrl={listing.application_url}
               />
             ))
           ) : fallbackLoading ? (
@@ -206,9 +215,11 @@ const FeaturedPlacements = () => {
 
         {/* View All Button */}
         <div className="text-center">
-          <Button variant="outline" size="lg" className="min-w-[200px]">
-            View All Opportunities
-            <ArrowRight className="w-5 h-5 ml-2" />
+          <Button asChild variant="outline" size="lg" className="min-w-[200px]">
+            <Link to="/find-placements">
+              View All Opportunities
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
           </Button>
         </div>
       </div>

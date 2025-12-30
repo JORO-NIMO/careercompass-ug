@@ -128,11 +128,14 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">Stay Connected</h3>
             <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-muted-foreground">
-                <Mail className="w-4 h-4" />
-                <a href="mailto:info@placementbridge.org" className="text-sm hover:text-primary transition-colors">
-                  info@placementbridge.org
-                </a>
+              <div className="flex items-center space-x-2 text-muted-foreground group">
+                <Mail className="w-4 h-4 group-hover:text-primary transition-colors" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 font-semibold">Company Info Helpline</span>
+                  <a href="mailto:info@placementbridge.org" className="text-sm hover:text-primary transition-colors">
+                    info@placementbridge.org
+                  </a>
+                </div>
               </div>
               <div className="flex items-center space-x-2 text-muted-foreground">
                 <Phone className="w-4 h-4" />
