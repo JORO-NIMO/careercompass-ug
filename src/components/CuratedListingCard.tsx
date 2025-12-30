@@ -82,12 +82,25 @@ export function CuratedListingCard({
   }, []);
 
   const handleApply = async () => {
+    // Check if there's a direct external link (Priority 1)
+    if (applicationUrl) {
+      window.open(applicationUrl, '_blank');
+      return;
+    }
+
+    // Check if there's a direct email (Priority 2)
+    if (applicationEmail) {
+      window.location.href = `mailto:${applicationEmail}?subject=Application for ${title}&body=Hello, I am interested in the ${title} position I saw on PlacementBridge.`;
+      return;
+    }
+
+    // Fallback to internal application flow (Priority 3)
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
       toast({
         title: "Sign in required",
-        description: "Please log in as a student to apply for opportunities.",
+        description: "Please log in as a student to apply via the platform.",
         variant: "destructive"
       });
       navigate('/auth');
@@ -115,23 +128,12 @@ export function CuratedListingCard({
 
     setIsApplying(true);
     try {
-      if (applicationMethod === 'whatsapp' && whatsappNumber) {
-        await submitApplication(id, cvUrl); // Log the application with snapshot
-        window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=Hello, I am interested in the ${title} position I saw on PlacementBridge.`, '_blank');
-      } else if (applicationMethod === 'email' && applicationEmail) {
-        await submitApplication(id, cvUrl);
-        window.location.href = `mailto:${applicationEmail}?subject=Application for ${title}&body=Hello, I am interested in the ${title} position I saw on PlacementBridge.`;
-      } else if (applicationMethod === 'url' && applicationUrl) {
-        await submitApplication(id, cvUrl);
-        window.open(applicationUrl, '_blank');
-      } else {
-        // Internal application
-        await submitApplication(id, cvUrl);
-        toast({
-          title: "Application submitted",
-          description: "Your profile has been shared with the recruiter.",
-        });
-      }
+      // Internal application
+      await submitApplication(id, cvUrl);
+      toast({
+        title: "Application submitted",
+        description: "Your profile has been shared with the recruiter.",
+      });
     } catch (error: any) {
       toast({
         title: "Application error",

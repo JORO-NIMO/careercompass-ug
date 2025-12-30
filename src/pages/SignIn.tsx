@@ -27,8 +27,18 @@ const SignIn = () => {
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  setCaptchaError(null);
+  if (!termsAccepted) {
+    toast({
+      title: "Terms Required",
+      description: "Please accept the Terms of Service and Privacy Policy to continue.",
+      variant: "destructive",
+    });
+    return;
+  }
+  // ... existing logic
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
 
@@ -114,6 +124,14 @@ const SignIn = () => {
       toast({
         title: "Error",
         description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!termsAccepted) {
+      toast({
+        title: "Terms Required",
+        description: "Please accept the Terms of Service and Privacy Policy to continue.",
         variant: "destructive",
       });
       return;
@@ -321,6 +339,8 @@ const SignIn = () => {
                           type="checkbox"
                           id="terms"
                           required
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
                           className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                         />
                         <label
