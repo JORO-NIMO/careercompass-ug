@@ -96,7 +96,6 @@ const OAuthConsent = () => {
 
   return (
     <div className="min-h-screen bg-muted/10">
-      <Header />
       <main className="py-12">
         <div className="container mx-auto px-4 max-w-3xl space-y-6">
           <div className="text-center space-y-2">
@@ -216,7 +215,6 @@ const OAuthConsent = () => {
           </p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

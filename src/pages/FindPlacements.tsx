@@ -83,7 +83,6 @@ const FindPlacements = () => {
 
         <FeaturedPlacements />
       </main>
-      <Footer />
     </div>
   );
 };

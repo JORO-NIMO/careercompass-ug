@@ -999,7 +999,6 @@ const ForCompanies = () => {
         </DialogContent>
       </Dialog>
 
-      <Footer />
     </div>
   );
 };

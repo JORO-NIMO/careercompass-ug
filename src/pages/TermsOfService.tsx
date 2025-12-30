@@ -6,7 +6,6 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 const TermsOfService = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
       <main className="py-12 container mx-auto px-4 max-w-5xl">
         <div className="space-y-8">
 
@@ -241,7 +240,6 @@ const TermsOfService = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -181,7 +181,6 @@ const TopInternships = () => {
           })),
         }}
       />
-      <Header />
       <main className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto space-y-10">
@@ -247,7 +246,6 @@ const TopInternships = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 };

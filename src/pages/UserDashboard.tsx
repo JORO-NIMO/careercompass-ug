@@ -185,7 +185,6 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="py-16">
         <div className="container mx-auto max-w-5xl px-4 space-y-16">
           <section className="space-y-2 text-center">
@@ -446,7 +445,6 @@ const UserDashboard = () => {
           </section>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

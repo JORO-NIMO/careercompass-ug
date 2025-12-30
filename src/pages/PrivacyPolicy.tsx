@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
       <main className="py-12 container mx-auto px-4 max-w-5xl">
         <div className="space-y-8">
 
@@ -202,7 +201,6 @@ const PrivacyPolicy = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

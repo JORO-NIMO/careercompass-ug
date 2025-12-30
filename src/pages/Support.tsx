@@ -6,7 +6,6 @@ import { Mail, MessageCircle, LifeBuoy, Clock, ShieldCheck } from "lucide-react"
 const Support = () => {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <Header />
 
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
@@ -122,7 +121,6 @@ const Support = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
