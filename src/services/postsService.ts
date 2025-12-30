@@ -28,16 +28,21 @@ export async function createPost(payload: Partial<AdminPost>): Promise<AdminPost
         .single();
 
     if (error) {
-        console.error('createPost error:', error);
-        throw new Error(error.message || 'Failed to create post');
+        console.error('createPost error details:', JSON.stringify(error, null, 2));
+        throw new Error(`Failed to create post: ${error.message} (${error.code})`);
     }
 
-    await logAdminAction({
-        action: 'create',
-        targetTable: 'posts',
-        targetId: data.id,
-        changes: data,
-    });
+    // Try logging, but don't fail operation if logging fails
+    try {
+        await logAdminAction({
+            action: 'create',
+            targetTable: 'posts',
+            targetId: data.id,
+            changes: data,
+        });
+    } catch (logError) {
+        console.warn('Failed to log admin action for createPost:', logError);
+    }
 
     return data as AdminPost;
 }

@@ -128,8 +128,9 @@ export function AdminPostsManager() {
             }
             setModalOpen(false);
             void loadPosts();
-        } catch (error) {
-            toast({ title: 'Error', description: 'Failed to save post', variant: 'destructive' });
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to save post';
+            toast({ title: 'Error', description: message, variant: 'destructive' });
         } finally {
             setIsSaving(false);
         }
