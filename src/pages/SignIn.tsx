@@ -25,16 +25,11 @@ const SignIn = () => {
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
-
-  // setCaptchaError(null); // Removed rogue statement
-
-  if (!termsAccepted && false) { // verification logic moved to handler
-    // ...
-  }
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
