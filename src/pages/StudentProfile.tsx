@@ -3,8 +3,6 @@ import { Loader2, Plus, X, MapPin } from "lucide-react";
 // ...existing imports...
 // For reverse geocoding
 const REVERSE_GEOCODE_API = "https://nominatim.openstreetmap.org/reverse?format=jsonv2";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import QuickNavigation from "@/components/QuickNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -347,6 +345,7 @@ const ForCompanies = () => {
         application_email: applicationMethod === 'email' ? applicationEmail.trim() : undefined,
         application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
         region: region,
+        industry: industry,
       });
 
       setSubmissionSuccess(true);
@@ -483,7 +482,7 @@ const ForCompanies = () => {
           serviceType: 'Internship and early-career recruitment',
         }}
       />
-      <Header />
+      {/* Header and Footer are now global in App.tsx */}
       <main className="py-16">
         <div className="container mx-auto px-4 space-y-16">
           <section className="max-w-3xl mx-auto text-center space-y-6">

@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
-import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import SearchFilters from "@/components/SearchFilters";
 import FeaturedPlacements from "@/components/FeaturedPlacements";
 import HowItWorks from "@/components/HowItWorks";
 import QuickNavigation from "@/components/QuickNavigation";
-import Footer from "@/components/Footer";
 import SEO from "@/components/SEO";
 import { HomepageAdsBanner } from "@/components/HomepageAdsBanner";
 
@@ -97,8 +95,7 @@ const Index = () => {
           },
         }}
       />
-      <Header />
-      <main>
+      <main className="flex-grow">
         <HeroSection />
         <div className="container mx-auto px-4 -mt-16 relative z-20">
           <SearchFilters />

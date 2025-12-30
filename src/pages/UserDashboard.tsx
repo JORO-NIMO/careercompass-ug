@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import CompanyMediaManager from '@/components/CompanyMediaManager';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';

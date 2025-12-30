@@ -102,7 +102,7 @@ const Footer = () => {
               <li><a href="/find-talent" className="hover:text-primary transition-colors">Discover Talent</a></li>
               <li>
                 <a
-                  href="mailto:partnerships@placementbridge.org?subject=Request%20for%20partnership"
+                  href="mailto:admin@placementbridge.org?subject=Request%20for%20partnership"
                   className="hover:text-primary transition-colors"
                 >
                   Partner With Us

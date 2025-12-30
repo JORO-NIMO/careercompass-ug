@@ -1,5 +1,3 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import SearchFilters from "@/components/SearchFilters";
 import FeaturedPlacements from "@/components/FeaturedPlacements";
 import SEO from "@/components/SEO";
@@ -45,7 +43,6 @@ const FindPlacements = () => {
           description: "Discover curated internships, fellowships, and placements across Uganda.",
         }}
       />
-      <Header />
       <main>
         <div className="bg-gradient-to-br from-primary via-primary-glow to-primary-dark text-primary-foreground">
           <div className="container mx-auto px-4 py-16">
@@ -59,7 +56,7 @@ const FindPlacements = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="container mx-auto px-4 -mt-16 relative z-20">
           <SearchFilters onSearch={handleSearch} />
         </div>
@@ -83,7 +80,7 @@ const FindPlacements = () => {
             ))}
           </div>
         )}
-        
+
         <FeaturedPlacements />
       </main>
       <Footer />

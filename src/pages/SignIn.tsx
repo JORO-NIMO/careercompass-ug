@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import HCaptchaWidget from '@/components/HCaptchaWidget';
 import { useNavigate } from 'react-router-dom';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,19 +26,15 @@ const SignIn = () => {
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
-
-  setCaptchaError(null);
-  if (!termsAccepted) {
-    toast({
-      title: "Terms Required",
-      description: "Please accept the Terms of Service and Privacy Policy to continue.",
-      variant: "destructive",
-    });
-    return;
-  }
-  // ... existing logic
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
+
+  // setCaptchaError(null); // Removed rogue statement
+
+  if (!termsAccepted && false) { // verification logic moved to handler
+    // ...
+  }
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
@@ -176,9 +170,8 @@ const SignIn = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="py-16">
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-grow flex items-center justify-center p-4">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
             <Tabs defaultValue="signin" className="w-full">
@@ -358,7 +351,6 @@ const SignIn = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

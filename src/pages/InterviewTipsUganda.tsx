@@ -1,5 +1,3 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import QuickNavigation from "@/components/QuickNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +41,6 @@ const InterviewTipsUganda = () => {
           ],
         }}
       />
-      <Header />
       <main className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto space-y-10">
@@ -161,7 +158,6 @@ const InterviewTipsUganda = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 };

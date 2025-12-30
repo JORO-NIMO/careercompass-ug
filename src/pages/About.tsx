@@ -1,12 +1,9 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Target, Globe, Award } from "lucide-react";
 
 const About = () => {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main>
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-primary via-primary-glow to-primary-dark text-primary-foreground">
