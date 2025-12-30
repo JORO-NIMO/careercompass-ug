@@ -71,3 +71,29 @@ export type AdminBulletResponse = AdminBulletDetail | (AdminBulletDetail & Admin
 export type AdminPlacement = Tables<'placements'>;
 
 export type AdminProfile = Tables<'profiles'>;
+
+export interface AdminPost {
+  id: string;
+  title: string;
+  content: string;
+  category: 'Placements' | 'Announcements' | 'Updates';
+  status: 'draft' | 'published' | 'archived';
+  scheduled_for: string | null;
+  image_url: string | null;
+  cta_text: string | null;
+  cta_link: string | null;
+  created_at: string;
+  published_at: string | null;
+  author_id: string | null;
+  updated_at: string;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  admin_id: string | null;
+  action: string;
+  target_table: string;
+  target_id: string;
+  changes: any | null;
+  timestamp: string;
+}

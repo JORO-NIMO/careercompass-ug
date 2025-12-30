@@ -13,6 +13,7 @@ import { AdminAdsManager } from '@/components/AdminAdsManager';
 import { AdminBoostsManager } from '@/components/AdminBoostsManager';
 import { AdminCompaniesManager } from '@/components/AdminCompaniesManager';
 import { AdminListingsManager } from '@/components/AdminListingsManager';
+import { AdminPostsManager } from '@/components/AdminPostsManager';
 
 interface Placement {
   id: string;
@@ -216,6 +217,10 @@ const AdminDashboard = () => {
 
           <div className="mb-8">
             <AdminListingsManager />
+          </div>
+
+          <div className="mb-8">
+            <AdminPostsManager />
           </div>
 
           <div className="mb-8">

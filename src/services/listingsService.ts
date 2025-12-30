@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import type { AdminListing, AdminListingsCollection, ListingWithCompany } from '@/types/admin';
+import { logAdminAction } from './adminService';
 export type { ListingWithCompany } from '@/types/admin';
 
 export type Listing = Tables<'listings'>;
@@ -94,6 +95,10 @@ export async function createListing(payload: {
   application_email?: string;
   application_url?: string;
   region?: string;
+  status?: 'draft' | 'published' | 'archived';
+  expires_at?: string;
+  logo_url?: string;
+  banner_urls?: string[];
 }): Promise<Listing> {
   const { data, error } = await supabase
     .from('listings')
@@ -110,6 +115,10 @@ export async function createListing(payload: {
       application_email: payload.application_email,
       application_url: payload.application_url,
       region: payload.region,
+      status: payload.status ?? 'published',
+      expires_at: payload.expires_at,
+      logo_url: payload.logo_url,
+      banner_urls: payload.banner_urls,
     })
     .select('*')
     .single();
@@ -118,6 +127,13 @@ export async function createListing(payload: {
     console.error('createListing error:', error);
     throw new Error(error.message || 'Failed to create listing');
   }
+
+  await logAdminAction({
+    action: 'create',
+    targetTable: 'listings',
+    targetId: data.id,
+    changes: data,
+  });
 
   return data;
 }
@@ -135,6 +151,10 @@ export async function updateListing(id: string, payload: {
   application_email?: string;
   application_url?: string;
   region?: string;
+  status?: 'draft' | 'published' | 'archived';
+  expires_at?: string;
+  logo_url?: string;
+  banner_urls?: string[];
 }): Promise<Listing> {
   const { data, error } = await supabase
     .from('listings')
@@ -151,6 +171,10 @@ export async function updateListing(id: string, payload: {
       application_email: payload.application_email,
       application_url: payload.application_url,
       region: payload.region,
+      status: payload.status,
+      expires_at: payload.expires_at,
+      logo_url: payload.logo_url,
+      banner_urls: payload.banner_urls,
     })
     .eq('id', id)
     .select('*')
@@ -160,6 +184,13 @@ export async function updateListing(id: string, payload: {
     console.error('updateListing error:', error);
     throw new Error(error.message || 'Failed to update listing');
   }
+
+  await logAdminAction({
+    action: 'update',
+    targetTable: 'listings',
+    targetId: id,
+    changes: payload,
+  });
 
   return data;
 }
@@ -174,6 +205,12 @@ export async function deleteListing(id: string): Promise<void> {
     console.error('deleteListing error:', error);
     throw new Error(error.message || 'Failed to delete listing');
   }
+
+  await logAdminAction({
+    action: 'delete',
+    targetTable: 'listings',
+    targetId: id,
+  });
 }
 
 export async function toggleListingFeature(id: string, isFeatured: boolean): Promise<Listing> {
