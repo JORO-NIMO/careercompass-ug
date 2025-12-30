@@ -42,7 +42,8 @@ const PrivacyPolicy = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Your Choices</h2>
                 <p className="text-muted-foreground">
-                  You can update or delete your profile at any time from the account dashboard. To request a full export or deletion of your data, contact support@placementbridge.org and we will respond within ten working days.
+                  You can update or delete your profile at any time from the account dashboard. To request a full export or deletion of your data,        admin@placementbridge.org
+                  and we will respond within ten working days.
                 </p>
               </div>
 

@@ -49,7 +49,8 @@ const TermsOfService = () => {
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">Contact</h2>
                 <p className="text-muted-foreground">
-                  For questions about these Terms or to report misuse, email support@placementbridge.org. We review all reports promptly and work to maintain a safe hiring community.
+                  For questions about these Terms or to report misuse,        admin@placementbridge.org
+                  . We review all reports promptly and work to maintain a safe hiring community.
                 </p>
               </div>
             </CardContent>

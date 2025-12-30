@@ -702,7 +702,7 @@ const ForCompanies = () => {
                     email with a lightweight landing page brief so we can publish a trusted company profile for you.
                   </p>
                   <p>
-                    You can also email <a className="underline" href="mailto:support@placementbridge.org?subject=Website%20support%20request">support@placementbridge.org</a> with your logo and contact details to fast-track the process.
+                    You can also email <a className="underline" href="mailto:admin@placementbridge.org?subject=Website%20support%20request">admin@placementbridge.org</a> with your logo and contact details to fast-track the process.
                   </p>
                 </CardContent>
               </Card>

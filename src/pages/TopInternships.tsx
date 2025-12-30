@@ -9,7 +9,7 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import SEO from "@/components/SEO";
 
-const INDUSTRY_DATA: Record<string, {
+interface IndustryData {
   title: string;
   description: string;
   highlights: Array<{
@@ -20,7 +20,9 @@ const INDUSTRY_DATA: Record<string, {
   }>;
   skills: string[];
   keywords: string[];
-}> = {
+}
+
+const INDUSTRY_DATA: Record<string, IndustryData> = {
   technology: {
     title: "Technology & Software Development",
     description:
@@ -111,7 +113,7 @@ const INDUSTRY_DATA: Record<string, {
   },
 };
 
-const fallbackIndustry = {
+const fallbackIndustry: IndustryData = {
   title: "Emerging Opportunities",
   description:
     "Explore placements across agribusiness, tourism, renewable energy, and creative industries. PlacementBridge curates fresh opportunities weekly.",
@@ -238,7 +240,7 @@ const TopInternships = () => {
                 </p>
                 <Separator />
                 <p>
-                  Need access to more leads? Email <a href="mailto:joronimoamanya@gmail.com" className="text-primary underline">support@placementbridge.org</a> to join our premium internship intelligence brief.
+                  Need access to more leads? Email <a href="mailto:admin@placementbridge.org" className="text-primary underline">admin@placementbridge.org</a> to join our premium internship intelligence brief.
                 </p>
               </CardContent>
             </Card>
