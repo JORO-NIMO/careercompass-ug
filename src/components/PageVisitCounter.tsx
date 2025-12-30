@@ -9,11 +9,28 @@ export function PageVisitCounter() {
         // Initial fetch
         fetchCount();
 
+        // Log visit if not already logged this session
+        const hasLogged = sessionStorage.getItem('has_logged_visit');
+        if (!hasLogged) {
+            void logVisit();
+        }
+
         // Poll every minute (60,000 ms)
         const interval = setInterval(fetchCount, 60000);
 
         return () => clearInterval(interval);
     }, []);
+
+    const logVisit = async () => {
+        try {
+            await supabase.rpc('log_page_visit', { p_path: window.location.pathname });
+            sessionStorage.setItem('has_logged_visit', 'true');
+            // Refresh count after logging
+            fetchCount();
+        } catch (err) {
+            console.error('Failed to log visit', err);
+        }
+    };
 
     const fetchCount = async () => {
         try {

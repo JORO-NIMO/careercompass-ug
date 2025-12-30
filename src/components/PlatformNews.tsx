@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Megaphone, ArrowRight, Calendar } from "lucide-react";
+import { Megaphone, ArrowRight, Calendar, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Announcement {
@@ -86,24 +86,51 @@ export const PlatformNews = () => {
                                     {item.title}
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="flex-grow flex flex-col justify-between pt-0">
+                            <CardContent className="flex-grow pt-0">
                                 <div className="text-sm text-muted-foreground line-clamp-3 mb-4">
                                     {item.content.replace(/<[^>]*>/g, '')}
                                 </div>
-
+                            </CardContent>
+                            <div className="px-6 pb-6 pt-0 flex gap-2 mt-auto">
                                 {item.cta_link && (
-                                    <Button variant="ghost" className="self-start pl-0 hover:pl-2 transition-all group" asChild>
+                                    <Button variant="outline" className="flex-1 group" asChild>
                                         <a href={item.cta_link} target="_blank" rel="noopener noreferrer">
                                             {item.cta_text || "Learn More"}
                                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                                         </a>
                                     </Button>
                                 )}
-                            </CardContent>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0"
+                                    onClick={async () => {
+                                        const shareData = {
+                                            title: item.title,
+                                            text: item.content.replace(/<[^>]*>/g, '').slice(0, 100),
+                                            url: item.cta_link || window.location.href,
+                                        };
+                                        if (navigator.share) {
+                                            try {
+                                                await navigator.share(shareData);
+                                            } catch (err: unknown) {
+                                                if (err instanceof Error && err.name !== 'AbortError') console.error('Error sharing:', err);
+                                            }
+                                        } else {
+                                            await navigator.clipboard.writeText(`${shareData.title}\n${shareData.url}`);
+                                            alert('Link copied to clipboard!');
+                                        }
+                                    }}
+                                >
+                                    <Share2 className="h-4 w-4" />
+                                    <span className="sr-only">Share</span>
+                                </Button>
+                            </div>
                         </Card>
                     ))}
                 </div>
-            )}
-        </section>
+            )
+            }
+        </section >
     );
 };
