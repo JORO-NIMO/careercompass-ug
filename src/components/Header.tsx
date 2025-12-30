@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, Briefcase, LogOut, Shield } from "lucide-react";
+import { Menu, Briefcase, LogOut, Shield, Search } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,6 +69,28 @@ const Header = () => {
             </Link>
           )}
         </nav>
+
+        {/* Search Bar */}
+        <div className="hidden md:flex items-center flex-1 max-w-sm mx-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const input = form.elements.namedItem('q') as HTMLInputElement;
+            const query = input.value.trim();
+            if (query) {
+              const target = window.location.pathname.includes('find-talent') ? '/find-talent' : '/find-placements';
+              window.location.href = `${target}?q=${encodeURIComponent(query)}`;
+            }
+          }} className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              name="q"
+              type="search"
+              placeholder="Search..."
+              className="w-full bg-muted/50 border border-input rounded-md pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </form>
+        </div>
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-3">

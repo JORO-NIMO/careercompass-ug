@@ -7,8 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Clock3, Sparkles, ArrowUpRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
 import { Link } from "react-router-dom";
 
 import { fetchCandidates, type Candidate } from "@/services/profilesService";
@@ -39,6 +37,7 @@ const FindTalent = () => {
   const [selectedField, setSelectedField] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
+  const [selectedUniversity, setSelectedUniversity] = useState("all");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -107,6 +106,16 @@ const FindTalent = () => {
     return Array.from(unique).sort();
   }, [candidates]);
 
+  const universityOptions = useMemo(() => {
+    const unique = new Set<string>();
+    candidates.forEach((candidate) => {
+      if (candidate.education && candidate.education !== "Background details not provided" && candidate.education.length < 50) {
+        unique.add(candidate.education);
+      }
+    });
+    return Array.from(unique).sort();
+  }, [candidates]);
+
   const filteredCandidates = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
@@ -124,10 +133,11 @@ const FindTalent = () => {
       const matchesField = selectedField === "all" || candidate.field === selectedField;
       const matchesLocation = selectedLocation === "all" || candidate.location === selectedLocation;
       const matchesExperience = selectedExperience === "all" || candidate.experience === selectedExperience;
+      const matchesUniversity = selectedUniversity === "all" || candidate.education === selectedUniversity;
 
-      return matchesTerm && matchesField && matchesLocation && matchesExperience;
+      return matchesTerm && matchesField && matchesLocation && matchesExperience && matchesUniversity;
     });
-  }, [candidates, searchTerm, selectedField, selectedLocation, selectedExperience]);
+  }, [candidates, searchTerm, selectedField, selectedLocation, selectedExperience, selectedUniversity]);
 
   const showComingSoon = !loading && candidates.length === 0;
   const showNoResults = !loading && candidates.length > 0 && filteredCandidates.length === 0;
@@ -137,6 +147,7 @@ const FindTalent = () => {
     setSelectedField("all");
     setSelectedLocation("all");
     setSelectedExperience("all");
+    setSelectedUniversity("all");
   };
 
   return (
@@ -254,6 +265,20 @@ const FindTalent = () => {
                   {experienceOptions.map((experience) => (
                     <SelectItem key={experience} value={experience}>
                       {experience}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* University Filter */}
+              <Select value={selectedUniversity} onValueChange={setSelectedUniversity}>
+                <SelectTrigger>
+                  <SelectValue placeholder="University / Institute" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Universities</SelectItem>
+                  {universityOptions.map((uni) => (
+                    <SelectItem key={uni} value={uni}>
+                      {uni}
                     </SelectItem>
                   ))}
                 </SelectContent>
