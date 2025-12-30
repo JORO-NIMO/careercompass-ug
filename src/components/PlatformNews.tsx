@@ -83,7 +83,9 @@ export const PlatformNews = () => {
                                     )}
                                 </div>
                                 <CardTitle className="text-lg leading-tight line-clamp-2">
-                                    {item.title}
+                                    <Link to={`/updates/${item.id}`} className="hover:text-primary transition-colors">
+                                        {item.title}
+                                    </Link>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex-grow pt-0">
@@ -92,23 +94,22 @@ export const PlatformNews = () => {
                                 </div>
                             </CardContent>
                             <div className="px-6 pb-6 pt-0 flex gap-2 mt-auto">
-                                {item.cta_link && (
-                                    <Button variant="outline" className="flex-1 group" asChild>
-                                        <a href={item.cta_link} target="_blank" rel="noopener noreferrer">
-                                            {item.cta_text || "Learn More"}
-                                            <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                                        </a>
-                                    </Button>
-                                )}
+                                <Button variant="outline" className="flex-1 group" asChild>
+                                    <Link to={`/updates/${item.id}`}>
+                                        Read Update
+                                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                    </Link>
+                                </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"
                                     className="shrink-0"
                                     onClick={async () => {
+                                        const shareUrl = `${window.location.origin}/updates/${item.id}`;
                                         const shareData = {
                                             title: item.title,
                                             text: item.content.replace(/<[^>]*>/g, '').slice(0, 100),
-                                            url: item.cta_link || window.location.href,
+                                            url: shareUrl,
                                         };
                                         if (navigator.share) {
                                             try {
@@ -117,7 +118,7 @@ export const PlatformNews = () => {
                                                 if (err instanceof Error && err.name !== 'AbortError') console.error('Error sharing:', err);
                                             }
                                         } else {
-                                            await navigator.clipboard.writeText(`${shareData.title}\n${shareData.url}`);
+                                            await navigator.clipboard.writeText(shareUrl);
                                             alert('Link copied to clipboard!');
                                         }
                                     }}

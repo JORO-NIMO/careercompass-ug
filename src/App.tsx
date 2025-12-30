@@ -40,6 +40,7 @@ const HowToWriteACV = lazy(() => import("./pages/HowToWriteACV"));
 const InterviewTipsUganda = lazy(() => import("./pages/InterviewTipsUganda"));
 const TopInternships = lazy(() => import("./pages/TopInternships"));
 const CareerTrendsBlog = lazy(() => import("./pages/CareerTrendsBlog"));
+const UpdateDetails = lazy(() => import("./pages/UpdateDetails"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,6 +118,7 @@ function AppRouter() {
           <Route path="/guides/interview-tips-uganda" element={<InterviewTipsUganda />} />
           <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
           <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
+          <Route path="/updates/:id" element={<UpdateDetails />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
