@@ -316,6 +316,20 @@ const SignIn = () => {
                       <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? 'Creating account...' : 'Create Account'}
                       </Button>
+                      <div className="flex items-center space-x-2 mt-4">
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          required
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="terms"
+                          className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          I agree to the <a href="/terms" className="text-primary underline hover:text-primary/80" target="_blank">Terms of Service</a> and <a href="/privacy" className="text-primary underline hover:text-primary/80" target="_blank">Privacy Policy</a>.
+                        </label>
+                      </div>
                     </form>
                   </CardContent>
                 </Card>
