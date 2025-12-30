@@ -2,8 +2,8 @@
 BEGIN;
 
 -- 1. Storage Policies
--- Enable RLS on storage.objects if not already enabled (usually enabled by default)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Note: storage.objects usually has RLS enabled by default.
+-- We skip ALTER TABLE to avoid permission errors if not superuser.
 
 -- Policy: Public Read Access for 'ads' and 'company-media'
 CREATE POLICY "Public Access"
