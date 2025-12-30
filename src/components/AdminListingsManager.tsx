@@ -44,6 +44,13 @@ interface ListingFormState {
   companyId: string | null;
   isFeatured: boolean;
   displayOrder: string;
+  opportunityType: string;
+  applicationDeadline: string;
+  applicationMethod: string;
+  whatsappNumber: string;
+  applicationEmail: string;
+  applicationUrl: string;
+  region: string;
 }
 
 const DEFAULT_FORM_STATE: ListingFormState = {
@@ -52,6 +59,13 @@ const DEFAULT_FORM_STATE: ListingFormState = {
   companyId: null,
   isFeatured: false,
   displayOrder: '',
+  opportunityType: 'job',
+  applicationDeadline: '',
+  applicationMethod: 'website',
+  whatsappNumber: '',
+  applicationEmail: '',
+  applicationUrl: '',
+  region: '',
 };
 
 export function AdminListingsManager() {
@@ -146,6 +160,13 @@ export function AdminListingsManager() {
       companyId: listing.company_id,
       isFeatured: listing.is_featured,
       displayOrder: String(listing.display_order ?? ''),
+      opportunityType: listing.opportunity_type ?? 'job',
+      applicationDeadline: listing.application_deadline ? new Date(listing.application_deadline).toISOString().slice(0, 16) : '',
+      applicationMethod: listing.application_method ?? 'website',
+      whatsappNumber: listing.whatsapp_number ?? '',
+      applicationEmail: listing.application_email ?? '',
+      applicationUrl: listing.application_url ?? '',
+      region: listing.region ?? '',
     });
     setDialogOpen(true);
   };
@@ -179,6 +200,13 @@ export function AdminListingsManager() {
           companyId: formState.companyId ?? null,
           isFeatured: formState.isFeatured,
           displayOrder: parsedOrder,
+          opportunity_type: formState.opportunityType,
+          application_deadline: formState.applicationDeadline || undefined,
+          application_method: formState.applicationMethod,
+          whatsapp_number: formState.whatsappNumber,
+          application_email: formState.applicationEmail,
+          application_url: formState.applicationUrl,
+          region: formState.region,
         });
         toast({ title: 'Listing updated', description: 'Changes saved successfully.' });
       } else {
@@ -188,6 +216,13 @@ export function AdminListingsManager() {
           companyId: formState.companyId ?? undefined,
           isFeatured: formState.isFeatured,
           displayOrder: parsedOrder,
+          opportunity_type: formState.opportunityType,
+          application_deadline: formState.applicationDeadline || undefined,
+          application_method: formState.applicationMethod,
+          whatsapp_number: formState.whatsappNumber,
+          application_email: formState.applicationEmail,
+          application_url: formState.applicationUrl,
+          region: formState.region,
         });
         toast({ title: 'Listing created', description: 'Listing added to the curated feed.' });
       }
@@ -472,6 +507,104 @@ export function AdminListingsManager() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="listing-type">Opportunity type</Label>
+                <Select
+                  value={formState.opportunityType}
+                  onValueChange={(value) => setFormState((prev) => ({ ...prev, opportunityType: value }))}
+                >
+                  <SelectTrigger id="listing-type">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="job">Job</SelectItem>
+                    <SelectItem value="internship">Internship</SelectItem>
+                    <SelectItem value="graduate_trainee">Graduate Trainee</SelectItem>
+                    <SelectItem value="volunteer">Volunteer</SelectItem>
+                    <SelectItem value="course">Course</SelectItem>
+                    <SelectItem value="scholarship">Scholarship</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="listing-region">Region</Label>
+                <Input
+                  id="listing-region"
+                  value={formState.region}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, region: event.target.value }))}
+                  placeholder="e.g. Kampala, Mbarara, Online"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="listing-deadline">Application deadline</Label>
+                <Input
+                  id="listing-deadline"
+                  type="datetime-local"
+                  value={formState.applicationDeadline}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, applicationDeadline: event.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="listing-method">Application method</Label>
+                <Select
+                  value={formState.applicationMethod}
+                  onValueChange={(value) => setFormState((prev) => ({ ...prev, applicationMethod: value }))}
+                >
+                  <SelectTrigger id="listing-method">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="website">External website</SelectItem>
+                    <SelectItem value="url">External form / URL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {formState.applicationMethod === 'whatsapp' && (
+              <div className="space-y-2">
+                <Label htmlFor="listing-whatsapp">WhatsApp number</Label>
+                <Input
+                  id="listing-whatsapp"
+                  value={formState.whatsappNumber}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, whatsappNumber: event.target.value }))}
+                  placeholder="e.g. +256700000000"
+                />
+              </div>
+            )}
+
+            {formState.applicationMethod === 'email' && (
+              <div className="space-y-2">
+                <Label htmlFor="listing-email">Application email</Label>
+                <Input
+                  id="listing-email"
+                  type="email"
+                  value={formState.applicationEmail}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, applicationEmail: event.target.value }))}
+                  placeholder="e.g. hr@company.com"
+                />
+              </div>
+            )}
+
+            {(formState.applicationMethod === 'website' || formState.applicationMethod === 'url') && (
+              <div className="space-y-2">
+                <Label htmlFor="listing-url">Application URL</Label>
+                <Input
+                  id="listing-url"
+                  type="url"
+                  value={formState.applicationUrl}
+                  onChange={(event) => setFormState((prev) => ({ ...prev, applicationUrl: event.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="listing-order">Display order</Label>
               <Input
