@@ -44,16 +44,20 @@ ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Posts
+DROP POLICY IF EXISTS "Public can view published posts" ON public.posts;
 CREATE POLICY "Public can view published posts" ON public.posts
   FOR SELECT USING (status = 'published' AND (scheduled_for IS NULL OR scheduled_for <= now()));
 
+DROP POLICY IF EXISTS "Admins have full control over posts" ON public.posts;
 CREATE POLICY "Admins have full control over posts" ON public.posts
   FOR ALL TO authenticated USING (is_admin()) WITH CHECK (is_admin());
 
 -- RLS Policies for Audit Logs
+DROP POLICY IF EXISTS "Admins can view audit logs" ON public.admin_audit_logs;
 CREATE POLICY "Admins can view audit logs" ON public.admin_audit_logs
   FOR SELECT TO authenticated USING (is_admin());
 
+DROP POLICY IF EXISTS "System/Admins can insert audit logs" ON public.admin_audit_logs;
 CREATE POLICY "System/Admins can insert audit logs" ON public.admin_audit_logs
   FOR INSERT TO authenticated WITH CHECK (is_admin());
 

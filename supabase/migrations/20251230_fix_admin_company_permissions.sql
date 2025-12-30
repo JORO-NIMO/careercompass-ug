@@ -6,17 +6,20 @@ BEGIN;
 -- We skip ALTER TABLE to avoid permission errors if not superuser.
 
 -- Policy: Public Read Access for 'ads' and 'company-media'
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id IN ('ads', 'company-media') );
 
 -- Policy: Authenticated Users can Upload to 'ads' and 'company-media'
+DROP POLICY IF EXISTS "Authenticated Upload" ON storage.objects;
 CREATE POLICY "Authenticated Upload"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK ( bucket_id IN ('ads', 'company-media') );
 
 -- Policy: Users can Update/Delete their own files (or Admins can do anything)
+DROP POLICY IF EXISTS "Owner/Admin Update Delete" ON storage.objects;
 CREATE POLICY "Owner/Admin Update Delete"
 ON storage.objects FOR UPDATE
 TO authenticated
@@ -27,6 +30,7 @@ WITH CHECK (
   (auth.uid() = owner) OR (is_admin()) 
 );
 
+DROP POLICY IF EXISTS "Owner/Admin Delete" ON storage.objects;
 CREATE POLICY "Owner/Admin Delete"
 ON storage.objects FOR DELETE
 TO authenticated
