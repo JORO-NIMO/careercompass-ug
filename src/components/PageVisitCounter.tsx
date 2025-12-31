@@ -35,9 +35,11 @@ export function PageVisitCounter() {
     const fetchCount = async () => {
         try {
             // @ts-ignore - RPC created in new migration
-            const { data, error } = await supabase.rpc('get_page_visit_count');
-            if (!error && typeof data === 'number') {
-                setCount(data);
+            const { data, error } = await supabase.rpc('get_analytics_metrics');
+            if (!error && data) {
+                // TS cast as we don't have types yet
+                const metrics = data as { active_now: number };
+                setCount(metrics.active_now || 0);
             }
         } catch (err) {
             console.error('Failed to fetch visit count', err);
