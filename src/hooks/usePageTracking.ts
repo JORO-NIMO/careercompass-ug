@@ -8,31 +8,39 @@ import { trackPageView } from '@/lib/analytics';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
+const getVisitorId = (): string => {
+  const STORAGE_KEY = 'pb_visitor_id';
+  let visitorId = localStorage.getItem(STORAGE_KEY);
+  if (!visitorId) {
+    visitorId = crypto.randomUUID();
+    localStorage.setItem(STORAGE_KEY, visitorId);
+  }
+  return visitorId;
+};
+
 export function usePageTracking() {
   const location = useLocation();
   const { user } = useAuth();
 
   useEffect(() => {
-    // Track page view on route change
-    trackPageView(
-      location.pathname + location.search,
-      document.title,
-      user?.id
-    );
-
-    // [New] Real-time Page Visit Logging for Counter
-    const logVisit = async () => {
+    const track = async () => {
       try {
-        // @ts-ignore - Table created in new migration, types not yet generated
-        await supabase.from('page_visits_log').insert({
-          path: location.pathname,
-          visited_at: new Date().toISOString()
+        const visitorId = getVisitorId();
+        // Call the atomic RPC function
+        // @ts-ignore - Types for new schema not yet generated
+        await supabase.rpc('track_visit', {
+          p_visitor_id: visitorId,
+          p_path: location.pathname,
+          p_referrer: document.referrer || null,
+          p_user_id: user?.id || null,
+          p_user_agent: navigator.userAgent
         });
-      } catch (e) {
-        // silent fail
+      } catch (error) {
+        console.error('[Analytics] Failed to track visit:', error);
       }
     };
-    logVisit();
 
-  }, [location, user?.id]);
+    // Track on mount and route change
+    track();
+  }, [location.pathname, user?.id]);
 }
