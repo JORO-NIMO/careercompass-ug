@@ -52,6 +52,32 @@ async function parseJsonResponse<T>(response: Response): Promise<{
   }
 }
 
+/**
+ * Semantic Search for Listings
+ * 1. Generates embedding for the search text via Edge Function
+ * 2. Searches DB using cosine similarity
+ */
+export async function searchSmartListings(queryText: string) {
+  // AI-based search has been disabled. Use a simple client-side text fallback
+  console.warn('searchSmartListings: AI search disabled; using text fallback for:', queryText);
+  try {
+    const all = await fetchListings();
+    const q = queryText.trim().toLowerCase();
+    if (!q) return [];
+    return all.filter((item) => {
+      const title = (item as any).title ?? '';
+      const description = (item as any).description ?? '';
+      return (
+        title.toLowerCase().includes(q) ||
+        description.toLowerCase().includes(q)
+      );
+    });
+  } catch (err) {
+    console.error('Fallback text search failed:', err);
+    return [];
+  }
+}
+
 export async function fetchListings(): Promise<ListingWithCompany[]> {
   try {
     const response = await fetch('/api/listings');

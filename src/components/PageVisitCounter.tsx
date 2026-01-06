@@ -7,7 +7,7 @@ export function PageVisitCounter() {
 
     useEffect(() => {
         // Initial fetch
-        fetchCount();
+        void fetchCount();
 
         // Log visit if not already logged this session
         const hasLogged = sessionStorage.getItem('has_logged_visit');
@@ -15,18 +15,35 @@ export function PageVisitCounter() {
             void logVisit();
         }
 
-        // Poll every minute (60,000 ms)
-        const interval = setInterval(fetchCount, 60000);
+        // Poll every 30 seconds for more responsive count updates
+        const interval = setInterval(fetchCount, 30000);
 
         return () => clearInterval(interval);
     }, []);
 
     const logVisit = async () => {
         try {
-            await supabase.rpc('log_page_visit', { p_path: window.location.pathname });
+            // include user id when available so authenticated visits are associated
+            const { data: sessionData } = await supabase.auth.getSession();
+            const userId = sessionData?.session?.user?.id ?? null;
+
+            try {
+                // try RPC with optional parameter (server function may ignore extra params)
+                // @ts-ignore
+                await supabase.rpc('log_page_visit', { p_path: window.location.pathname, p_user_id: userId });
+            } catch (rpcErr) {
+                // fallback: call RPC without user id if the first call fails
+                try {
+                    // @ts-ignore
+                    await supabase.rpc('log_page_visit', { p_path: window.location.pathname });
+                } catch (e) {
+                    console.error('log_page_visit failed (fallback)', e);
+                }
+            }
+
             sessionStorage.setItem('has_logged_visit', 'true');
             // Refresh count after logging
-            fetchCount();
+            void fetchCount();
         } catch (err) {
             console.error('Failed to log visit', err);
         }
@@ -49,7 +66,7 @@ export function PageVisitCounter() {
     if (count === null) return null;
 
     return (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 px-3 py-1 rounded-full animate-pulse">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 px-3 py-1 rounded-full">
             <Users className="w-3 h-3" />
             <span>{count.toLocaleString()} Live Visits</span>
         </div>

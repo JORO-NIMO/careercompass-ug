@@ -7,7 +7,7 @@
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'github' });
     return { error };
   };
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +46,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
 
+      // Upsert profile for signed-in users to ensure they're stored in DB
       if (nextSession?.user) {
+        void (async () => {
+          try {
+            const u = nextSession.user;
+            await supabase.from('profiles').upsert([
+              {
+                id: u.id,
+                email: u.email ?? null,
+                full_name: (u.user_metadata as any)?.full_name ?? (u.user_metadata as any)?.name ?? null,
+                updated_at: new Date().toISOString(),
+              },
+            ], { onConflict: 'id' });
+          } catch (err) {
+            console.warn('Failed to upsert profile on auth change', err);
+          }
+        })();
+
         void checkAdminStatus(nextSession.user.id).then((result) => {
           setIsAdmin(result);
           setLoading(false);
@@ -62,6 +79,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(initialSession?.user ?? null);
 
       if (initialSession?.user) {
+        // upsert profile on initial load
+        void (async () => {
+          try {
+            const u = initialSession.user;
+            await supabase.from('profiles').upsert([
+              {
+                id: u.id,
+                email: u.email ?? null,
+                full_name: (u.user_metadata as any)?.full_name ?? (u.user_metadata as any)?.name ?? null,
+                updated_at: new Date().toISOString(),
+              },
+            ], { onConflict: 'id' });
+          } catch (err) {
+            console.warn('Failed to upsert profile on session init', err);
+          }
+        })();
+
         void checkAdminStatus(initialSession.user.id).then((result) => {
           setIsAdmin(result);
           setLoading(false);
@@ -95,6 +129,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signOut = async () => {
     await supabase.auth.signOut();
   };
+
+  // Auto sign-out after inactivity (3 minutes)
+  const inactivityTimeoutRef = useRef<number | null>(null);
+  const INACTIVITY_LIMIT = 3 * 60 * 1000; // 3 minutes
+
+  useEffect(() => {
+    // clear any existing timer
+    const clearTimer = () => {
+      if (inactivityTimeoutRef.current) {
+        window.clearTimeout(inactivityTimeoutRef.current);
+        inactivityTimeoutRef.current = null;
+      }
+    };
+
+    const startTimer = () => {
+      clearTimer();
+      inactivityTimeoutRef.current = window.setTimeout(() => {
+        void supabase.auth.signOut();
+      }, INACTIVITY_LIMIT);
+    };
+
+    const activityHandler = () => {
+      if (session) startTimer();
+    };
+
+    // Only run when there's an active session
+    if (session) {
+      const events: Array<keyof WindowEventMap> = [
+        "mousemove",
+        "keydown",
+        "mousedown",
+        "touchstart",
+        "scroll",
+      ];
+
+      events.forEach((ev) => window.addEventListener(ev, activityHandler));
+
+      // start initial timer
+      startTimer();
+
+      return () => {
+        events.forEach((ev) => window.removeEventListener(ev, activityHandler));
+        clearTimer();
+      };
+    }
+
+    // If no session, ensure timer cleared
+    clearTimer();
+    return undefined;
+  }, [session]);
 
   return (
     <AuthContext.Provider value={{ user, session, isAdmin, loading, signIn, signUp, signOut, signInWithGoogle, signInWithGithub }}>

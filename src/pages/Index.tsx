@@ -8,6 +8,7 @@ import SEO from "@/components/SEO";
 import { HomepageAdsBanner } from "@/components/HomepageAdsBanner";
 
 import { PlatformNews } from "@/components/PlatformNews";
+import { SmartJobSearch } from "@/components/SmartJobSearch";
 
 const RESOURCE_HIGHLIGHTS = [
   {
@@ -100,6 +101,9 @@ const Index = () => {
       <main className="flex-grow">
         <HeroSection />
         <div className="container mx-auto px-4 -mt-16 relative z-20">
+          <div className="mb-6 max-w-2xl mx-auto">
+            <SmartJobSearch />
+          </div>
           <SearchFilters />
         </div>
         <PlatformNews />

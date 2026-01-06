@@ -185,7 +185,8 @@ export function CuratedListingCard({
         <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{description}</p>
       </CardContent>
       <CardFooter className="flex items-center justify-between border-t border-border/50 pt-4">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Updated {formattedUpdatedAt}</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-auto">Updated {formattedUpdatedAt}</span>
+
         <Button
           size="sm"
           onClick={handleApply}
