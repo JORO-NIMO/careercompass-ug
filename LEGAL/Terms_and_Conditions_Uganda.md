@@ -581,7 +581,7 @@ I.2 Customer Content License Table
 
 31. Security and Vulnerability Disclosure (Expanded)
 31.3 Responsible Disclosure Program
-- The Company operates a responsible disclosure process and maintains a security contact at security@[your-domain]. Rewards or acknowledgements for responsible disclosures are at the Company's discretion.
+- The Company operates a responsible disclosure process and maintains a security contact at security@company.example. Rewards or acknowledgements for responsible disclosures are at the Company's discretion.
 
 32. Data Breach Response – Detailed Steps
 - Identification and containment
