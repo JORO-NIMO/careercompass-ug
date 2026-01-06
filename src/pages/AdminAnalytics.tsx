@@ -18,9 +18,9 @@ const AdminAnalytics = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const { data, error } = await (supabase.rpc('get_analytics_metrics') as any);
+        const { data, error } = await supabase.rpc<AnalyticsMetrics>('get_analytics_metrics');
         if (error) throw error;
-        setMetrics(data as AnalyticsMetrics);
+        setMetrics(data);
       } catch (err) {
         console.error("Failed to fetch analytics:", err);
       } finally {
