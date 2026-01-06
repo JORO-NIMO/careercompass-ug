@@ -7,27 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, MapPin, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Clock3, Sparkles, ArrowUpRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-import { toast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
-type ProfileRow = Tables<"profiles">;
-
-interface Candidate {
-  id: string;
-  name: string;
-  title: string;
-  location: string;
-  field: string;
-  education: string;
-  skills: string[];
-  experience: string;
-  email?: string;
-  phone?: string;
-  availability: string;
-  verified: boolean;
-  updatedAt?: string | null;
-}
+import { fetchCandidates, type Candidate } from "@/services/profilesService";
 
 const BASE_FIELD_OPTIONS = [
   "Technology",
@@ -42,15 +24,23 @@ const BASE_FIELD_OPTIONS = [
 
 const BASE_LOCATION_OPTIONS = ["Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu", "Mbale", "Fort Portal", "Arua"];
 
-const BASE_EXPERIENCE_OPTIONS = ["Fresh Graduate", "1-2 years", "3-5 years", "5+ years"];
+const BASE_EXPERIENCE_OPTIONS = [
+  "Emerging Talent",
+  "1-2 years",
+  "3-5 years",
+  "5+ years",
+  "Career Switcher",
+];
 
 const FindTalent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedField, setSelectedField] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedExperience, setSelectedExperience] = useState("all");
+  const [selectedUniversity, setSelectedUniversity] = useState("all");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const hasFetchedRef = useRef(false);
 
@@ -60,52 +50,17 @@ const FindTalent = () => {
 
     let isMounted = true;
 
-    const mapProfileToCandidate = (profile: ProfileRow): Candidate => {
-      const interests = profile.areas_of_interest ?? [];
-      const primaryInterest = interests[0] ?? "Open to opportunities";
-
-      return {
-        id: profile.id,
-        name: profile.full_name ?? "Unnamed Candidate",
-        title: primaryInterest,
-        location: profile.location ?? "Location not specified",
-        field: primaryInterest,
-        education: profile.experience_level ? `${profile.experience_level} graduate` : "Education details not provided",
-        skills: interests,
-        experience: profile.experience_level ?? "Experience not specified",
-        email: profile.email,
-        phone: undefined,
-        availability: profile.availability_status ?? "Available upon request",
-        verified: false,
-        updatedAt: profile.updated_at,
-      };
-    };
-
     const loadCandidates = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("profiles")
-          .select(
-            "id, full_name, email, areas_of_interest, updated_at, location, experience_level, availability_status",
-          )
-          .order("updated_at", { ascending: false })
-          .limit(100);
-
-        if (error) throw error;
-
+        setLoadError(null);
+        const candidates = await fetchCandidates();
         if (!isMounted) return;
-
-        const mapped = (data ?? []).map(mapProfileToCandidate);
-        setCandidates(mapped);
+        setCandidates(candidates);
       } catch (error) {
         console.error("Failed to load candidates", error);
         if (isMounted) {
-          toast({
-            title: "Unable to load candidates",
-            description: "Please try again shortly.",
-            variant: "destructive",
-          });
+          setLoadError("We could not refresh the candidate directory. Please retry in a moment.");
         }
       } finally {
         if (isMounted) {
@@ -151,6 +106,16 @@ const FindTalent = () => {
     return Array.from(unique).sort();
   }, [candidates]);
 
+  const universityOptions = useMemo(() => {
+    const unique = new Set<string>();
+    candidates.forEach((candidate) => {
+      if (candidate.education && candidate.education !== "Background details not provided" && candidate.education.length < 50) {
+        unique.add(candidate.education);
+      }
+    });
+    return Array.from(unique).sort();
+  }, [candidates]);
+
   const filteredCandidates = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
 
@@ -168,10 +133,11 @@ const FindTalent = () => {
       const matchesField = selectedField === "all" || candidate.field === selectedField;
       const matchesLocation = selectedLocation === "all" || candidate.location === selectedLocation;
       const matchesExperience = selectedExperience === "all" || candidate.experience === selectedExperience;
+      const matchesUniversity = selectedUniversity === "all" || candidate.education === selectedUniversity;
 
-      return matchesTerm && matchesField && matchesLocation && matchesExperience;
+      return matchesTerm && matchesField && matchesLocation && matchesExperience && matchesUniversity;
     });
-  }, [candidates, searchTerm, selectedField, selectedLocation, selectedExperience]);
+  }, [candidates, searchTerm, selectedField, selectedLocation, selectedExperience, selectedUniversity]);
 
   const showComingSoon = !loading && candidates.length === 0;
   const showNoResults = !loading && candidates.length > 0 && filteredCandidates.length === 0;
@@ -181,6 +147,7 @@ const FindTalent = () => {
     setSelectedField("all");
     setSelectedLocation("all");
     setSelectedExperience("all");
+    setSelectedUniversity("all");
   };
 
   return (
@@ -188,23 +155,26 @@ const FindTalent = () => {
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Badge className="mb-4" variant="secondary">For Employers</Badge>
+          <Badge className="mb-4" variant="secondary">For Organizations</Badge>
           <h1 className="text-4xl font-bold mb-4">Find Talent</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Search for qualified candidates across Uganda. Connect with skilled professionals ready for their next opportunity.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
             <Button variant="outline" asChild>
-              <a href="/find-placements">View Placements</a>
+              <a href="/find-placements">View Opportunities</a>
             </Button>
             <Button asChild>
-              <a href="/for-companies">Post a Placement</a>
-            </Button>
-            <Button variant="secondary" asChild>
-              <a href="/pricing">See Pricing</a>
+              <a href="/for-companies">Post an Opportunity</a>
             </Button>
           </div>
         </div>
+
+        {loadError && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            {loadError}
+          </div>
+        )}
 
         <Card id="feature-faq" className="mb-10 border-primary/20 bg-primary/5">
           <CardHeader className="pb-4">
@@ -213,7 +183,7 @@ const FindTalent = () => {
               How Featuring Works
             </CardTitle>
             <CardDescription>
-              Featured placements get a spotlight badge, float to the top of search results, and appear in employer highlight emails.
+              Featured opportunities get a spotlight badge, float to the top of search results, and appear in employer highlight emails.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -228,7 +198,7 @@ const FindTalent = () => {
               </div>
               <div className="rounded-lg border border-primary bg-white p-4 shadow-sm">
                 <p className="font-semibold mb-1">30 Day Feature</p>
-                <p className="text-sm text-muted-foreground">Dominate searches for the entire month with premium badge placement.</p>
+                <p className="text-sm text-muted-foreground">Dominate searches for the entire month with premium badge visibility.</p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3 mt-6">
@@ -299,6 +269,20 @@ const FindTalent = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {/* University Filter */}
+              <Select value={selectedUniversity} onValueChange={setSelectedUniversity}>
+                <SelectTrigger>
+                  <SelectValue placeholder="University / Institute" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Universities</SelectItem>
+                  {universityOptions.map((uni) => (
+                    <SelectItem key={uni} value={uni}>
+                      {uni}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -335,108 +319,110 @@ const FindTalent = () => {
             ))}
           {!loading &&
             filteredCandidates.map((candidate) => (
-            <Card key={candidate.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.name}`} />
-                    <AvatarFallback>{candidate.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl mb-1">{candidate.name}</CardTitle>
-                        <CardDescription className="text-base">{candidate.title}</CardDescription>
+              <Card key={candidate.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${candidate.name}`} />
+                      <AvatarFallback>{candidate.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-xl mb-1">{candidate.name}</CardTitle>
+                          <CardDescription className="text-base">{candidate.title}</CardDescription>
+                        </div>
+                        {candidate.verified && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-700">
+                            <Award className="h-3 w-3 mr-1" />
+                            Verified
+                          </Badge>
+                        )}
                       </div>
-                      {candidate.verified && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
-                          <Award className="h-3 w-3 mr-1" />
-                          Verified
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Location & Field */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      <span>{candidate.location}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Briefcase className="h-4 w-4" />
+                      <span>{candidate.experience}</span>
+                    </div>
+                  </div>
+
+                  {/* Education */}
+                  <div className="flex items-start gap-2 text-sm">
+                    <GraduationCap className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                    <span className="text-muted-foreground">{candidate.education}</span>
+                  </div>
+
+                  {/* Skills */}
+                  <div>
+                    <p className="text-sm font-medium mb-2">Skills:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {candidate.skills.slice(0, 5).map((skill, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                      {candidate.skills.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{candidate.skills.length - 5} more
+                        </Badge>
+                      )}
+                      {candidate.skills.length === 0 && (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">
+                          Interests coming soon
                         </Badge>
                       )}
                     </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Location & Field */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{candidate.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Briefcase className="h-4 w-4" />
-                    <span>{candidate.experience}</span>
-                  </div>
-                </div>
 
-                {/* Education */}
-                <div className="flex items-start gap-2 text-sm">
-                  <GraduationCap className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">{candidate.education}</span>
-                </div>
-
-                {/* Skills */}
-                <div>
-                  <p className="text-sm font-medium mb-2">Skills:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {candidate.skills.slice(0, 5).map((skill, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {candidate.skills.length > 5 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{candidate.skills.length - 5} more
-                      </Badge>
+                  {/* Contact Info */}
+                  <div className="pt-4 border-t space-y-2">
+                    {candidate.email && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">
+                          {candidate.email}
+                        </a>
+                      </div>
                     )}
-                    {candidate.skills.length === 0 && (
-                      <Badge variant="outline" className="text-xs text-muted-foreground">
-                        Interests coming soon
-                      </Badge>
+                    {candidate.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <a href={`tel:${candidate.phone}`} className="text-blue-600 hover:underline">
+                          {candidate.phone}
+                        </a>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Available: {candidate.availability}</span>
+                    </div>
+                    {candidate.updatedAt && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Clock3 className="h-3 w-3" />
+                        <span>Updated {new Date(candidate.updatedAt).toLocaleDateString()}</span>
+                      </div>
                     )}
                   </div>
-                </div>
 
-                {/* Contact Info */}
-                <div className="pt-4 border-t space-y-2">
-                  {candidate.email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${candidate.email}`} className="text-blue-600 hover:underline">
-                        {candidate.email}
-                      </a>
-                    </div>
-                  )}
-                  {candidate.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${candidate.phone}`} className="text-blue-600 hover:underline">
-                        {candidate.phone}
-                      </a>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Available: {candidate.availability}</span>
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <Button className="flex-1" asChild>
+                      <a href={`mailto:${candidate.email}`}>Contact Candidate</a>
+                    </Button>
+                    <Button variant="outline">Save</Button>
                   </div>
-                  {candidate.updatedAt && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock3 className="h-3 w-3" />
-                      <span>Updated {new Date(candidate.updatedAt).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Button className="flex-1">Contact Candidate</Button>
-                  <Button variant="outline">Save</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
         </div>
 
         {showComingSoon && (
@@ -477,7 +463,9 @@ const FindTalent = () => {
             <a href="mailto:joronimoamanya@gmail.com" className="flex-1">
               <Button size="lg" className="w-full">Request Recruitment Support</Button>
             </a>
-            <Button size="lg" variant="outline">Post a Job Opening</Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link to="/for-companies#post-opportunity">Post a Job Opening</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

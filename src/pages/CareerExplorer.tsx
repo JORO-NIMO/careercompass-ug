@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 
 const CareerExplorer: React.FC = () => {
   const [query, setQuery] = useState('software engineer');
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown>(null);
 
   const runSearch = async () => {
     try {
       const res = await fetch(`/api/careers?q=${encodeURIComponent(query)}`);
-      const json = await res.json();
+      const json: unknown = await res.json();
       setResult(json);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
     }
   };

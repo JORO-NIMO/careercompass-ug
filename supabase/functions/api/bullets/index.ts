@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
@@ -48,10 +49,7 @@ export default async function (req: Request) {
   if (req.method === 'GET') {
     try {
       if (!(await canAccessOwner(supabase, ownerId, user.id))) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Not authorized to view this balance' }),
-          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Not authorized to view this balance', 403);
       }
 
       const { data: balanceRow, error: balanceError } = await supabase
@@ -75,20 +73,14 @@ export default async function (req: Request) {
         throw txError;
       }
 
-      return new Response(
-        JSON.stringify({
-          ok: true,
-          balance: balanceRow ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null },
-          transactions: transactions ?? [],
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
-    } catch (err: any) {
+      return jsonSuccess({
+        balance: balanceRow ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null },
+        transactions: transactions ?? [],
+      });
+    } catch (err: unknown) {
       console.error('bullets fetch error', err);
-      return new Response(
-        JSON.stringify({ ok: false, error: err?.message ?? 'Failed to load balance' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      const message = err instanceof Error ? err.message : 'Failed to load balance';
+      return jsonError(message, 500);
     }
   }
 
@@ -109,18 +101,12 @@ export default async function (req: Request) {
     const reason = payload?.reason?.trim();
 
     if (typeof delta !== 'number' || !Number.isInteger(delta) || delta >= 0 || !reason) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'A negative integer delta and reason are required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonError('A negative integer delta and reason are required', 400);
     }
 
     try {
       if (!(await canAccessOwner(supabase, ownerId, user.id))) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Not authorized to spend bullets for this owner' }),
-          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Not authorized to spend bullets for this owner', 403);
       }
 
       let createdBoostId: string | null = null;
@@ -139,10 +125,7 @@ export default async function (req: Request) {
         }
 
         if (!placement || placement.created_by !== user.id) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Listing unavailable for boost' }),
-            { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-          );
+          return jsonError('Listing unavailable for boost', 403);
         }
 
         const { data: currentBalanceRow, error: balanceError } = await supabase
@@ -157,10 +140,7 @@ export default async function (req: Request) {
 
         const currentBalance = currentBalanceRow?.balance ?? 0;
         if (currentBalance + delta < 0) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Insufficient bullets for boost' }),
-            { status: 409, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-          );
+          return jsonError('Insufficient bullets for boost', 409);
         }
 
         const now = new Date();
@@ -182,10 +162,7 @@ export default async function (req: Request) {
 
         if (boostInsertError) {
           console.error('boost creation failed before bullet deduction', boostInsertError);
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Boost purchase failed' }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-          );
+          return jsonError('Boost purchase failed', 500);
         }
 
         createdBoostId = insertedBoost?.id ?? null;
@@ -206,21 +183,13 @@ export default async function (req: Request) {
         throw rpcError;
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, balance: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
-    } catch (err: any) {
+      return jsonSuccess({ balance: data });
+    } catch (err: unknown) {
       console.error('bullets spend error', err);
-      return new Response(
-        JSON.stringify({ ok: false, error: err?.message ?? 'Failed to spend bullets' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      const message = err instanceof Error ? err.message : 'Failed to spend bullets';
+      return jsonError(message, 400);
     }
   }
 
-  return new Response(
-    JSON.stringify({ ok: false, error: 'Not found' }),
-    { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-  );
+  return jsonError('Not found', 404);
 }

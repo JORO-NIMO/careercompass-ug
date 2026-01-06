@@ -1,12 +1,10 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
 
-type Props = {
-  unread?: number;
-  onClick?: () => void;
-};
-
-const NotificationBell: React.FC<Props> = ({ unread = 0, onClick }) => {
+const NotificationBell: React.FC<{ onClick?: () => void; unread: number }> = ({ onClick, unread }) => {
+  // const { notifications } = useNotifications(); // Removed to use prop from Header
+  // const unread = notifications.filter(n => !n.read).length; // Using prop instead
   return (
     <button
       aria-label="Notifications"

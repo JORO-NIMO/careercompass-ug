@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { CheckCircle2, FileText, Target, Users, Briefcase, Mail, Phone } from "lucide-react";
+import { CheckCircle, FileText, Target, Users, Briefcase, Mail, Phone } from "lucide-react";
 
 const ApplicationTips = () => {
   const tipCategories = [
@@ -114,7 +114,7 @@ const ApplicationTips = () => {
           <Badge className="mb-4" variant="secondary">Career Resources</Badge>
           <h1 className="text-4xl font-bold mb-4">Application Tips & Career Guidance</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Expert advice to help you land your dream job or internship. From crafting the perfect CV to acing your interviews.
+            Expert advice to help you land your next learning, training, or career opportunity—from crafting the perfect CV to acing your interviews.
           </p>
         </div>
 
@@ -134,7 +134,7 @@ const ApplicationTips = () => {
                 <ul className="space-y-2">
                   {category.tips.map((tip, tipIndex) => (
                     <li key={tipIndex} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                       <span>{tip}</span>
                     </li>
                   ))}
@@ -198,7 +198,7 @@ const ApplicationTips = () => {
                 <h3 className="font-semibold">Find Opportunities</h3>
               </div>
               <p className="text-sm text-muted-foreground">
-                Browse internships and job placements
+                Browse opportunities across education and employment
               </p>
             </a>
           </CardContent>

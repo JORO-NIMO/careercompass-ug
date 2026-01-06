@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* PlacementsBridge Design System - Green theme for Uganda internship platform */
+/* PlacementBridge Design System - Green theme for Uganda opportunity platform */
 
 @layer base {
   :root {
@@ -117,6 +117,10 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background:
+      radial-gradient(circle at 15% 20%, hsla(146, 45%, 90%, 0.7), transparent 60%),
+      radial-gradient(circle at 85% 10%, hsla(180, 40%, 92%, 0.6), transparent 55%),
+      linear-gradient(180deg, hsla(146, 45%, 97%, 0.85), hsla(120, 33%, 98%, 0.9));
   }
 }

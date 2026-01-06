@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 interface RoleRow {
   role: string;
@@ -10,10 +11,7 @@ export default async function (req: Request) {
   if (corsResponse) return corsResponse;
 
   if (req.method !== 'GET') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Method not allowed', 405);
   }
 
   const { user, error } = await verifyAuth(req);
@@ -40,10 +38,7 @@ export default async function (req: Request) {
 
   if (fetchError) {
     console.error('notifications fetch error', fetchError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to load notifications' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Failed to load notifications', 500);
   }
 
   const visible = (notifications ?? []).filter((n) => {
@@ -80,8 +75,5 @@ export default async function (req: Request) {
     read: readMap.has(n.id),
   }));
 
-  return new Response(
-    JSON.stringify({ items }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-  );
+  return jsonSuccess({ items });
 }

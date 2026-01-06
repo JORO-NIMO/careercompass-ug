@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 const ADS_BUCKET = Deno.env.get('ADS_BUCKET') ?? 'public';
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -80,10 +81,7 @@ export default async function (req: Request) {
 
   const isAdmin = await ensureAdmin(user.id, supabase);
   if (!isAdmin) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Admin role required' }),
-      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Admin role required', 403);
   }
 
   const url = new URL(req.url);
@@ -100,16 +98,10 @@ export default async function (req: Request) {
 
       if (fetchError) {
         console.error('ads fetch error', fetchError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to load ads' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to load ads', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, items: data ?? [] }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ items: data ?? [] });
     }
 
     if (req.method === 'POST' && !resourceId) {
@@ -121,25 +113,16 @@ export default async function (req: Request) {
       const image = formData.get('image');
 
       if (typeof titleRaw !== 'string' || titleRaw.trim().length === 0) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Title is required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Title is required', 400);
       }
 
       if (!(image instanceof File) || image.size === 0) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Image upload is required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Image upload is required', 400);
       }
 
       const uploadResult = await uploadImage(image, supabase);
       if ('error' in uploadResult) {
-        return new Response(
-          JSON.stringify({ ok: false, error: uploadResult.error }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError(uploadResult.error, 400);
       }
 
       const description = typeof descriptionRaw === 'string' ? descriptionRaw.trim() || null : null;
@@ -160,16 +143,10 @@ export default async function (req: Request) {
 
       if (insertError) {
         console.error('ads insert error', insertError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to create ad' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to create ad', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ item: data }, 201);
     }
 
     if (req.method === 'PUT' && resourceId) {
@@ -180,10 +157,7 @@ export default async function (req: Request) {
         .maybeSingle();
 
       if (fetchError || !existing) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Ad not found' }),
-          { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Ad not found', 404);
       }
 
       const formData = await req.formData();
@@ -192,10 +166,7 @@ export default async function (req: Request) {
       const titleRaw = formData.get('title');
       if (typeof titleRaw === 'string') {
         if (titleRaw.trim().length === 0) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Title cannot be empty' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError('Title cannot be empty', 400);
         }
         updates.title = titleRaw.trim();
       }
@@ -203,10 +174,7 @@ export default async function (req: Request) {
       const descriptionRaw = formData.get('description');
       if (descriptionRaw !== null) {
         if (typeof descriptionRaw !== 'string') {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Description must be a string' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError('Description must be a string', 400);
         }
         updates.description = descriptionRaw.trim() || null;
       }
@@ -214,10 +182,7 @@ export default async function (req: Request) {
       const linkRaw = formData.get('link');
       if (linkRaw !== null) {
         if (typeof linkRaw !== 'string') {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Link must be a string' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError('Link must be a string', 400);
         }
         updates.link = linkRaw.trim() || null;
       }
@@ -232,20 +197,14 @@ export default async function (req: Request) {
       if (image instanceof File && image.size > 0) {
         const uploadResult = await uploadImage(image, supabase);
         if ('error' in uploadResult) {
-          return new Response(
-            JSON.stringify({ ok: false, error: uploadResult.error }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError(uploadResult.error, 400);
         }
         updates.image_url = uploadResult.url;
         newImagePath = uploadResult.path;
       }
 
       if (Object.keys(updates).length === 0) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'No changes provided' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('No changes provided', 400);
       }
 
       const { data, error: updateError } = await supabase
@@ -260,10 +219,7 @@ export default async function (req: Request) {
         if (newImagePath) {
           await supabase.storage.from(ADS_BUCKET).remove([newImagePath]).catch(() => undefined);
         }
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to update ad' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to update ad', 500);
       }
 
       if (newImagePath && existing.image_url) {
@@ -273,10 +229,7 @@ export default async function (req: Request) {
         }
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ item: data });
     }
 
     if (req.method === 'DELETE' && resourceId) {
@@ -287,10 +240,7 @@ export default async function (req: Request) {
         .maybeSingle();
 
       if (fetchError || !existing) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Ad not found' }),
-          { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Ad not found', 404);
       }
 
       const { error: deleteError } = await supabase
@@ -300,10 +250,7 @@ export default async function (req: Request) {
 
       if (deleteError) {
         console.error('ads delete error', deleteError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to delete ad' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to delete ad', 500);
       }
 
       if (existing.image_url) {
@@ -313,20 +260,14 @@ export default async function (req: Request) {
         }
       }
 
-      return new Response(
-        JSON.stringify({ ok: true }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess();
     }
 
     if (req.method === 'PATCH' && resourceId && action === 'toggle') {
       const payload = await req.json().catch(() => ({}));
       const isActive = payload?.is_active;
       if (typeof isActive !== 'boolean') {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'is_active boolean is required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('is_active boolean is required', 400);
       }
 
       const { data, error: updateError } = await supabase
@@ -338,27 +279,15 @@ export default async function (req: Request) {
 
       if (updateError || !data) {
         console.error('ads toggle error', updateError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to update status' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to update status', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ item: data });
     }
 
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Not found', 404);
   } catch (err) {
     console.error('admin_ads handler error', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Internal server error', 500);
   }
 }

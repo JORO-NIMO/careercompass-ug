@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 const ALLOWED_TARGET_ROLES = new Set(['user', 'employer', 'admin', 'all', null]);
 
@@ -8,10 +9,7 @@ export default async function (req: Request) {
   if (corsResponse) return corsResponse;
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Method not allowed', 405);
   }
 
   const { user, error } = await verifyAuth(req);
@@ -29,10 +27,7 @@ export default async function (req: Request) {
     .maybeSingle();
 
   if (roleError || !roleData) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Admin role required' }),
-      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Admin role required', 403);
   }
 
   const payload = await req.json().catch(() => ({}));
@@ -42,17 +37,11 @@ export default async function (req: Request) {
   const targetRole = typeof targetRoleRaw === 'string' ? targetRoleRaw.trim() : null;
 
   if (!title || !message) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Title and message are required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Title and message are required', 400);
   }
 
   if (!ALLOWED_TARGET_ROLES.has(targetRole)) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Invalid target role' }),
-      { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Invalid target role', 400);
   }
 
   const normalizedRole = targetRole === 'all' ? null : targetRole;
@@ -69,14 +58,8 @@ export default async function (req: Request) {
 
   if (insertError) {
     console.error('admin_notifications insert error', insertError);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Failed to create notification' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Failed to create notification', 500);
   }
 
-  return new Response(
-    JSON.stringify({ ok: true }),
-    { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-  );
+  return jsonSuccess({});
 }

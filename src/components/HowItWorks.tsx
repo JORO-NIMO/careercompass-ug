@@ -6,22 +6,22 @@ const HowItWorks = () => {
     {
       icon: Search,
       title: "Search & Filter",
-      description: "Find placements by region, industry, field of study, and year level using our smart filters."
+      description: "Explore opportunities across education, training, and employment by region, industry, skill, and experience level."
     },
     {
       icon: UserCheck,
       title: "Create Profile",
-      description: "Build your student profile with university details, CV, and areas of interest."
+      description: "Build a rich profile that highlights learning history, professional experience, and goals."
     },
     {
       icon: Send,
       title: "Apply Instantly",
-      description: "Submit applications with your CV and cover letter directly through the platform."
+      description: "Submit tailored applications with supporting documents directly to education partners and employers."
     },
     {
       icon: MessageSquare,
       title: "Get Connected",
-      description: "Receive notifications when companies review your application and want to connect."
+      description: "Receive updates when organizations review your application and invite you to collaborate."
     }
   ];
 
@@ -33,7 +33,7 @@ const HowItWorks = () => {
             How It Works
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Simple steps to find and secure your ideal internship placement
+            Simple steps to navigate learning pathways, professional development, and meaningful work
           </p>
         </div>
 

@@ -1,15 +1,13 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 export default async function (req: Request) {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
   if (req.method !== 'GET') {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Method not allowed' }),
-      { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Method not allowed', 405);
   }
 
   try {
@@ -22,21 +20,12 @@ export default async function (req: Request) {
 
     if (error) {
       console.error('ads public fetch error', error);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Failed to load ads' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Failed to load ads', 500);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, items: data ?? [] }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonSuccess({ items: data ?? [] });
   } catch (err) {
     console.error('ads public handler error', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Internal server error', 500);
   }
 }

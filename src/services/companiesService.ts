@@ -43,10 +43,17 @@ async function parseJsonResponse(response: Response) {
   const rawBody = await response.text();
 
   if (!rawBody) {
-    return { success: response.ok, data: undefined, error: response.ok ? undefined : 'Empty response from server' };
+    return {
+      success: response.ok,
+      data: undefined,
+      error: response.ok ? undefined : `Empty response: ${response.status} ${response.statusText}`
+    };
   }
 
   if (!contentType.includes('application/json')) {
+    if (response.ok) {
+      return { success: true, data: undefined };
+    }
     return { success: false, data: undefined, error: 'Server returned non-JSON response' };
   }
 
@@ -100,31 +107,68 @@ export async function listCompanies(): Promise<Company[]> {
 }
 
 export async function approveCompany(id: string, options: { approved?: boolean; notes?: string } = {}): Promise<Company> {
-  const response = await authorizedFetch(`/api/companies/${id}/approve`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ approved: options.approved ?? true, notes: options.notes }),
-  });
+  const { data, error } = await supabase
+    .from('companies')
+    .update({
+      approved: options.approved ?? true,
+      notes: options.notes
+    })
+    .eq('id', id)
+    .select('*')
+    .single();
 
-  const { success, data, error } = await parseJsonResponse(response);
-  if (!success || !data?.item) {
-    throw new Error(error ?? 'Failed to update company');
+  if (error) {
+    console.error('approveCompany error:', error);
+    throw new Error(error.message || 'Failed to update company');
   }
 
-  return data.item as Company;
+  return data as Company;
 }
 
 export async function listOwnedCompanies(): Promise<Company[]> {
-  const response = await authorizedFetch('/api/user/companies', {
-    method: 'GET',
-  });
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Authentication required');
 
-  const { success, data, error } = await parseJsonResponse(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load companies');
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('created_by', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('listOwnedCompanies error:', error);
+    throw new Error(error.message || 'Failed to load companies');
   }
 
-  return (data?.items ?? []) as Company[];
+  return (data || []) as Company[];
+}
+
+export async function listCompanyMedia(companyId: string): Promise<CompanyMedia[]> {
+  const { data, error } = await supabase
+    .from('company_media')
+    .select('*')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('listCompanyMedia error:', error);
+    throw new Error(error.message || 'Failed to load media');
+  }
+
+  return (data || []) as CompanyMedia[];
+}
+
+export async function deleteCompanyMedia(companyId: string, mediaId: string): Promise<void> {
+  const { error } = await supabase
+    .from('company_media')
+    .delete()
+    .eq('id', mediaId)
+    .eq('company_id', companyId);
+
+  if (error) {
+    console.error('deleteCompanyMedia error:', error);
+    throw new Error(error.message || 'Failed to delete media');
+  }
 }
 
 function assertMediaFile(file: File) {
@@ -136,15 +180,6 @@ function assertMediaFile(file: File) {
   if (!(mime.startsWith('image/') || mime === 'application/pdf')) {
     throw new Error('Only image or PDF files are allowed.');
   }
-}
-
-export async function listCompanyMedia(companyId: string): Promise<CompanyMedia[]> {
-  const response = await fetch(`/api/companies/${companyId}/media`);
-  const { success, data, error } = await parseJsonResponse(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to load media');
-  }
-  return (data?.items ?? []) as CompanyMedia[];
 }
 
 export async function uploadCompanyMedia(companyId: string, file: File, options: { placementId?: string } = {}): Promise<CompanyMedia> {
@@ -167,15 +202,4 @@ export async function uploadCompanyMedia(companyId: string, file: File, options:
   }
 
   return data.item as CompanyMedia;
-}
-
-export async function deleteCompanyMedia(companyId: string, mediaId: string): Promise<void> {
-  const response = await authorizedFetch(`/api/companies/${companyId}/media/${mediaId}`, {
-    method: 'DELETE',
-  });
-
-  const { success, error } = await parseJsonResponse(response);
-  if (!success) {
-    throw new Error(error ?? 'Failed to delete media');
-  }
 }

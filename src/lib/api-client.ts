@@ -1,13 +1,42 @@
 /**
  * Centralized API client with error handling and type safety
  */
-import { env } from './env';
+import type { AnalyticsEventEnvelope } from '@/types/analytics';
+import type { NotificationPayload } from '@/types/notifications';
+const rawApiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const fallbackBase = typeof window !== 'undefined' ? window.location.origin : '';
+const apiBase = (() => {
+  if (!rawApiBase) {
+    return fallbackBase.replace(/\/+$/, '');
+  }
+  try {
+    const normalized = new URL(rawApiBase).toString();
+    return normalized.replace(/\/+$/, '');
+  } catch (error) {
+    console.warn('Invalid VITE_API_BASE_URL provided, falling back to window.location.origin.', error);
+    return fallbackBase.replace(/\/+$/, '');
+  }
+})();
+
+export function resolveApiUrl(path: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (!apiBase) {
+    return normalizedPath;
+  }
+  return `${apiBase}${normalizedPath}`;
+}
+
+
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public data?: any
+    public data?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -23,7 +52,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const isJson = contentType?.includes('application/json');
 
   if (!response.ok) {
-    const errorData = isJson ? await response.json().catch(() => ({})) : {};
+    const errorData = (isJson ? await response.json().catch(() => ({})) : {}) as Record<string, unknown>;
     throw new ApiError(
       errorData.message || errorData.error || `Request failed with status ${response.status}`,
       response.status,
@@ -35,12 +64,18 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return {} as T;
   }
 
-  return isJson ? response.json() : response.text() as Promise<T>;
+  if (isJson) {
+    const jsonBody = (await response.json().catch(() => null)) as unknown;
+    return jsonBody as T;
+  }
+
+  const textBody = await response.text();
+  return textBody as unknown as T;
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean>): string {
-  const url = new URL(path, window.location.origin);
-  
+  const url = new URL(resolveApiUrl(path));
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, String(value));
@@ -72,55 +107,54 @@ export const apiClient = {
   get: <T>(path: string, options?: RequestOptions) =>
     request<T>(path, { ...options, method: 'GET' }),
 
-  post: <T>(path: string, data?: any, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'POST', body: JSON.stringify(data) }),
+  post: <T, TBody extends JsonValue | Record<string, JsonValue> = JsonValue>(path: string, data?: TBody, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'POST', body: data !== undefined ? JSON.stringify(data) : undefined }),
 
-  put: <T>(path: string, data?: any, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'PUT', body: JSON.stringify(data) }),
+  put: <T, TBody extends JsonValue | Record<string, JsonValue> = JsonValue>(path: string, data?: TBody, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'PUT', body: data !== undefined ? JSON.stringify(data) : undefined }),
 
-  patch: <T>(path: string, data?: any, options?: RequestOptions) =>
-    request<T>(path, { ...options, method: 'PATCH', body: JSON.stringify(data) }),
+  patch: <T, TBody extends JsonValue | Record<string, JsonValue> = JsonValue>(path: string, data?: TBody, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: 'PATCH', body: data !== undefined ? JSON.stringify(data) : undefined }),
 
   delete: <T>(path: string, options?: RequestOptions) =>
     request<T>(path, { ...options, method: 'DELETE' }),
 };
 
 // Specific API methods
+import { env } from './env';
+
+const FUNCTIONS_URL = `${env.supabase.url}/functions/v1`;
+
 export const api = {
   // Jobs
   searchJobs: (query: string, provider: 'jsearch' | 'adzuna' = 'jsearch') =>
-    apiClient.get('/api/jobs', { params: { query, provider } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/jobs`, { params: { query, provider } }),
 
   // Courses
   getCourses: (limit = 20) =>
-    apiClient.get('/api/courses', { params: { limit } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/courses`, { params: { limit } }),
 
   // Books
   searchBooks: (q: string, limit = 20) =>
-    apiClient.get('/api/books', { params: { q, limit } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/books`, { params: { q, limit } }),
 
   // Careers
   searchCareers: (q: string) =>
-    apiClient.get('/api/careers', { params: { q } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/careers`, { params: { q } }),
 
   getCareerByCode: (code: string) =>
-    apiClient.get('/api/careers', { params: { code } }),
+    apiClient.get(`${FUNCTIONS_URL}/api/careers`, { params: { code } }),
 
   // Analytics
-  trackEvent: (event: { event_name: string; props?: Record<string, any> }) =>
-    apiClient.post('/api/analytics', event),
+  trackEvent: <Name extends AnalyticsEventEnvelope['event_name']>(event: AnalyticsEventEnvelope<Name>) =>
+    apiClient.post(`${FUNCTIONS_URL}/events`, event),
 
-  trackEvents: (events: Array<{ event_name: string; props?: Record<string, any> }>) =>
-    apiClient.post('/api/analytics', { events }),
+  trackEvents: (events: AnalyticsEventEnvelope[]) =>
+    apiClient.post(`${FUNCTIONS_URL}/events`, { events }),
 
   // Notifications
-  sendNotification: (notification: {
-    user_id?: string;
-    type: string;
-    title: string;
-    body?: string;
-    channel?: string[];
-  }) => apiClient.post('/api/notifications', notification),
+  sendNotification: (notification: NotificationPayload) =>
+    apiClient.post(`${FUNCTIONS_URL}/notifications`, notification),
 
   // Feedback
   submitFeedback: (feedback: {
@@ -128,5 +162,5 @@ export const api = {
     category?: string;
     message: string;
     anonymous?: boolean;
-  }) => apiClient.post('/api/feedback', feedback),
+  }) => apiClient.post(`${FUNCTIONS_URL}/api/feedback`, feedback),
 };

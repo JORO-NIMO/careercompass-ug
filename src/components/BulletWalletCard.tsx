@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCcw, Rocket } from 'lucide-react';
@@ -36,16 +36,9 @@ export function BulletWalletCard({ ownerId, title, description, enableBoostActio
   const [spending, setSpending] = useState(false);
   const summaryRequestOwner = useRef<string | null>(null);
 
-  useEffect(() => {
-    setSummary(null);
-    setLoading(true);
-    loadSummary();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ownerId]);
-
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     const requestOwner = ownerId;
-    if (refreshing && summaryRequestOwner.current === requestOwner) {
+    if (summaryRequestOwner.current === requestOwner) {
       return;
     }
     summaryRequestOwner.current = requestOwner;
@@ -56,7 +49,7 @@ export function BulletWalletCard({ ownerId, title, description, enableBoostActio
         return;
       }
       setSummary(data);
-    } catch (error) {
+    } catch (error: unknown) {
       if (summaryRequestOwner.current === requestOwner) {
         console.error('Failed to load bullet summary', error);
         toast({ title: 'Error', description: 'Unable to load bullet balance', variant: 'destructive' });
@@ -68,7 +61,13 @@ export function BulletWalletCard({ ownerId, title, description, enableBoostActio
         summaryRequestOwner.current = null;
       }
     }
-  };
+  }, [ownerId, toast]);
+
+  useEffect(() => {
+    setSummary(null);
+    setLoading(true);
+    void loadSummary();
+  }, [loadSummary]);
 
   const handleGeneralSpend = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -90,9 +89,10 @@ export function BulletWalletCard({ ownerId, title, description, enableBoostActio
       setGeneralAmount('1');
       setGeneralReason(DEFAULT_GENERAL_REASON);
       await loadSummary();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Bullet spend failed', error);
-      toast({ title: 'Spend failed', description: error?.message ?? 'Unable to spend bullets', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unable to spend bullets';
+      toast({ title: 'Spend failed', description: message, variant: 'destructive' });
     } finally {
       setSpending(false);
     }
@@ -123,9 +123,10 @@ export function BulletWalletCard({ ownerId, title, description, enableBoostActio
       setBoostListingId('');
       setBoostDuration('7');
       await loadSummary();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Boost purchase failed', error);
-      toast({ title: 'Boost failed', description: error?.message ?? 'Unable to boost listing', variant: 'destructive' });
+      const message = error instanceof Error ? error.message : 'Unable to boost listing';
+      toast({ title: 'Boost failed', description: message, variant: 'destructive' });
     } finally {
       setSpending(false);
     }

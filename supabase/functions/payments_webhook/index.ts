@@ -1,6 +1,7 @@
 // Supabase Edge Function (Deno) - Payments webhook
 // Handles payment provider webhooks (Stripe, Paystack, etc.)
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
+import { jsonError, jsonSuccess } from '../_shared/responses.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -131,10 +132,7 @@ export default async function (req: Request) {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ ok: false, message: 'Method not allowed' }),
-      { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Method not allowed', 405, {}, corsHeaders);
   }
 
   try {
@@ -146,10 +144,7 @@ export default async function (req: Request) {
     
     if (!provider) {
       console.error('No valid webhook signature header found');
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Missing webhook signature' }),
-        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Missing webhook signature', 401, {}, corsHeaders);
     }
     
     const rawBody = await req.text();
@@ -161,10 +156,7 @@ export default async function (req: Request) {
     
     if (!webhookSecret) {
       console.error(`Missing ${provider.toUpperCase()}_WEBHOOK_SECRET environment variable`);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Webhook secret not configured' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Webhook secret not configured', 500, {}, corsHeaders);
     }
     
     let isValid = false;
@@ -176,10 +168,7 @@ export default async function (req: Request) {
     
     if (!isValid) {
       console.error(`Invalid ${provider} webhook signature`);
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Invalid signature' }),
-        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Invalid signature', 401, {}, corsHeaders);
     }
     
     const event = JSON.parse(rawBody);
@@ -203,28 +192,19 @@ export default async function (req: Request) {
 
       if (!userId || !entityId) {
         console.error('Missing user_id or entity_id in metadata');
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Missing required metadata' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Missing required metadata', 400, {}, corsHeaders);
       }
 
       const entityType = entityTypeRaw === 'company' ? 'company' : 'listing';
 
       if (!Number.isFinite(boostDays) || boostDays <= 0) {
         console.error('Invalid boost duration provided');
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Invalid boost duration' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Invalid boost duration', 400, {}, corsHeaders);
       }
 
       if (!Number.isFinite(amount) || amount <= 0) {
         console.error('Invalid payment amount received');
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Invalid payment amount' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Invalid payment amount', 400, {}, corsHeaders);
       }
 
       const { data: paymentId, error: boostCreationError } = await supabase.rpc('create_boost_from_payment', {
@@ -241,16 +221,10 @@ export default async function (req: Request) {
 
       if (boostCreationError) {
         console.error('create_boost_from_payment error:', boostCreationError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to record boost for payment' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to record boost for payment', 500, {}, corsHeaders);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, payment_id: paymentId }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ payment_id: paymentId }, 200, corsHeaders);
     }
 
     // Handle other event types (failures, refunds, etc.)
@@ -271,15 +245,9 @@ export default async function (req: Request) {
         });
     }
 
-    return new Response(
-      JSON.stringify({ ok: true, event_type: eventType }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonSuccess({ event_type: eventType }, 200, corsHeaders);
   } catch (err) {
     console.error('payments_webhook error:', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Internal server error', 500, {}, corsHeaders);
   }
 }

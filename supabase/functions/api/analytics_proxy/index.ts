@@ -1,6 +1,22 @@
 // Proxy to send server-side events to PostHog (or store for later)
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
+
+interface AnalyticsEventPayload {
+  session_id?: string | null;
+  event_name?: string;
+  props?: Record<string, unknown> | null;
+  timestamp?: string;
+}
+
+function isEventPayload(value: unknown): value is AnalyticsEventPayload {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const candidate = value as Record<string, unknown>;
+  return 'event_name' in candidate && typeof candidate.event_name === 'string';
+}
 
 export default async function (req: Request) {
   // Handle CORS preflight
@@ -9,10 +25,7 @@ export default async function (req: Request) {
 
   try {
     if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({ ok: false, message: 'Method not allowed' }), 
-        { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Method not allowed', 405);
     }
 
     // Require authentication for analytics ingestion
@@ -21,18 +34,24 @@ export default async function (req: Request) {
       return unauthorizedResponse(authError || 'Authentication required');
     }
 
-    const payload = await req.json().catch(() => ({ events: [] }));
+    const payload = (await req.json().catch(() => ({ events: [] }))) as Record<string, unknown>;
     const supabase = createSupabaseServiceClient();
 
     // Store raw events in analytics_events for auditing
     // Ensure user_id matches authenticated user to prevent spoofing
-    const events = Array.isArray(payload.events) ? payload.events : [payload];
-    const rows = events.map((e: any) => ({
+    const rawEventsSource = (payload as { events?: unknown }).events;
+    const rawEvents = Array.isArray(rawEventsSource)
+      ? rawEventsSource
+      : isEventPayload(payload)
+        ? [payload]
+        : [];
+    const events = rawEvents.filter(isEventPayload);
+    const rows = events.map((event) => ({
       user_id: user.id, // Always use authenticated user's ID
-      session_id: e.session_id || null,
-      event_name: e.event_name,
-      props: e.props || {},
-      timestamp: e.timestamp || new Date().toISOString(),
+      session_id: event.session_id ?? null,
+      event_name: event.event_name,
+      props: event.props ?? {},
+      timestamp: event.timestamp ?? new Date().toISOString(),
     }));
     
     const { error: insertError } = await supabase.from('analytics_events').insert(rows);
@@ -49,15 +68,9 @@ export default async function (req: Request) {
       }).catch((e) => console.error('posthog forward error', e));
     }
 
-    return new Response(
-      JSON.stringify({ ok: true }), 
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonSuccess({});
   } catch (err) {
     console.error('analytics_proxy error', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }), 
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError(err instanceof Error ? err.message : 'Internal server error', 500);
   }
 }

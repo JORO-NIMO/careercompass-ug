@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Trash2, UploadCloud, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -22,12 +22,12 @@ const CompanyMediaManager = ({ companyId, disabled = false }: CompanyMediaManage
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const loadMedia = async () => {
+  const loadMedia = useCallback(async () => {
     try {
       setLoading(true);
       const items = await listCompanyMedia(companyId);
       setMedia(items ?? []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load media', error);
       toast({
         title: 'Unable to load media',
@@ -37,12 +37,11 @@ const CompanyMediaManager = ({ companyId, disabled = false }: CompanyMediaManage
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId, toast]);
 
   useEffect(() => {
-    loadMedia();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId]);
+    void loadMedia();
+  }, [loadMedia]);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -53,11 +52,12 @@ const CompanyMediaManager = ({ companyId, disabled = false }: CompanyMediaManage
       const item = await uploadCompanyMedia(companyId, file);
       setMedia((prev) => [item, ...prev]);
       toast({ title: 'Media uploaded', description: `${file.name} is now available.` });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload failed', error);
+      const message = error instanceof Error ? error.message : undefined;
       toast({
         title: 'Upload failed',
-        description: error?.message ?? 'Only images or PDFs up to 5MB are allowed.',
+        description: message ?? 'Only images or PDFs up to 5MB are allowed.',
         variant: 'destructive',
       });
     } finally {
@@ -74,11 +74,12 @@ const CompanyMediaManager = ({ companyId, disabled = false }: CompanyMediaManage
       await deleteCompanyMedia(companyId, id);
       setMedia((prev) => prev.filter((item) => item.id !== id));
       toast({ title: 'Media removed' });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Delete failed', error);
+      const message = error instanceof Error ? error.message : undefined;
       toast({
         title: 'Unable to delete media',
-        description: error?.message ?? 'Please try again.',
+        description: message ?? 'Please try again.',
         variant: 'destructive',
       });
     } finally {

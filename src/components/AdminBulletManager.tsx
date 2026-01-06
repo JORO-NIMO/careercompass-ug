@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, RefreshCcw, Send } from 'lucide-react';
-import {
-  adminAdjustBullets,
-  fetchAdminBulletBalances,
-  type BulletBalance,
-  type BulletTransaction,
-} from '@/services/bulletService';
+import { adminAdjustBullets, fetchAdminBulletBalances } from '@/services/bulletService';
+import type { BulletBalance, BulletTransaction } from '@/types/admin';
 
 interface FormState {
   ownerId: string;
@@ -36,26 +32,27 @@ export function AdminBulletManager() {
   const [submitting, setSubmitting] = useState(false);
   const detailRequestRef = useRef(0);
 
-  useEffect(() => {
-    loadBalances();
-  }, []);
-
   const sortedBalances = useMemo(() => {
     return [...balances].sort((a, b) => b.balance - a.balance);
   }, [balances]);
 
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async () => {
     try {
       setLoadingBalances(true);
       const data = await fetchAdminBulletBalances();
       setBalances(data.items ?? []);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load bullet balances', error);
-      toast({ title: 'Error', description: 'Unable to load bullet balances', variant: 'destructive' });
+      const description = error instanceof Error ? error.message : 'Unable to load bullet balances';
+      toast({ title: 'Error', description, variant: 'destructive' });
     } finally {
       setLoadingBalances(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadBalances();
+  }, [loadBalances]);
 
   const loadDetails = async (ownerId: string) => {
     if (detailLoading && loadingDetailsFor === ownerId) {
@@ -71,12 +68,18 @@ export function AdminBulletManager() {
       if (detailRequestRef.current !== nextRequestId) {
         return;
       }
-      setSelectedBalance(data.balance ?? { owner_id: ownerId, balance: 0 });
+      setSelectedBalance(data.balance ?? {
+        owner_id: ownerId,
+        balance: 0,
+        created_at: null,
+        updated_at: null,
+      });
       setTransactions(data.transactions ?? []);
       setFormState((prev) => ({ ...prev, ownerId }));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load bullet details', error);
-      toast({ title: 'Error', description: 'Unable to load owner details', variant: 'destructive' });
+      const description = error instanceof Error ? error.message : 'Unable to load owner details';
+      toast({ title: 'Error', description, variant: 'destructive' });
     } finally {
       if (detailRequestRef.current === nextRequestId) {
         setDetailLoading(false);
@@ -105,9 +108,10 @@ export function AdminBulletManager() {
       if (selectedOwner) {
         await loadDetails(selectedOwner);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to adjust bullets', error);
-      toast({ title: 'Update failed', description: error?.message ?? 'Unable to adjust bullets', variant: 'destructive' });
+      const description = error instanceof Error ? error.message : 'Unable to adjust bullets';
+      toast({ title: 'Update failed', description, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }

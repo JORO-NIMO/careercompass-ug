@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listCompanies, approveCompany, type Company } from '@/services/companiesService';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,22 +29,22 @@ export function AdminCompaniesManager() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadCompanies();
-  }, []);
-
-  const loadCompanies = async () => {
+  const loadCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const records = await listCompanies();
       setCompanies(sortCompanies(records));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load companies', error);
       toast({ title: 'Error', description: 'Unable to load companies', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    void loadCompanies();
+  }, [loadCompanies]);
 
   const handleApproval = async (company: Company, desired: boolean) => {
     try {
@@ -57,11 +57,11 @@ export function AdminCompaniesManager() {
           ? `${company.name} is now published as a trusted employer.`
           : `${company.name} will require fresh verification before posting.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update company approval', error);
       toast({
         title: 'Update failed',
-        description: error?.message ?? 'Unable to update approval status',
+        description: error instanceof Error ? error.message : 'Unable to update approval status',
         variant: 'destructive',
       });
     } finally {

@@ -1,12 +1,37 @@
 import { Button } from "@/components/ui/button";
-import { Bell, Menu, Briefcase, LogOut, Shield } from "lucide-react";
-import { useState } from "react";
+import { Menu, Briefcase, LogOut, Shield, Search } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut, isAdmin } = useAuth();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const loadUnread = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) return;
+
+        const response = await fetch('/api/notifications?unread=1', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        const data = await response.json();
+        setUnread(data.unread ?? 0);
+      } catch (err) {
+        console.error('Failed to fetch unread notifications:', err);
+        setUnread(0);
+      }
+    };
+    loadUnread();
+  }, [user]);
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -19,8 +44,8 @@ const Header = () => {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/favicon.ico" alt="PlacementsBridge" className="w-8 h-8 rounded-md object-cover" />
-          <span className="text-xl font-bold text-foreground">PlacementsBridge</span>
+          <img src="/favicon.ico" alt="PlacementBridge" className="w-8 h-8 rounded-md object-cover" />
+          <span className="text-xl font-bold text-foreground">PlacementBridge</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -37,9 +62,6 @@ const Header = () => {
           <Link to="/for-companies" className="text-muted-foreground hover:text-primary transition-colors">
             For Companies
           </Link>
-          <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
-            Pricing
-          </Link>
           {isAdmin && (
             <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
               <Shield className="w-4 h-4" />
@@ -48,14 +70,33 @@ const Header = () => {
           )}
         </nav>
 
+        {/* Search Bar */}
+        <div className="hidden md:flex items-center flex-1 max-w-sm mx-6">
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const input = form.elements.namedItem('q') as HTMLInputElement;
+            const query = input.value.trim();
+            if (query) {
+              const target = window.location.pathname.includes('find-talent') ? '/find-talent' : '/find-placements';
+              window.location.href = `${target}?q=${encodeURIComponent(query)}`;
+            }
+          }} className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              name="q"
+              type="search"
+              placeholder="Search..."
+              className="w-full bg-muted/50 border border-input rounded-md pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </form>
+        </div>
+
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-3">
           {user ? (
             <>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></span>
-              </Button>
+              <NotificationBell unread={unread} onClick={() => navigate('/notifications')} />
               <Link to="/profile">
                 <Button variant="outline">Profile</Button>
               </Link>
@@ -102,9 +143,6 @@ const Header = () => {
             </Link>
             <Link to="/for-companies" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
               For Companies
-            </Link>
-            <Link to="/pricing" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
-              Pricing
             </Link>
             {isAdmin && (
               <Link to="/admin" className="block py-2 text-muted-foreground hover:text-primary transition-colors">

@@ -1,5 +1,6 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
 
 export default async function (req: Request) {
   // Handle CORS preflight
@@ -8,10 +9,7 @@ export default async function (req: Request) {
 
   try {
     if (req.method !== 'POST') {
-      return new Response(
-        JSON.stringify({ ok: false, message: 'Method not allowed' }), 
-        { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonError('Method not allowed', 405);
     }
 
     // Require authentication for sending notifications
@@ -38,10 +36,7 @@ export default async function (req: Request) {
         .maybeSingle();
       
       if (!roleData) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Cannot send notifications to other users' }), 
-          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Cannot send notifications to other users', 403);
       }
     }
 
@@ -81,15 +76,9 @@ export default async function (req: Request) {
       }
     }
 
-    return new Response(
-      JSON.stringify({ ok: true }), 
-      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonSuccess({});
   } catch (err) {
     console.error('notifications_proxy error', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }), 
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Internal server error', 500);
   }
 }

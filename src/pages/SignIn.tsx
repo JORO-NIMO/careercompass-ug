@@ -1,40 +1,95 @@
 import { useState, useEffect } from 'react';
+import HCaptchaWidget from '@/components/HCaptchaWidget';
 import { useNavigate } from 'react-router-dom';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
+import { FcGoogle } from 'react-icons/fc';
+import { FaGithub } from 'react-icons/fa';
 import { useToast } from '@/hooks/use-toast';
+import { env } from '@/lib/env';
 
+const HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITEKEY || '';
+const VERIFY_HCAPTCHA_URL = `${env.supabase.url}/functions/v1/verify-hcaptcha`;
 const SignIn = () => {
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
+
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [signInEmail, setSignInEmail] = useState('');
   const [signInPassword, setSignInPassword] = useState('');
   const [signUpEmail, setSignUpEmail] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+
+  const handleGoogleSignIn = async () => {
+    setIsSubmitting(true);
+    const { error } = await signInWithGoogle();
+    if (error) {
+      toast({
+        title: "Google sign-in failed",
+        description: error.message || "Unable to sign in with Google.",
+        variant: "destructive",
+      });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleGithubSignIn = async () => {
+    setIsSubmitting(true);
+    const { error } = await signInWithGithub();
+    if (error) {
+      toast({
+        title: "GitHub sign-in failed",
+        description: error.message || "Unable to sign in with GitHub.",
+        variant: "destructive",
+      });
+    }
+    setIsSubmitting(false);
+  };
 
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    
+    setCaptchaError(null);
+    if (!captchaToken) {
+      setCaptchaError('Please complete the captcha.');
+      return;
+    }
+    setIsSubmitting(true);
+    // Verify hCaptcha token server-side
+    try {
+      const verifyRes = await fetch(VERIFY_HCAPTCHA_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        setCaptchaError('Captcha verification failed. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (err) {
+      setCaptchaError('Captcha verification error.');
+      setIsSubmitting(false);
+      return;
+    }
     const { error } = await signIn(signInEmail, signInPassword);
-    
     if (error) {
       toast({
         title: "Error",
@@ -48,13 +103,12 @@ const SignIn = () => {
       });
       navigate('/');
     }
-    
-    setLoading(false);
+    setIsSubmitting(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setCaptchaError(null);
     if (signUpPassword !== signUpConfirmPassword) {
       toast({
         title: "Error",
@@ -63,11 +117,38 @@ const SignIn = () => {
       });
       return;
     }
-    
-    setLoading(true);
-    
+    if (!termsAccepted) {
+      toast({
+        title: "Terms Required",
+        description: "Please accept the Terms of Service and Privacy Policy to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!captchaToken) {
+      setCaptchaError('Please complete the captcha.');
+      return;
+    }
+    setIsSubmitting(true);
+    // Verify hCaptcha token server-side
+    try {
+      const verifyRes = await fetch(VERIFY_HCAPTCHA_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken }),
+      });
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok || !verifyData.success) {
+        setCaptchaError('Captcha verification failed. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (err) {
+      setCaptchaError('Captcha verification error.');
+      setIsSubmitting(false);
+      return;
+    }
     const { error } = await signUp(signUpEmail, signUpPassword, fullName);
-    
     if (error) {
       toast({
         title: "Error",
@@ -77,17 +158,15 @@ const SignIn = () => {
     } else {
       toast({
         title: "Success",
-        description: "Account created successfully! You can now sign in.",
+        description: "Account created successfully! Please check your email for a verification link.",
       });
     }
-    
-    setLoading(false);
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="py-16">
+    <div className="min-h-screen bg-background flex flex-col">
+      <main className="flex-grow flex items-center justify-center p-4">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto">
             <Tabs defaultValue="signin" className="w-full">
@@ -95,9 +174,31 @@ const SignIn = () => {
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="signin">
                 <Card>
+                  <div className="flex flex-col gap-4 p-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGoogleSignIn}
+                      disabled={isSubmitting}
+                    >
+                      <FcGoogle className="w-5 h-5" />
+                      Continue with Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGithubSignIn}
+                      disabled={isSubmitting}
+                    >
+                      <FaGithub className="w-5 h-5" />
+                      Continue with GitHub
+                    </Button>
+                  </div>
                   <CardHeader>
                     <CardTitle className="text-center">Welcome Back</CardTitle>
                   </CardHeader>
@@ -105,10 +206,10 @@ const SignIn = () => {
                     <form onSubmit={handleSignIn} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input 
-                          id="email" 
-                          type="email" 
-                          placeholder="your@email.com"
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="your@/gmail.com"
                           value={signInEmail}
                           onChange={(e) => setSignInEmail(e.target.value)}
                           required
@@ -116,24 +217,54 @@ const SignIn = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
-                        <Input 
-                          id="password" 
+                        <Input
+                          id="password"
                           type="password"
                           value={signInPassword}
                           onChange={(e) => setSignInPassword(e.target.value)}
                           required
                         />
                       </div>
-                      <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? 'Signing in...' : 'Sign In'}
+                      <HCaptchaWidget
+                        sitekey={HCAPTCHA_SITEKEY}
+                        onVerify={token => { setCaptchaToken(token); setCaptchaError(null); }}
+                        onExpire={() => { setCaptchaToken(null); setCaptchaError('Captcha expired.'); }}
+                        onError={() => setCaptchaError('Captcha error.')}
+                        disabled={isSubmitting}
+                      />
+                      {captchaError && <div className="text-red-500 text-sm mb-2">{captchaError}</div>}
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? 'Signing in...' : 'Sign In'}
                       </Button>
                     </form>
                   </CardContent>
                 </Card>
               </TabsContent>
-              
+
               <TabsContent value="signup">
                 <Card>
+                  <div className="flex flex-col gap-4 p-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGoogleSignIn}
+                      disabled={isSubmitting}
+                    >
+                      <FcGoogle className="w-5 h-5" />
+                      Sign up with Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex items-center justify-center gap-2"
+                      onClick={handleGithubSignIn}
+                      disabled={isSubmitting}
+                    >
+                      <FaGithub className="w-5 h-5" />
+                      Sign up with GitHub
+                    </Button>
+                  </div>
                   <CardHeader>
                     <CardTitle className="text-center">Create Account</CardTitle>
                   </CardHeader>
@@ -141,8 +272,8 @@ const SignIn = () => {
                     <form onSubmit={handleSignUp} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>
-                        <Input 
-                          id="name" 
+                        <Input
+                          id="name"
                           placeholder="Your full name"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
@@ -151,9 +282,9 @@ const SignIn = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
-                        <Input 
-                          id="signup-email" 
-                          type="email" 
+                        <Input
+                          id="signup-email"
+                          type="email"
                           placeholder="your@email.com"
                           value={signUpEmail}
                           onChange={(e) => setSignUpEmail(e.target.value)}
@@ -162,8 +293,8 @@ const SignIn = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
-                        <Input 
-                          id="signup-password" 
+                        <Input
+                          id="signup-password"
                           type="password"
                           value={signUpPassword}
                           onChange={(e) => setSignUpPassword(e.target.value)}
@@ -172,17 +303,41 @@ const SignIn = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="confirm-password">Confirm Password</Label>
-                        <Input 
-                          id="confirm-password" 
+                        <Input
+                          id="confirm-password"
                           type="password"
                           value={signUpConfirmPassword}
                           onChange={(e) => setSignUpConfirmPassword(e.target.value)}
                           required
                         />
                       </div>
-                      <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? 'Creating account...' : 'Create Account'}
+                      <HCaptchaWidget
+                        sitekey={HCAPTCHA_SITEKEY}
+                        onVerify={token => { setCaptchaToken(token); setCaptchaError(null); }}
+                        onExpire={() => { setCaptchaToken(null); setCaptchaError('Captcha expired.'); }}
+                        onError={() => setCaptchaError('Captcha error.')}
+                        disabled={isSubmitting}
+                      />
+                      {captchaError && <div className="text-red-500 text-sm mb-2">{captchaError}</div>}
+                      <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? 'Creating account...' : 'Create Account'}
                       </Button>
+                      <div className="flex items-center space-x-2 mt-4">
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          required
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                        <label
+                          htmlFor="terms"
+                          className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          I agree to the <a href="/terms" className="text-primary underline hover:text-primary/80" target="_blank">Terms of Service</a> and <a href="/privacy" className="text-primary underline hover:text-primary/80" target="_blank">Privacy Policy</a>.
+                        </label>
+                      </div>
                     </form>
                   </CardContent>
                 </Card>
@@ -191,7 +346,6 @@ const SignIn = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

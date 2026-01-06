@@ -227,7 +227,7 @@ const CVBuilder = () => {
     if (!text) return [];
     return text
       .split(/\r?\n/)
-      .map((line) => line.replace(/^[-•\d\.\s]+/, "").trim())
+      .map((line) => line.replace(/^[-•\d.\s]+/, "").trim())
       .filter(Boolean);
   };
 

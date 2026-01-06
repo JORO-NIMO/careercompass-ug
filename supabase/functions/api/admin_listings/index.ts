@@ -1,10 +1,21 @@
-import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../_shared/responses.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
-  const idx = parts.indexOf('admin_listings');
-  return idx === -1 ? [] : parts.slice(idx + 1);
+  // Handle both /api/admin/listings and legacy /admin_listings patterns
+  const adminIdx = parts.indexOf('admin');
+  const listingsIdx = parts.indexOf('listings');
+
+  // If /admin/listings pattern, return segments after 'listings'
+  if (adminIdx !== -1 && listingsIdx !== -1 && listingsIdx > adminIdx) {
+    return parts.slice(listingsIdx + 1);
+  }
+
+  // Fallback for legacy /admin_listings pattern
+  const legacyIdx = parts.indexOf('admin_listings');
+  return legacyIdx === -1 ? [] : parts.slice(legacyIdx + 1);
 }
 
 async function ensureAdmin(userId: string, supabase: ReturnType<typeof createSupabaseServiceClient>) {
@@ -47,10 +58,7 @@ export default async function (req: Request) {
   const supabase = createSupabaseServiceClient();
   const isAdmin = await ensureAdmin(user.id, supabase);
   if (!isAdmin) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Admin role required' }),
-      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    return jsonError('Admin role required', 403);
   }
 
   const url = new URL(req.url);
@@ -68,16 +76,10 @@ export default async function (req: Request) {
 
       if (fetchError) {
         console.error('admin listings fetch error', fetchError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to load listings' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError(`Failed to load listings: ${fetchError.message}`, 500, fetchError);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, items: data ?? [] }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonSuccess({ items: data ?? [] });
     }
 
     if (req.method === 'POST' && !listingId) {
@@ -93,10 +95,7 @@ export default async function (req: Request) {
       const description = payload?.description?.trim();
 
       if (!title || !description) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Title and description are required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Title and description are required', 400);
       }
 
       const displayOrder = await determineDisplayOrder(supabase, payload?.display_order ?? null);
@@ -115,16 +114,10 @@ export default async function (req: Request) {
 
       if (insertError) {
         console.error('admin listings insert error', insertError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to create listing' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to create listing', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonSuccess({ item: data }, 201);
     }
 
     if (req.method === 'PUT' && listingId) {
@@ -137,10 +130,7 @@ export default async function (req: Request) {
       } | null;
 
       if (!payload) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Invalid JSON payload' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Invalid JSON payload', 400);
       }
 
       const updates: Record<string, unknown> = {};
@@ -148,10 +138,7 @@ export default async function (req: Request) {
       if (payload.title !== undefined) {
         const trimmed = payload.title.trim();
         if (!trimmed) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Title cannot be empty' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-          );
+          return jsonError('Title cannot be empty', 400);
         }
         updates.title = trimmed;
       }
@@ -159,10 +146,7 @@ export default async function (req: Request) {
       if (payload.description !== undefined) {
         const trimmed = payload.description.trim();
         if (!trimmed) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'Description cannot be empty' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-          );
+          return jsonError('Description cannot be empty', 400);
         }
         updates.description = trimmed;
       }
@@ -180,10 +164,7 @@ export default async function (req: Request) {
       }
 
       if (Object.keys(updates).length === 0) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'No changes provided' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('No changes provided', 400);
       }
 
       const { data, error: updateError } = await supabase
@@ -195,16 +176,10 @@ export default async function (req: Request) {
 
       if (updateError) {
         console.error('admin listings update error', updateError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to update listing' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to update listing', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonSuccess({ item: data });
     }
 
     if (req.method === 'DELETE' && listingId) {
@@ -215,22 +190,16 @@ export default async function (req: Request) {
 
       if (deleteError) {
         console.error('admin listings delete error', deleteError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to delete listing' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to delete listing', 500);
       }
 
-      return new Response(null, { status: 204, headers: { ...corsHeaders } });
+      return jsonSuccess({});
     }
 
     if (req.method === 'PATCH' && listingId && action === 'feature') {
       const payload = await req.json().catch(() => null) as { is_featured?: boolean } | null;
       if (typeof payload?.is_featured !== 'boolean') {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'is_featured boolean is required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('is_featured boolean is required', 400);
       }
 
       const { data, error: patchError } = await supabase
@@ -242,25 +211,16 @@ export default async function (req: Request) {
 
       if (patchError) {
         console.error('admin listings feature error', patchError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to update feature state' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to update feature state', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonSuccess({ item: data });
     }
 
     if (req.method === 'PATCH' && listingId && action === 'order') {
       const payload = await req.json().catch(() => null) as { display_order?: number } | null;
       if (typeof payload?.display_order !== 'number' || !Number.isFinite(payload.display_order)) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'display_order numeric value is required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('display_order numeric value is required', 400);
       }
 
       const { data, error: patchError } = await supabase
@@ -272,27 +232,17 @@ export default async function (req: Request) {
 
       if (patchError) {
         console.error('admin listings order error', patchError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to update display order' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-        );
+        return jsonError('Failed to update display order', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-      );
+      return jsonSuccess({ item: data });
     }
 
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
   } catch (err) {
-    console.error('admin listings handler error', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
-    );
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error('admin listings handler error', error);
+    return jsonError(error.message, 500, {
+      stack: error.stack?.split('\n').slice(0, 5)
+    });
   }
 }

@@ -1,10 +1,21 @@
-import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
-import { verifyAuth, unauthorizedResponse, handleCors, corsHeaders } from '../../_shared/auth.ts';
+import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
+import { verifyAuth, unauthorizedResponse, handleCors } from '../_shared/auth.ts';
+import { jsonError, jsonSuccess } from '../_shared/responses.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
-  const idx = parts.indexOf('admin_boosts');
-  return idx === -1 ? [] : parts.slice(idx + 1);
+  // Handle both /api/admin/boosts and legacy /admin_boosts patterns
+  const adminIdx = parts.indexOf('admin');
+  const boostsIdx = parts.indexOf('boosts');
+
+  // If /admin/boosts pattern, return segments after 'boosts'
+  if (adminIdx !== -1 && boostsIdx !== -1 && boostsIdx > adminIdx) {
+    return parts.slice(boostsIdx + 1);
+  }
+
+  // Fallback for legacy /admin_boosts pattern
+  const legacyIdx = parts.indexOf('admin_boosts');
+  return legacyIdx === -1 ? [] : parts.slice(legacyIdx + 1);
 }
 
 function isValidEntityType(value: unknown): value is 'company' | 'listing' {
@@ -36,10 +47,7 @@ export default async function (req: Request) {
     .maybeSingle();
 
   if (!roleData) {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Admin role required' }),
-      { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    return jsonError('Admin role required', 403);
   }
 
   const url = new URL(req.url);
@@ -55,16 +63,10 @@ export default async function (req: Request) {
 
       if (fetchError) {
         console.error('admin boosts fetch error', fetchError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to load boosts' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError(`Failed to load boosts: ${fetchError.message}`, 500, fetchError);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, items: data ?? [] }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ items: data ?? [] });
     }
 
     if (req.method === 'POST' && !resourceId) {
@@ -76,24 +78,15 @@ export default async function (req: Request) {
       const isActive = payload.is_active === false ? false : true;
 
       if (!entityId) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'entity_id is required' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('entity_id is required', 400);
       }
 
       if (!endsAtIso) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'ends_at must be a valid timestamp' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('ends_at must be a valid timestamp', 400);
       }
 
       if (new Date(endsAtIso).getTime() <= new Date(startsAtIso).getTime()) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'ends_at must be after starts_at' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('ends_at must be after starts_at', 400);
       }
 
       const { data, error: insertError } = await supabase
@@ -110,16 +103,10 @@ export default async function (req: Request) {
 
       if (insertError) {
         console.error('admin boosts create error', insertError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to create boost' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to create boost', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 201, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ item: data }, 201);
     }
 
     if (req.method === 'PATCH' && resourceId) {
@@ -133,10 +120,7 @@ export default async function (req: Request) {
       if (payload.starts_at !== undefined) {
         const startsAtIso = normalizeIso(payload.starts_at);
         if (!startsAtIso) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'starts_at must be a valid timestamp' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError('starts_at must be a valid timestamp', 400);
         }
         updates.starts_at = startsAtIso;
       }
@@ -144,27 +128,18 @@ export default async function (req: Request) {
       if (payload.ends_at !== undefined) {
         const endsAtIso = normalizeIso(payload.ends_at);
         if (!endsAtIso) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'ends_at must be a valid timestamp' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError('ends_at must be a valid timestamp', 400);
         }
         updates.ends_at = endsAtIso;
       }
 
       if (Object.keys(updates).length === 0) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'No updates provided' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('No updates provided', 400);
       }
 
       if (updates.starts_at && updates.ends_at) {
         if (new Date(updates.ends_at as string).getTime() <= new Date(updates.starts_at as string).getTime()) {
-          return new Response(
-            JSON.stringify({ ok: false, error: 'ends_at must be after starts_at' }),
-            { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
+          return jsonError('ends_at must be after starts_at', 400);
         }
       }
 
@@ -177,16 +152,10 @@ export default async function (req: Request) {
 
       if (updateError) {
         console.error('admin boosts update error', updateError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to update boost' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to update boost', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ item: data });
     }
 
     if (req.method === 'DELETE' && resourceId) {
@@ -199,27 +168,17 @@ export default async function (req: Request) {
 
       if (updateError) {
         console.error('admin boosts revoke error', updateError);
-        return new Response(
-          JSON.stringify({ ok: false, error: 'Failed to revoke boost' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
+        return jsonError('Failed to revoke boost', 500);
       }
 
-      return new Response(
-        JSON.stringify({ ok: true, item: data }),
-        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
+      return jsonSuccess({ item: data });
     }
 
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Not found' }),
-      { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
   } catch (err) {
-    console.error('admin boosts handler error', err);
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-    );
+    const error = err instanceof Error ? err : new Error(String(err));
+    console.error('admin boosts handler error', error);
+    return jsonError(error.message, 500, {
+      stack: error.stack?.split('\n').slice(0, 5)
+    });
   }
 }

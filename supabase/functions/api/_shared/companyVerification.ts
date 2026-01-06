@@ -1,5 +1,5 @@
 const NOMINATIM_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
-const NOMINATIM_USER_AGENT = Deno.env.get('NOMINATIM_USER_AGENT') ?? 'careercompass-internal/1.0';
+const NOMINATIM_USER_AGENT = Deno.env.get('NOMINATIM_USER_AGENT') ?? 'placementbridge-internal/1.0';
 const NOMINATIM_CONTACT_EMAIL = Deno.env.get('NOMINATIM_CONTACT_EMAIL');
 const WEB_REQUEST_TIMEOUT_MS = 6000;
 
@@ -73,8 +73,9 @@ export async function verifyMapsLocation(location?: string) {
       formattedAddress: best?.display_name,
       rawStatus: best?.type ?? 'FOUND',
     };
-  } catch (error: any) {
-    return { verified: false, rawStatus: error?.message ?? 'NOMINATIM_ERROR' };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'NOMINATIM_ERROR';
+    return { verified: false, rawStatus: message };
   }
 }
 
@@ -100,12 +101,13 @@ export async function verifyWebPresence(websiteUrl?: string) {
       return { verified: false, resolvedUrl: getResponse.url, status: getResponse.status };
     }
     return { verified: false, resolvedUrl: headResponse.url, status: headResponse.status };
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timer);
-    if (error?.name === 'AbortError') {
+    if (error instanceof DOMException && error.name === 'AbortError') {
       return { verified: false, rawError: 'TIMEOUT' };
     }
-    return { verified: false, rawError: error?.message ?? 'WEB_ERROR' };
+    const message = error instanceof Error ? error.message : 'WEB_ERROR';
+    return { verified: false, rawError: message };
   }
 }
 

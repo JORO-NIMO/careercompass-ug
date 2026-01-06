@@ -1,21 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } from 'lucide-react';
 import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
+import { createPlacement } from '@/services/placementsService';
 import { companyRegistrationSchema } from '@/lib/validations';
-import { BulletWalletCard } from '@/components/BulletWalletCard';
+import { resolveApiUrl } from '@/lib/api-client';
+import { LocationPicker } from '@/components/ui/LocationPicker';
 
 interface ActiveBoost {
   id: string;
@@ -37,9 +40,11 @@ interface CompanyFormState {
 const ForCompanies = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement | null>(null);
-  
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://placementbridge.org';
+
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
   const [companyForm, setCompanyForm] = useState<CompanyFormState>({
@@ -50,7 +55,7 @@ const ForCompanies = () => {
   });
   const [registeringCompany, setRegisteringCompany] = useState(false);
   const [verificationMeta, setVerificationMeta] = useState<VerificationMeta | null>(null);
-  
+
   const [positionTitle, setPositionTitle] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [description, setDescription] = useState('');
@@ -58,15 +63,29 @@ const ForCompanies = () => {
   const [industry, setIndustry] = useState('');
   const [stipend, setStipend] = useState('');
   const [availableSlots, setAvailableSlots] = useState('');
+  const [opportunityType, setOpportunityType] = useState('job');
+  const [applicationDeadline, setApplicationDeadline] = useState('');
+  const [applicationMethod, setApplicationMethod] = useState('website');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [applicationEmail, setApplicationEmail] = useState('');
+  const [applicationUrl, setApplicationUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [loadingBoosts, setLoadingBoosts] = useState(false);
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  const [geolocationCapturedAt, setGeolocationCapturedAt] = useState<string | null>(null);
+  const featureMode = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('mode') === 'feature';
+  }, [location.search]);
 
   useEffect(() => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to post placements",
+        description: "Please sign in to post opportunities",
       });
       navigate('/signin');
     }
@@ -103,7 +122,7 @@ const ForCompanies = () => {
             contact_email: user.email ?? prev.contact_email,
           }));
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to load company', error);
         if (isMounted) {
           toast({
@@ -148,8 +167,8 @@ const ForCompanies = () => {
         const placementMap = new Map<string, { title: string; company: string }>();
         (placementRows ?? []).forEach((row) => {
           placementMap.set(row.id, {
-            title: row.position_title ?? 'Untitled placement',
-            company: row.company_name ?? 'Your company',
+            title: row.position_title ?? 'Untitled opportunity',
+            company: row.company_name ?? 'Your organization',
           });
         });
 
@@ -180,8 +199,8 @@ const ForCompanies = () => {
           return {
             id: row.id,
             entityId: row.entity_id,
-            placementTitle: placement?.title ?? 'Placement',
-            companyName: placement?.company ?? 'Your company',
+            placementTitle: placement?.title ?? 'Opportunity',
+            companyName: placement?.company ?? 'Your organization',
             startsAt: row.starts_at,
             endsAt: row.ends_at,
             createdAt: row.created_at ?? row.starts_at,
@@ -189,13 +208,11 @@ const ForCompanies = () => {
         });
 
         setActiveBoosts(mapped);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to load boosts', error);
-        toast({
-          title: 'Unable to load boosts',
-          description: 'Refresh the page or try again shortly.',
-          variant: 'destructive',
-        });
+        if (isMounted) {
+          setActiveBoosts([]);
+        }
       } finally {
         if (isMounted) {
           setLoadingBoosts(false);
@@ -218,7 +235,7 @@ const ForCompanies = () => {
     const parsed = companyRegistrationSchema.safeParse({
       name: companyForm.name.trim(),
       location: companyForm.location.trim(),
-      website_url: companyForm.website_url.trim(),
+      website_url: companyForm.website_url.trim() || undefined,
       contact_email: companyForm.contact_email.trim() ? companyForm.contact_email.trim() : undefined,
     });
 
@@ -245,6 +262,15 @@ const ForCompanies = () => {
       });
       setCompanyName(savedCompany.name);
 
+      const missingWebsite = !savedCompany.website_url;
+      if (missingWebsite) {
+        void notifyMissingWebsite({
+          id: savedCompany.id,
+          name: savedCompany.name,
+          contactEmail: savedCompany.contact_email ?? parsed.data.contact_email,
+        });
+      }
+
       if (savedCompany.approved) {
         toast({
           title: 'Company approved automatically',
@@ -258,18 +284,28 @@ const ForCompanies = () => {
         if (verification && !verification.web.verified) {
           pendingReasons.push('ensure your website is reachable');
         }
+        if (missingWebsite) {
+          pendingReasons.push('share a website or let us build one for you');
+        }
         toast({
           title: 'Verification pending',
           description: pendingReasons.length
             ? `Pending manual review — ${pendingReasons.join(' and ')}.`
             : 'We will review your company shortly. You will receive an email once approved.',
         });
+        if (missingWebsite) {
+          toast({
+            title: 'Website assistance queued',
+            description: 'Our team will contact you with a simple landing page brief so we can verify your organisation.',
+          });
+        }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Company registration error', error);
+      const message = error instanceof Error ? error.message : 'Please try again shortly.';
       toast({
         title: 'Unable to save company',
-        description: error?.message ?? 'Please try again shortly.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -283,7 +319,7 @@ const ForCompanies = () => {
       return;
     }
 
-    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry || !availableSlots.trim()) {
+    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry) {
       toast({
         title: "Missing information",
         description: "Please complete all required fields before submitting.",
@@ -292,56 +328,49 @@ const ForCompanies = () => {
       return;
     }
 
-    const slotsNumber = Number.parseInt(availableSlots, 10);
-
-    if (Number.isNaN(slotsNumber) || slotsNumber <= 0) {
-      toast({
-        title: "Invalid slot count",
-        description: "Enter how many positions you have available.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setSubmitting(true);
-    
-    try {
-      const { data: insertedPlacement, error } = await supabase
-        .from('placements')
-        .insert({
-          position_title: positionTitle.trim(),
-          company_name: companyName.trim(),
-          description: description.trim(),
-          region,
-          industry,
-          stipend: stipend.trim(),
-          available_slots: slotsNumber,
-          created_by: user?.id,
-          approved: false,
-          contact_info: user?.email || null,
-        })
-        .select('id')
-        .single();
 
-      if (error) throw error;
+    try {
+      // Use the new listings system instead of legacy placements
+      const { createListing } = await import('@/services/listingsService');
+
+      await createListing({
+        title: positionTitle.trim(),
+        description: description.trim(),
+        companyId: company?.id,
+        opportunity_type: opportunityType,
+        application_deadline: applicationDeadline || undefined,
+        application_method: applicationMethod,
+        whatsapp_number: applicationMethod === 'whatsapp' ? whatsappNumber.trim() : undefined,
+        application_email: applicationMethod === 'email' ? applicationEmail.trim() : undefined,
+        application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
+        region: region,
+        industry: industry,
+      });
+
+      setSubmissionSuccess(true);
 
       toast({
-        title: "Submitted",
-        description: "Placement submitted and is pending admin review. You will be notified once approved.",
+        title: "Published",
+        description: "Opportunity posted and is live. You can manage it from the dashboard.",
       });
 
       // Reset form
       setPositionTitle('');
-      setCompanyName('');
       setDescription('');
       setRegion('');
       setIndustry('');
       setStipend('');
       setAvailableSlots('');
-    } catch (error: any) {
+      setApplicationDeadline('');
+      setWhatsappNumber('');
+      setApplicationEmail('');
+      setApplicationUrl('');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to post opportunity";
       toast({
         title: "Error",
-        description: error.message || "Failed to post placement",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -352,6 +381,61 @@ const ForCompanies = () => {
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const notifyMissingWebsite = useCallback(async (payload: { id: string; name: string; contactEmail?: string | null }) => {
+    try {
+      const response = await fetch(resolveApiUrl('/api/notifications'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'company_missing_website',
+          title: 'Company requested website support',
+          body: `${payload.name} registered without a website. Reach out to help them publish a landing page.`,
+          metadata: {
+            company_id: payload.id,
+            contact_email: payload.contactEmail ?? null,
+          },
+          channel: ['in_app', 'email'],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Notification request failed');
+      }
+    } catch (error) {
+      console.error('Failed to queue website assistance notification', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mode') === 'feature') {
+      scrollToForm();
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    const locationValue = companyForm.location;
+    if (!locationValue) {
+      setCoordinates(null);
+      return;
+    }
+    const normalized = locationValue.toLowerCase();
+    if (!normalized.includes('coordinate')) {
+      return;
+    }
+    const matches = locationValue.match(/-?\d+\.\d+/g);
+    if (matches && matches.length >= 2) {
+      const [latRaw, lngRaw] = matches;
+      const lat = Number.parseFloat(latRaw);
+      const lng = Number.parseFloat(lngRaw);
+      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+        setCoordinates({ lat, lng });
+      }
+    }
+  }, [companyForm.location]);
+
+  // Geolocation logic is now handled by LocationPicker component
 
   const regionOptions = [
     { value: 'central', label: 'Central Region' },
@@ -371,13 +455,40 @@ const ForCompanies = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <SEO
+        title="Hire Interns and Early Talent in Uganda | PlacementBridge for Companies"
+        description="Publish internships and early-career roles across Uganda with instant moderation, verified companies, and built-in talent sourcing tools."
+        keywords={[
+          'post internships Uganda',
+          'hire graduates Kampala',
+          'Uganda early talent marketplace',
+          'student placements employers',
+        ]}
+        canonical="/for-companies"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Service',
+          name: 'PlacementBridge Employer Portal',
+          url: `${baseUrl}/for-companies`,
+          areaServed: {
+            '@type': 'Country',
+            name: 'Uganda',
+          },
+          provider: {
+            '@type': 'Organization',
+            name: 'PlacementBridge',
+            url: baseUrl,
+          },
+          serviceType: 'Internship and early-career recruitment',
+        }}
+      />
+      {/* Header and Footer are now global in App.tsx */}
       <main className="py-16">
         <div className="container mx-auto px-4 space-y-16">
           <section className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold">Post a Placement</h1>
+            <h1 className="text-4xl md:text-5xl font-bold">Post an Opportunity</h1>
             <p className="text-lg text-muted-foreground">
-              Share your internship or graduate opportunities with thousands of motivated students across Uganda. Provide the details below and our team will review before publishing.
+              Share your internships, fellowships, apprenticeships, and roles with thousands of motivated learners and professionals across Uganda. Provide the details below and your opportunity will go live instantly while our team monitors for anything suspicious.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button size="lg" onClick={scrollToForm} disabled={submitting}>
@@ -392,7 +503,7 @@ const ForCompanies = () => {
           <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                  <CardTitle>Company verification</CardTitle>
+                <CardTitle>Company verification</CardTitle>
               </CardHeader>
               <CardContent className="pt-2 space-y-4">
                 {companyLoading ? (
@@ -414,7 +525,7 @@ const ForCompanies = () => {
                             ? company.approved
                               ? 'Company approved'
                               : 'Pending approval'
-                            : 'Register your company to unlock placement publishing.'}
+                            : 'Register your company to unlock opportunity publishing.'}
                         </span>
                       </div>
                       {company && (
@@ -483,15 +594,31 @@ const ForCompanies = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="company-location">Google Maps location</Label>
-                        <Input
-                          id="company-location"
-                          value={companyForm.location}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, location: event.target.value }))}
-                          placeholder="Plot 12 Kampala Road, Kampala"
-                          required
-                          disabled={registeringCompany}
-                        />
+                        <Label htmlFor="company-location">Company location</Label>
+                        <div className="flex flex-col gap-2">
+                          <LocationPicker
+                            initialLat={coordinates?.lat}
+                            initialLng={coordinates?.lng}
+                            onLocationSelect={(lat, lng) => {
+                              const formatted = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                              setCompanyForm(prev => ({ ...prev, location: formatted }));
+                              setCoordinates({ lat, lng });
+                              setGeolocationCapturedAt(new Date().toLocaleTimeString());
+                            }}
+                            readOnly={registeringCompany}
+                          />
+                        </div>
+                        <div className="hidden">
+                          {/* Hidden input to keep form logic happy if needed, though we update state directly */}
+                          <Input
+                            id="company-location"
+                            value={companyForm.location}
+                            readOnly
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Use the map to pin your exact entrance. Drag the marker if needed.
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="company-website">Company website</Label>
@@ -499,10 +626,12 @@ const ForCompanies = () => {
                           id="company-website"
                           value={companyForm.website_url}
                           onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
-                          placeholder="https://yourcompany.com"
-                          required
+                          placeholder="https://yourcompany.com (leave blank if you need help)"
                           disabled={registeringCompany}
                         />
+                        <p className="text-xs text-muted-foreground">
+                          No website yet? Leave this empty and we will reach out to set up a simple landing page for verification.
+                        </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-xs text-muted-foreground">
@@ -549,47 +678,50 @@ const ForCompanies = () => {
 
           {user ? (
             <section className="grid gap-6 md:grid-cols-2">
-              <BulletWalletCard
-                ownerId={user.id}
-                title="Your personal bullets"
-                description="Use personal credits to experiment with boosts or share spotlighted content."
-              />
-              {company ? (
-                <BulletWalletCard
-                  ownerId={company.id}
-                  title={`${company.name} credits`}
-                  description="Spend company bullets to boost published placements and reach more students."
-                  enableBoostActions
-                />
-              ) : (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Placement boosts</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Register and verify your company to unlock a dedicated wallet for boosts and featured slots.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Speed up verification</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <p>Double-check these items so your opportunity goes live without delay:</p>
+                  <ul className="list-disc space-y-1 pl-4">
+                    <li>Use an official work email so we can confirm your organisation quickly.</li>
+                    <li>Capture accurate coordinates using the device location button or paste them manually.</li>
+                    <li>Share a short description for why your organisation is engaging students or graduates now.</li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Need a website?</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <p>
+                    If you register without a website, we automatically notify the PlacementBridge admin team. Expect an
+                    email with a lightweight landing page brief so we can publish a trusted company profile for you.
+                  </p>
+                  <p>
+                    You can also email <a className="underline" href="mailto:admin@placementbridge.org?subject=Website%20support%20request">admin@placementbridge.org</a> with your logo and contact details to fast-track the process.
+                  </p>
+                </CardContent>
+              </Card>
             </section>
           ) : null}
 
           <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Featured placements</CardTitle>
+                <CardTitle>Featured opportunities</CardTitle>
               </CardHeader>
               <CardContent className="pt-2 space-y-4">
                 {loadingBoosts ? (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Checking your featured placements…</span>
+                    <span>Checking your featured opportunities…</span>
                   </div>
                 ) : activeBoosts.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Featured placements go live automatically once your payment is confirmed. Active features appear here with their scheduled end date.
+                    Featured opportunities go live automatically once your payment is confirmed. Active features appear here with their scheduled end date.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -611,7 +743,7 @@ const ForCompanies = () => {
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                 <Sparkles className="h-4 w-4" />
-                                Featured placement
+                                Featured opportunity
                               </div>
                               <h3 className="text-lg font-semibold text-foreground">{boost.placementTitle}</h3>
                               <p className="text-sm text-muted-foreground">{boost.companyName}</p>
@@ -632,38 +764,67 @@ const ForCompanies = () => {
             </Card>
           </section>
 
-          <section ref={formRef} className="max-w-3xl mx-auto w-full">
+          <section className="max-w-3xl mx-auto w-full">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>Placement details</CardTitle>
+                <CardTitle>Frequently asked questions</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="timeline">
+                    <AccordionTrigger>How long does it take for opportunities to go live?</AccordionTrigger>
+                    <AccordionContent>
+                      Most listings are reviewed within one to two business days. Verified partners are typically approved instantly, while new organizations may require additional checks before publishing.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="boosts">
+                    <AccordionTrigger>What do boosts include?</AccordionTrigger>
+                    <AccordionContent>
+                      Boosted opportunities receive priority placement in search, a featured badge, and inclusion in highlight emails sent to active candidates. You can manage boosts from your company wallet at any time.
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="payments">
+                    <AccordionTrigger>Can we pay with mobile money or invoice?</AccordionTrigger>
+                    <AccordionContent>
+                      Yes. Our billing flow supports mobile money, cards, and invoicing for enterprise partners. Reach out via support if you need a tailored payment arrangement.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardContent>
+            </Card>
+          </section>
+
+          <section id="post-opportunity" ref={formRef} className="max-w-3xl mx-auto w-full">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Opportunity details</CardTitle>
               </CardHeader>
               <CardContent className="pt-2">
                 {company && !company.approved && (
                   <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    Your company is currently pending approval. Placements will remain hidden until verification is complete.
+                    Your organization is currently pending approval. Opportunities stay live, but our team may flag them for manual review until verification is complete.
+                  </div>
+                )}
+                {featureMode && (
+                  <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary-dark">
+                    Feature mode enabled. Submit your opportunity and it will publish immediately with a spotlight badge once payment is confirmed.
                   </div>
                 )}
                 <form className="space-y-6" onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title">Position title</Label>
-                      <Input
-                        id="title"
-                        placeholder="e.g. Software Engineer Intern"
-                        value={positionTitle}
-                        onChange={(e) => setPositionTitle(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="company">Company name</Label>
-                      <Input
-                        id="company"
-                        placeholder="Your company name"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        required
-                      />
+                      <Label htmlFor="opportunity-type">Opportunity type</Label>
+                      <Select value={opportunityType} onValueChange={setOpportunityType}>
+                        <SelectTrigger id="opportunity-type">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="job">Job</SelectItem>
+                          <SelectItem value="internship">Internship</SelectItem>
+                          <SelectItem value="apprenticeship">Apprenticeship</SelectItem>
+                          <SelectItem value="fellowship">Fellowship</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -692,9 +853,80 @@ const ForCompanies = () => {
                               {option.label}
                             </SelectItem>
                           ))}
+                          <SelectItem value="online">Online / Remote</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deadline">Application deadline</Label>
+                      <Input
+                        id="deadline"
+                        type="date"
+                        value={applicationDeadline}
+                        onChange={(e) => setApplicationDeadline(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-border p-4 bg-muted/20">
+                    <div className="space-y-2">
+                      <Label htmlFor="app-method">How should users apply?</Label>
+                      <Select value={applicationMethod} onValueChange={setApplicationMethod}>
+                        <SelectTrigger id="app-method">
+                          <SelectValue placeholder="Select application method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="website">Internal (via PlacementBridge)</SelectItem>
+                          <SelectItem value="whatsapp">WhatsApp Connect</SelectItem>
+                          <SelectItem value="email">Email Application</SelectItem>
+                          <SelectItem value="url">External Website / Form</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {applicationMethod === 'whatsapp' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="whatsapp">WhatsApp Number (with country code)</Label>
+                        <Input
+                          id="whatsapp"
+                          placeholder="e.g. +256700000000"
+                          value={whatsappNumber}
+                          onChange={(e) => setWhatsappNumber(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {applicationMethod === 'email' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="email">Application Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="jobs@company.com"
+                          value={applicationEmail}
+                          onChange={(e) => setApplicationEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {(applicationMethod === 'url' || applicationMethod === 'website') && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="url">{applicationMethod === 'url' ? 'External URL' : 'Website URL (Optional)'}</Label>
+                        <Input
+                          id="url"
+                          type="url"
+                          placeholder="https://company.com/apply"
+                          value={applicationUrl}
+                          onChange={(e) => setApplicationUrl(e.target.value)}
+                          required={applicationMethod === 'url'}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Industry</Label>
                       <Select value={industry || undefined} onValueChange={setIndustry}>
@@ -710,38 +942,23 @@ const ForCompanies = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="stipend">Stipend (optional)</Label>
+                      <Label htmlFor="stipend">Salary / Stipend Range</Label>
                       <Input
                         id="stipend"
-                        placeholder="e.g. 500,000 UGX/month"
+                        placeholder="e.g. 500,000 - 800,000 UGX/month"
                         value={stipend}
                         onChange={(e) => setStipend(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="slots">Available slots</Label>
-                      <Input
-                        id="slots"
-                        type="number"
-                        min={1}
-                        placeholder="e.g. 5"
-                        value={availableSlots}
-                        onChange={(e) => setAvailableSlots(e.target.value)}
-                        required
                       />
                     </div>
                   </div>
 
                   <div className="text-sm text-muted-foreground">
-                    Placements are saved as drafts until an admin approves them. Once approved, any boosts tied to confirmed payments will start automatically and appear above.
+                    Opportunities publish immediately. If we flag a listing, it will pause until resolved, and any boosts resume once it is cleared.
                   </div>
 
                   <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                    {submitting ? 'Submitting placement…' : 'Submit for review'}
+                    {submitting ? 'Publishing…' : 'Publish Opportunity'}
                   </Button>
                 </form>
               </CardContent>
@@ -749,7 +966,39 @@ const ForCompanies = () => {
           </section>
         </div>
       </main>
-      <Footer />
+
+      <Dialog open={submissionSuccess} onOpenChange={setSubmissionSuccess}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Opportunity Published!
+            </DialogTitle>
+            <DialogDescription>
+              Your listing is now live. Candidates can view and apply immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="rounded-md bg-green-50 p-4 text-sm text-green-900 border border-green-200">
+              <p className="font-medium">What happens next?</p>
+              <ul className="list-disc pl-4 mt-2 space-y-1">
+                <li>Your opportunity appears in search results instantly.</li>
+                <li>We notify matched candidates via email.</li>
+                <li>You'll receive applications directly to your email.</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-start">
+            <Button type="button" variant="secondary" onClick={() => setSubmissionSuccess(false)}>
+              Post Another Opportunity
+            </Button>
+            <Button type="button" onClick={() => navigate('/find-talent')}>
+              View Live Listing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
