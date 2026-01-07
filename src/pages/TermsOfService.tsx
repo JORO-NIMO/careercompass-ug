@@ -73,7 +73,7 @@ const TermsOfService = () => {
                       <li>Contain vague descriptions or misleading promises of "easy wealth".</li>
                     </ul>
                     <p>
-                      <strong>3.2 User-Generated Content:</strong> By engaging in our community forums or messaging systems, you grant us the administrative right to moderate, hide, or delete content that harassment, hate speech, or commercial spam. This moderation decision is final and not subject to appeal.
+                      <strong>3.2 User-Generated Content:</strong> By engaging in our community forums or messaging systems, you grant us the administrative right to moderate, hide, or delete content that contains harassment, hate speech, or commercial spam. This moderation decision is final and not subject to appeal.
                     </p>
                   </div>
                 </section>
