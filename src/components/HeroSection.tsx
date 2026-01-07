@@ -73,22 +73,22 @@ const HeroSection = () => {
               <div className="flex items-center justify-center w-20 h-20 bg-white shadow-sm rounded-full mx-auto border border-primary/20">
                 <Users className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-gray-900">{memberCount > 0 ? memberCount.toLocaleString() + '+' : '1000+'}</div>
-              <p className="text-sm font-medium text-gray-700">Active Members</p>
+              <div className="text-4xl font-bold text-gray-900">{memberCount > 0 ? memberCount.toLocaleString() + '+' : '1000+'}</div>
+              <p className="text-base font-medium text-gray-700">Active Members</p>
             </div>
             <div className="text-center space-y-3">
               <div className="flex items-center justify-center w-20 h-20 bg-white shadow-sm rounded-full mx-auto border border-primary/20">
                 <Building className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-gray-900">{partnerCount > 0 ? partnerCount.toLocaleString() + '+' : '200+'}</div>
-              <p className="text-sm font-medium text-gray-700">Partner Organizations</p>
+              <div className="text-4xl font-bold text-gray-900">{partnerCount > 0 ? partnerCount.toLocaleString() + '+' : '200+'}</div>
+              <p className="text-base font-medium text-gray-700">Partner Organizations</p>
             </div>
             <div className="text-center space-y-3">
               <div className="flex items-center justify-center w-20 h-20 bg-white shadow-sm rounded-full mx-auto border border-primary/20">
                 <MapPin className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-gray-900">Nationwide</div>
-              <p className="text-sm font-medium text-gray-700">Aggregating Accredited Info</p>
+              <div className="text-4xl font-bold text-gray-900">Nationwide</div>
+              <p className="text-base font-medium text-gray-700">Aggregating Accredited Info</p>
             </div>
           </div>
         </div>

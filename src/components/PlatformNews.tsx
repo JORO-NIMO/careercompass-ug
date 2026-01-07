@@ -53,8 +53,8 @@ export const PlatformNews = () => {
     return (
         <section className="container mx-auto px-4 mt-12 mb-8">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-2">
-                    <Megaphone className="h-6 w-6 text-primary" />
+                <h2 className="text-3xl font-semibold flex items-center gap-2">
+                    <Megaphone className="h-8 w-8 text-primary" />
                     Latest Updates
                 </h2>
 
@@ -72,24 +72,24 @@ export const PlatformNews = () => {
                         <Card key={item.id} className="flex flex-col h-full hover:shadow-md transition-all border-l-4 border-l-primary/60">
                             <CardHeader className="pb-3">
                                 <div className="flex justify-between items-start mb-2">
-                                    <Badge variant="secondary" className="text-xs uppercase tracking-wider">
+                                    <Badge variant="secondary" className="text-sm uppercase tracking-wider">
                                         {item.category}
                                     </Badge>
                                     {item.published_at && (
-                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" />
+                                        <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                            <Calendar className="h-4 w-4" />
                                             {new Date(item.published_at).toLocaleDateString()}
                                         </span>
                                     )}
                                 </div>
-                                <CardTitle className="text-lg leading-tight line-clamp-2">
+                                <CardTitle className="text-xl leading-tight line-clamp-2">
                                     <Link to={`/updates/${item.id}`} className="hover:text-primary transition-colors">
                                         {item.title}
                                     </Link>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex-grow pt-0">
-                                <div className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                                <div className="text-base text-muted-foreground line-clamp-3 mb-4">
                                     {item.content.replace(/<[^>]*>/g, '')}
                                 </div>
                             </CardContent>

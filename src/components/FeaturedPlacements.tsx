@@ -213,7 +213,7 @@ const FeaturedPlacements = () => {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-muted-foreground">No placements available yet.</p>
+              <p className="text-lg text-muted-foreground">No placements available yet.</p>
               {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
             </div>
           )}

@@ -47,8 +47,8 @@ const HowItWorks = () => {
                     <IconComponent className="w-8 h-8 text-primary-foreground" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
-                    <p className="text-muted-foreground">{step.description}</p>
+                    <h3 className="text-2xl font-semibold text-foreground">{step.title}</h3>
+                    <p className="text-base text-muted-foreground">{step.description}</p>
                   </div>
                   <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold mx-auto">
                     {index + 1}

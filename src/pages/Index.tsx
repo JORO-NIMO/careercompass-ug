@@ -93,10 +93,10 @@ const Index = () => {
                 className="group flex h-full flex-col justify-between rounded-2xl border border-border/70 bg-background/90 p-6 shadow-sm backdrop-blur transition hover:border-primary hover:bg-primary/5"
               >
                 <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-foreground">{segment.title}</h3>
-                  <p className="text-sm text-muted-foreground">{segment.description}</p>
+                  <h3 className="text-2xl font-semibold text-foreground">{segment.title}</h3>
+                  <p className="text-base text-muted-foreground">{segment.description}</p>
                 </div>
-                <span className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary group-hover:translate-x-1 group-hover:underline">
+                <span className="mt-6 inline-flex items-center gap-2 text-base font-medium text-primary group-hover:translate-x-1 group-hover:underline">
                   {segment.cta}
                   <span aria-hidden>→</span>
                 </span>
