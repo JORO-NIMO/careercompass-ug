@@ -64,7 +64,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
             const { error } = await supabase.from('placements').insert(
                 data.map(item => ({
                     ...item,
-                    approved: true, // Auto-approve admin uploads
+                    approved: true, // NOTE: Bulk admin uploads bypass the normal review workflow and are auto-approved. Ensure this feature is restricted to highly trusted admins.
                     created_at: new Date().toISOString()
                 }))
             );
