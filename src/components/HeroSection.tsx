@@ -30,7 +30,7 @@ const HeroSection = () => {
           alt="Uganda learners, professionals, and employers collaborating"
           className="w-full h-full object-cover opacity-10"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 to-background/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-background to-background/90"></div>
       </div>
 
       <div className="container mx-auto px-4 relative z-10 py-12">
