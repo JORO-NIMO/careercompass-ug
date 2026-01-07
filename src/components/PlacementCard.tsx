@@ -24,6 +24,7 @@ interface PlacementCardProps {
 }
 
 const PlacementCard = ({
+  id,
   title,
   company,
   region,
