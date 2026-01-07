@@ -27,7 +27,7 @@ This guide will help you set up automatic deployment to Vercel via GitHub Action
 1. Go to [Vercel Account Settings → Tokens](https://vercel.com/account/tokens)
 2. Click "Create Token"
 3. Give it a name (e.g., "GitHub Actions")
-4. Set scope to appropriate permissions
+4. For **Scope**, select the personal or team account that owns this project and keep the default **Full Access** permissions so the GitHub Actions workflow can deploy.
 5. Copy the token (you won't see it again!)
 
 #### B. Get Project IDs
