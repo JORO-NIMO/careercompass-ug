@@ -18,6 +18,8 @@ interface PlacementData {
   available_slots: number;
   created_at: string;
   approved?: boolean;
+  deadline?: string;
+  application_link?: string;
 }
 
 interface BoostData {
@@ -39,6 +41,8 @@ interface FeaturedCardPlacement {
   verified: boolean;
   boosted: boolean;
   boostEndsAt: string | null;
+  deadline?: string;
+  applicationLink?: string;
 }
 
 const FeaturedPlacements = () => {
@@ -83,14 +87,14 @@ const FeaturedPlacements = () => {
       try {
         const { data, error } = await supabase
           .from('placements')
-          .select('id, position_title, company_name, description, region, industry, stipend, available_slots, created_at, approved')
+          .select('id, position_title, company_name, description, region, industry, stipend, available_slots, created_at, approved, deadline, application_link')
           .order('created_at', { ascending: false })
           .limit(9);
 
         if (error) throw error;
         if (!mounted) return;
 
-        const placementRows = (data as PlacementData[] | null) ?? [];
+        const placementRows = (data as unknown as PlacementData[] | null) ?? [];
         const approvedRows = placementRows.filter((p) => p.approved === true);
         const placementIds = approvedRows.map((p) => p.id);
 
@@ -135,6 +139,8 @@ const FeaturedPlacements = () => {
             verified: false,
             boosted: Boolean(boostInfo),
             boostEndsAt: boostInfo?.ends_at ?? null,
+            deadline: p.deadline,
+            applicationLink: p.application_link,
           };
         });
 

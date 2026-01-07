@@ -138,13 +138,6 @@ export const api = {
   searchBooks: (q: string, limit = 20) =>
     apiClient.get(`${FUNCTIONS_URL}/api/books`, { params: { q, limit } }),
 
-  // Careers
-  searchCareers: (q: string) =>
-    apiClient.get(`${FUNCTIONS_URL}/api/careers`, { params: { q } }),
-
-  getCareerByCode: (code: string) =>
-    apiClient.get(`${FUNCTIONS_URL}/api/careers`, { params: { code } }),
-
   // Analytics
   trackEvent: <Name extends AnalyticsEventEnvelope['event_name']>(event: AnalyticsEventEnvelope<Name>) =>
     apiClient.post(`${FUNCTIONS_URL}/events`, event),

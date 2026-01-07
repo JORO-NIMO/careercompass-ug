@@ -26,8 +26,6 @@ const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 const FeedbackPage = lazy(() => import("./pages/Feedback"));
 const LearningHub = lazy(() => import("./pages/LearningHub"));
 const JobFeed = lazy(() => import("./pages/JobFeed"));
-const CareerExplorer = lazy(() => import("./pages/CareerExplorer"));
-const ApplicationTips = lazy(() => import("./pages/ApplicationTips"));
 const CVBuilder = lazy(() => import("./pages/CVBuilder"));
 const FindTalent = lazy(() => import("./pages/FindTalent"));
 
@@ -41,6 +39,7 @@ const InterviewTipsUganda = lazy(() => import("./pages/InterviewTipsUganda"));
 const TopInternships = lazy(() => import("./pages/TopInternships"));
 const CareerTrendsBlog = lazy(() => import("./pages/CareerTrendsBlog"));
 const UpdateDetails = lazy(() => import("./pages/UpdateDetails"));
+const ApplicationTips = lazy(() => import("./pages/ApplicationTips"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,8 +53,9 @@ const queryClient = new QueryClient({
 
 // Loading fallback component
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
+  <div className="min-h-screen flex flex-col items-center justify-center gap-4">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <p className="text-muted-foreground font-medium animate-pulse">Thinking...</p>
   </div>
 );
 
@@ -104,8 +104,6 @@ function AppRouter() {
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/learning" element={<LearningHub />} />
           <Route path="/jobs" element={<JobFeed />} />
-          <Route path="/career-explorer" element={<CareerExplorer />} />
-          <Route path="/application-tips" element={<ApplicationTips />} />
           <Route path="/cv-builder" element={<CVBuilder />} />
           <Route path="/find-talent" element={<FindTalent />} />
 
@@ -119,6 +117,7 @@ function AppRouter() {
           <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
           <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
           <Route path="/updates/:id" element={<UpdateDetails />} />
+          <Route path="/application-tips" element={<ApplicationTips />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

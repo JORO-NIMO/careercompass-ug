@@ -177,7 +177,7 @@ CareerCompass-UG has been comprehensively upgraded to production standards with 
 ### Before → After
 
 | Aspect | Before | After |
-|--------|--------|-------|
+|----------------|--------|-------|
 | **Type Safety** | Permissive (any allowed) | Strict (full type safety) |
 | **Error Handling** | App crashes on error | Error Boundary catches errors |
 | **Bundle Size** | All routes loaded upfront | Lazy loaded (60% reduction) |

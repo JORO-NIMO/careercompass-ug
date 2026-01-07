@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle, FileText, Target, Users, Briefcase, Mail, Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ApplicationTips = () => {
   const tipCategories = [
@@ -169,7 +170,7 @@ const ApplicationTips = () => {
         </Card>
 
         {/* Additional Resources */}
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 border-blue-200 mb-12">
           <CardHeader>
             <CardTitle>Ready to Apply?</CardTitle>
             <CardDescription>
@@ -203,6 +204,59 @@ const ApplicationTips = () => {
             </a>
           </CardContent>
         </Card>
+
+        {/* Explore our resources and insights */}
+        <section className="mt-12">
+          <div className="text-center space-y-3 mb-8">
+            <h2 className="text-2xl font-semibold text-foreground">Explore our resources and insights</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+              Deepen your search with career guides, interview preparation, labour market research, and curated learning pathways for Uganda.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                href: "/guides/how-to-write-a-cv",
+                category: "Career guide",
+                title: "Craft a competitive Ugandan CV",
+                description: "Step-by-step advice, templates, and recruiter-backed insights tailored to local hiring teams.",
+              },
+              {
+                href: "/guides/interview-tips-uganda",
+                category: "Interview prep",
+                title: "Ace interviews with confidence",
+                description: "Master panel etiquette, storytelling, and follow-up habits that resonate with employers across Uganda.",
+              },
+              {
+                href: "/insights/career-trends",
+                category: "Market insights",
+                title: "Track emerging career trends",
+                description: "Quarterly research on high-growth sectors, in-demand skills, and hiring forecasts nationwide.",
+              },
+              {
+                href: "/learning",
+                category: "Learning hub",
+                title: "Level up with curated learning",
+                description: "Browse vetted courses, mentorship programmes, and scholarships aligned to your goals.",
+              },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="group flex h-full flex-col rounded-lg border border-border/70 bg-background/80 p-6 shadow-sm transition hover:border-primary hover:bg-primary/5"
+              >
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary/80">
+                  {item.category}
+                </span>
+                <span className="mt-3 text-lg font-semibold text-foreground">{item.title}</span>
+                <p className="mt-2 flex-1 text-sm text-muted-foreground">{item.description}</p>
+                <span className="mt-4 text-sm font-medium text-primary group-hover:underline">
+                  View resource
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

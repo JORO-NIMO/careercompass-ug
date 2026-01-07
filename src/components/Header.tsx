@@ -43,9 +43,10 @@ const Header = () => {
     <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center space-x-2">
-          <img src="/favicon.ico" alt="PlacementBridge" className="w-8 h-8 rounded-md object-cover" />
-          <span className="text-xl font-bold text-foreground">PlacementBridge</span>
+        {/* Logo */}
+        <Link to="/" className="flex items-center space-x-3 mr-8">
+          <img src="/favicon.ico" alt="PlacementBridge" className="w-12 h-12 rounded-md object-cover" />
+          <span className="text-3xl font-bold text-foreground">PlacementBridge</span>
         </Link>
 
         {/* Desktop Navigation */}

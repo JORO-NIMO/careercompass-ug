@@ -99,9 +99,9 @@ const LearningHub: React.FC = () => {
             </a>
           </article>
           <article className="h-full rounded border bg-card p-4 shadow-sm">
-            <h3 className="font-semibold">Get personalized recommendations</h3>
+            <h3 className="font-semibold">Explore opportunities</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Build your talent profile to unlock tailored learning plans and curated opportunity updates.
+              Build your talent profile to unlock curated learning resources and relevant opportunity updates.
             </p>
             <a href="/profile" className="mt-3 inline-flex text-sm font-medium text-primary hover:underline">
               Update your profile
