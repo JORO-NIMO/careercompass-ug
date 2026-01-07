@@ -106,12 +106,14 @@ export async function listCompanies(): Promise<Company[]> {
   return (data ?? []) as Company[];
 }
 
-export async function approveCompany(id: string, options: { approved?: boolean; notes?: string } = {}): Promise<Company> {
+export async function approveCompany(id: string, options: { approved?: boolean; notes?: string; maps_verified?: boolean; web_verified?: boolean } = {}): Promise<Company> {
   const { data, error } = await supabase
     .from('companies')
     .update({
       approved: options.approved ?? true,
-      notes: options.notes
+      verification_notes: options.notes,
+      maps_verified: options.maps_verified,
+      web_verified: options.web_verified
     })
     .eq('id', id)
     .select('*')

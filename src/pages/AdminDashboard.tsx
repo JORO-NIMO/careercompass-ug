@@ -13,7 +13,9 @@ import { AdminAdsManager } from '@/components/AdminAdsManager';
 import { AdminBoostsManager } from '@/components/AdminBoostsManager';
 import { AdminCompaniesManager } from '@/components/AdminCompaniesManager';
 import { AdminListingsManager } from '@/components/AdminListingsManager';
+import { AdminPlacementUpload } from '@/components/AdminPlacementUpload';
 import { AdminPostsManager } from '@/components/AdminPostsManager';
+
 
 interface Placement {
   id: string;
@@ -24,6 +26,8 @@ interface Placement {
   industry: string;
   stipend: string;
   available_slots: number;
+  deadline?: string;
+  application_link?: string;
   created_at: string;
   approved: boolean;
   flagged: boolean;
@@ -224,6 +228,13 @@ const AdminDashboard = () => {
           </div>
 
           <div className="mb-8">
+            <AdminPlacementUpload onSuccess={() => {
+              void loadPlacements();
+              void loadStats();
+            }} />
+          </div>
+
+          <div className="mb-8">
           </div>
 
           {/* Placements List */}
@@ -261,6 +272,16 @@ const AdminDashboard = () => {
                           <span><img src="/favicon.ico" alt="industry" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.industry}</span>
                           <span><img src="/favicon.ico" alt="stipend" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.stipend}</span>
                           <span><img src="/favicon.ico" alt="slots" className="inline h-4 w-4 mr-1 align-text-bottom" />{placement.available_slots} slots</span>
+                          {placement.deadline && (
+                            <span className={new Date(placement.deadline) < new Date() ? "text-destructive" : ""}>
+                              ⏰ {new Date(placement.deadline).toLocaleDateString()}
+                            </span>
+                          )}
+                          {placement.application_link && (
+                            <a href={placement.application_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+                              🔗 Apply Link
+                            </a>
+                          )}
                         </div>
                         {placement.flagged && (
                           <div className="flex items-start gap-2 text-sm text-destructive">

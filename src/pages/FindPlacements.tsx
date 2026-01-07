@@ -3,24 +3,15 @@ import FeaturedPlacements from "@/components/FeaturedPlacements";
 import SEO from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buildPlacementQueries } from "@/lib/placementBot";
-import type { PlacementFilters, PlacementQuery } from "@/types/placements";
-import { useState } from "react";
+import type { PlacementFilters } from "@/types/placements";
 
 const FindPlacements = () => {
-  const [queries, setQueries] = useState<PlacementQuery[]>([]);
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://placementbridge.org";
 
   const handleSearch = (filters: PlacementFilters) => {
-    const built = buildPlacementQueries({
-      keywords: filters.keywords,
-      sector: filters.sector,
-      region: filters.region,
-      placementType: filters.placementType,
-      field: filters.field,
-      year: filters.year,
-    });
-    setQueries(built);
+    // Current search updates filtered listings directly or triggers a navigation
+    // The previous automated query bot logic is removed.
+    console.log("Search filters updated:", filters);
   };
 
   return (
@@ -60,26 +51,6 @@ const FindPlacements = () => {
         <div className="container mx-auto px-4 -mt-16 relative z-20">
           <SearchFilters onSearch={handleSearch} />
         </div>
-
-        {queries.length > 0 && (
-          <div className="container mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {queries.map((q) => (
-              <Card key={q.label} className="bg-secondary/30 border-primary/10">
-                <CardHeader>
-                  <CardTitle className="text-lg">{q.label}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground">{q.notes}</p>
-                  <Button asChild variant="outline" className="w-full" aria-label={`Open ${q.label}`}>
-                    <a href={q.url} target="_blank" rel="noreferrer noopener">
-                      Open search in new tab
-                    </a>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
 
         <FeaturedPlacements />
       </main>

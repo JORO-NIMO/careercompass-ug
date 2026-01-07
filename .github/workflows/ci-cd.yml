@@ -69,35 +69,6 @@ jobs:
           path: dist/
           retention-days: 7
 
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/develop'
-    environment:
-      name: staging
-      url: https://staging.careercompass-ug.com
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: './dist'
-          production-deploy: false
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions - Staging"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
   deploy-production:
     name: Deploy to Production
@@ -118,16 +89,6 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: './dist'
-          production-deploy: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions - Production"
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
       - name: Setup Supabase CLI
         if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' && secrets.SUPABASE_PROJECT_REF != '' }}

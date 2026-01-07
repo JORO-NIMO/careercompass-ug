@@ -49,7 +49,10 @@ export function AdminCompaniesManager() {
   const handleApproval = async (company: Company, desired: boolean) => {
     try {
       setUpdatingId(company.id);
-      const updated = await approveCompany(company.id, { approved: desired });
+      const updated = await approveCompany(company.id, {
+        approved: desired,
+        ...(desired ? { maps_verified: true, web_verified: true } : {})
+      });
       setCompanies((prev) => sortCompanies(prev.map((item) => (item.id === updated.id ? updated : item))));
       toast({
         title: desired ? 'Company approved' : 'Approval revoked',
