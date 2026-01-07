@@ -116,6 +116,10 @@
     @apply border-border;
   }
 
+  html {
+     font-size: 112.5%; /* Scales 1rem to 18px (default is usually 16px) */
+  }
+
   body {
     @apply text-foreground;
     background:

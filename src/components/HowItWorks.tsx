@@ -41,14 +41,14 @@ const HowItWorks = () => {
           {steps.map((step, index) => {
             const IconComponent = step.icon;
             return (
-              <Card key={index} className="text-center border-primary/10 hover:border-primary/30 transition-colors">
+              <Card key={index} className="text-center border-primary/40 hover:border-primary/60 transition-colors">
                 <CardContent className="pt-8 pb-6 space-y-4">
                   <div className="flex items-center justify-center w-16 h-16 bg-primary rounded-full mx-auto">
                     <IconComponent className="w-8 h-8 text-primary-foreground" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
-                    <p className="text-muted-foreground">{step.description}</p>
+                    <h3 className="text-2xl font-semibold text-foreground">{step.title}</h3>
+                    <p className="text-base text-muted-foreground">{step.description}</p>
                   </div>
                   <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold mx-auto">
                     {index + 1}

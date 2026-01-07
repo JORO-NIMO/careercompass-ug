@@ -146,7 +146,7 @@ export function CuratedListingCard({
   };
 
   return (
-    <Card className="h-full border-border hover:border-primary/30 hover:shadow-lg transition-all flex flex-col">
+    <Card className="h-full border-primary/20 hover:border-primary/40 hover:shadow-lg transition-all flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1">

@@ -34,18 +34,53 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
             const wb = read(bstr, { type: 'binary' });
             const wsname = wb.SheetNames[0];
             const ws = wb.Sheets[wsname];
-            const jsonData = utils.sheet_to_json<ParsedPlacement>(ws);
 
-            // Basic validation/sanitization could happen here
-            const sanitizedData = jsonData.map(item => ({
-                position_title: item.position_title || 'Untitled Position',
-                company_name: item.company_name || 'Unknown Company',
-                description: item.description || '',
-                region: item.region || 'Central',
-                industry: item.industry || 'Other',
-                stipend: item.stipend ? String(item.stipend) : 'Unpaid',
-                available_slots: Number(item.available_slots) || 1,
-            }));
+            // Get raw JSON with original headers
+            const rawData = utils.sheet_to_json<any>(ws);
+
+            // Define mappings for fuzzy matching
+            const columnMapping: Record<string, string[]> = {
+                position_title: ['position', 'title', 'role', 'job title', 'job_title', 'position title'],
+                company_name: ['company', 'organization', 'employer', 'company name', 'firm'],
+                description: ['description', 'details', 'job description', 'summary'],
+                region: ['region', 'location', 'district', 'city', 'area'],
+                industry: ['industry', 'sector', 'category', 'field'],
+                stipend: ['stipend', 'salary', 'pay', 'allowance', 'remuneration'],
+                available_slots: ['slots', 'openings', 'vacancies', 'number', 'quantity', 'available'],
+                deadline: ['deadline', 'closing date', 'expiry', 'due date'],
+                application_link: ['link', 'url', 'website', 'application link', 'apply']
+            };
+
+            const sanitizeKey = (key: string) => key.toLowerCase().trim().replace(/_/g, ' ');
+
+            const mapRow = (row: any): ParsedPlacement => {
+                const mapped: any = {};
+                const keys = Object.keys(row);
+
+                // Find matching keys
+                for (const [field, aliases] of Object.entries(columnMapping)) {
+                    const match = keys.find(k => {
+                        const sanitized = sanitizeKey(k);
+                        return aliases.some(alias => sanitized.includes(alias) || alias === sanitized);
+                    });
+
+                    if (match) {
+                        mapped[field] = row[match];
+                    }
+                }
+
+                return {
+                    position_title: mapped.position_title || row.position_title || 'Untitled Position',
+                    company_name: mapped.company_name || row.company_name || 'Unknown Company',
+                    description: mapped.description || row.description || '',
+                    region: mapped.region || row.region || 'Central',
+                    industry: mapped.industry || row.industry || 'Other',
+                    stipend: mapped.stipend ? String(mapped.stipend) : 'Unpaid',
+                    available_slots: Number(mapped.available_slots) || 1,
+                };
+            };
+
+            const sanitizedData = rawData.map(mapRow);
 
             setData(sanitizedData);
             toast({
