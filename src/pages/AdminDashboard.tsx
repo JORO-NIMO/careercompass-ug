@@ -14,6 +14,7 @@ import { AdminBoostsManager } from '@/components/AdminBoostsManager';
 import { AdminCompaniesManager } from '@/components/AdminCompaniesManager';
 import { AdminListingsManager } from '@/components/AdminListingsManager';
 import { AdminPlacementUpload } from '@/components/AdminPlacementUpload';
+import { AdminPostsManager } from '@/components/AdminPostsManager';
 
 
 interface Placement {
