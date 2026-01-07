@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileSpreadsheet, Check, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, Check } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ParsedPlacement {
@@ -17,6 +17,10 @@ interface ParsedPlacement {
     industry: string;
     stipend: string;
     available_slots: number;
+    website?: string;
+    email?: string;
+    phone?: string;
+    contact_name?: string;
 }
 
 export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) => {
@@ -42,10 +46,14 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 position_title: ['position', 'title', 'role', 'job title', 'job_title', 'position title', 'job', 'vacancy'],
                 company_name: ['company', 'organization', 'employer', 'company name', 'firm', 'organisation'],
                 description: ['description', 'details', 'job description', 'summary', 'about', 'info'],
-                region: ['region', 'location', 'district', 'city', 'area', 'place'],
+                region: ['region', 'location', 'district', 'city', 'area', 'place', 'address'],
                 industry: ['industry', 'sector', 'category', 'field', 'department'],
                 stipend: ['stipend', 'salary', 'pay', 'allowance', 'remuneration', 'wage', 'compensation'],
                 available_slots: ['slots', 'openings', 'vacancies', 'number', 'quantity', 'available', 'positions'],
+                website: ['website', 'url', 'web', 'site', 'link', 'homepage'],
+                email: ['email', 'e-mail', 'mail', 'contact email'],
+                phone: ['phone', 'phone number', 'tel', 'telephone', 'mobile', 'contact number', 'cell'],
+                contact_name: ['contact', 'contact name', 'name for contact', 'contact person', 'person', 'representative'],
             };
 
             const sanitizeKey = (key: string) => key.toLowerCase().trim().replace(/_/g, ' ');
@@ -67,13 +75,17 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
 
                 // Fallback: try direct column access if fuzzy match failed
                 return {
-                    position_title: mapped.position_title || row.position_title || row.Title || row.Position || 'Untitled Position',
-                    company_name: mapped.company_name || row.company_name || row.Company || row.Organization || 'Unknown Company',
-                    description: mapped.description || row.description || row.Description || row.Details || '',
-                    region: mapped.region || row.region || row.Region || row.Location || 'Central',
-                    industry: mapped.industry || row.industry || row.Industry || row.Sector || 'Other',
+                    position_title: mapped.position_title || row.Position || row.Title || 'Untitled Position',
+                    company_name: mapped.company_name || row.Company || row.Organization || 'Unknown Company',
+                    description: mapped.description || row.Description || row.Details || '',
+                    region: mapped.region || row.Location || row.Region || 'Central',
+                    industry: mapped.industry || row.Category || row.Industry || row.Sector || 'Other',
                     stipend: mapped.stipend ? String(mapped.stipend) : (row.Stipend || row.Salary || 'Unpaid'),
-                    available_slots: Number(mapped.available_slots) || Number(row.Slots) || Number(row.Openings) || 1,
+                    available_slots: Number(mapped.available_slots) || Number(row.Slots) || 1,
+                    website: mapped.website || row.Website || undefined,
+                    email: mapped.email || row.Email || undefined,
+                    phone: mapped.phone || row['Phone number'] || row.Phone || undefined,
+                    contact_name: mapped.contact_name || row['Name for Contact'] || row.Contact || undefined,
                 };
             };
 
@@ -136,7 +148,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                         Drop your Excel or CSV file here
                     </p>
                     <p className="text-xs text-muted-foreground/70 text-center">
-                        Columns will be auto-detected
+                        Supports: Company, Category, Website, Email, Phone, Contact Name, Location
                     </p>
                     <Input
                         type="file"
@@ -156,25 +168,29 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                             </AlertDescription>
                         </Alert>
 
-                        <div className="rounded-md border max-h-[300px] overflow-y-auto">
+                        <div className="rounded-md border max-h-[300px] overflow-x-auto overflow-y-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Position</TableHead>
                                         <TableHead>Company</TableHead>
-                                        <TableHead>Region</TableHead>
-                                        <TableHead>Stipend</TableHead>
-                                        <TableHead>Slots</TableHead>
+                                        <TableHead>Category</TableHead>
+                                        <TableHead>Location</TableHead>
+                                        <TableHead>Website</TableHead>
+                                        <TableHead>Email</TableHead>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead>Contact</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {data.slice(0, 10).map((row, index) => (
                                         <TableRow key={index}>
-                                            <TableCell className="font-medium">{row.position_title}</TableCell>
-                                            <TableCell>{row.company_name}</TableCell>
+                                            <TableCell className="font-medium">{row.company_name}</TableCell>
+                                            <TableCell>{row.industry}</TableCell>
                                             <TableCell>{row.region}</TableCell>
-                                            <TableCell>{row.stipend}</TableCell>
-                                            <TableCell>{row.available_slots}</TableCell>
+                                            <TableCell className="text-xs">{row.website || '-'}</TableCell>
+                                            <TableCell className="text-xs">{row.email || '-'}</TableCell>
+                                            <TableCell className="text-xs">{row.phone || '-'}</TableCell>
+                                            <TableCell className="text-xs">{row.contact_name || '-'}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
