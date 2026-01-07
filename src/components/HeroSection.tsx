@@ -3,21 +3,37 @@ import { Input } from "@/components/ui/input";
 import { Search, ArrowRight, Users, Building, MapPin } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
+  const [memberCount, setMemberCount] = useState(0);
+  const [partnerCount, setPartnerCount] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { count: profiles } = await supabase.from("profiles").select("*", { count: "exact", head: true });
+      const { count: companies } = await supabase.from("companies").select("*", { count: "exact", head: true });
+
+      if (profiles) setMemberCount(profiles);
+      if (companies) setPartnerCount(companies);
+    };
+    fetchStats();
+  }, []);
+
   return (
-    <section className="relative min-h-[600px] flex items-center bg-gradient-to-r from-primary/5 to-secondary/30 overflow-hidden">
+    <section className="relative min-h-[500px] flex items-center bg-gradient-to-r from-primary/5 to-secondary/30 overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src={heroImage} 
-          alt="Uganda learners, professionals, and employers collaborating" 
+        <img
+          src={heroImage}
+          alt="Uganda learners, professionals, and employers collaborating"
           className="w-full h-full object-cover opacity-10"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/95 to-background/80"></div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 relative z-10 py-12">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           {/* Main Heading */}
           <div className="space-y-4">
@@ -37,7 +53,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-3 p-2 bg-background border border-primary/20 rounded-lg shadow-lg">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input 
+                <Input
                   placeholder="Search by company, title, or region..."
                   className="pl-10 border-0 bg-transparent text-lg h-12"
                 />
@@ -53,41 +69,27 @@ const HeroSection = () => {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8">
-            <div className="text-center space-y-2">
-              <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-full mx-auto">
-                <Users className="w-8 h-8 text-primary" />
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center w-20 h-20 bg-white shadow-sm rounded-full mx-auto border border-primary/20">
+                <Users className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-foreground">1000+</div>
-              <p className="text-muted-foreground">Active Members</p>
+              <div className="text-3xl font-bold text-gray-900">{memberCount > 0 ? memberCount.toLocaleString() + '+' : '1000+'}</div>
+              <p className="text-sm font-medium text-gray-700">Active Members</p>
             </div>
-            <div className="text-center space-y-2">
-              <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-full mx-auto">
-                <Building className="w-8 h-8 text-primary" />
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center w-20 h-20 bg-white shadow-sm rounded-full mx-auto border border-primary/20">
+                <Building className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-foreground">200+</div>
-              <p className="text-muted-foreground">Partner Organizations</p>
+              <div className="text-3xl font-bold text-gray-900">{partnerCount > 0 ? partnerCount.toLocaleString() + '+' : '200+'}</div>
+              <p className="text-sm font-medium text-gray-700">Partner Organizations</p>
             </div>
-            <div className="text-center space-y-2">
-              <div className="flex items-center justify-center w-16 h-16 bg-primary-light rounded-full mx-auto">
-                <MapPin className="w-8 h-8 text-primary" />
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center w-20 h-20 bg-white shadow-sm rounded-full mx-auto border border-primary/20">
+                <MapPin className="w-10 h-10 text-primary" />
               </div>
-              <div className="text-3xl font-bold text-foreground">4</div>
-              <p className="text-muted-foreground">Regions Covered</p>
+              <div className="text-3xl font-bold text-gray-900">Nationwide</div>
+              <p className="text-sm font-medium text-gray-700">Aggregating Accredited Info</p>
             </div>
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <Link to="/profile">
-              <Button variant="hero" size="lg" className="min-w-[200px]">
-                I’m seeking growth
-              </Button>
-            </Link>
-            <Link to="/for-companies">
-              <Button variant="outline" size="lg" className="min-w-[200px]">
-                I represent an organization
-              </Button>
-            </Link>
           </div>
         </div>
       </div>

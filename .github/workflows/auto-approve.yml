@@ -1,0 +1,35 @@
+name: Auto-approve labeled PRs
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    if: github.event.label.name == 'auto-approve'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve pull request when labeled
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const label = context.payload.label && context.payload.label.name;
+            if (!pr) {
+              core.setFailed('No pull_request in payload');
+            } else if (label !== 'auto-approve') {
+              core.info(`Label is '${label}', skipping`);
+            } else {
+              await github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                body: 'Auto-approving per request',
+                event: 'APPROVE'
+              });
+              core.info(`Approved PR #${pr.number}`);
+            }

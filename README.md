@@ -9,9 +9,9 @@ This document reflects the project status as of December 2025.
 - Student Talent Profile with Supabase-backed save/preview, availability, institution lookup, and FAQ guidance
 - Feedback centre with category, rating, and anonymous submission options stored in Supabase
 - Employer onboarding that allows missing websites, raises admin notifications, and provides guidance instead of “bullet spend” widgets
-- Partner-with-us call-to-action that opens a pre-filled outreach email
-- Notification helpers and modal components for richer UX
-- Base pages for job feeds, learning hub, placements, analytics, admin dashboards, and error states
+- **Opportunity Feed**: Verified placements, internships, and fellowships aggregated from trusted local and regional sources.
+- **Learning & Growth Hub**: Curated courses, scholarships, and resources to bridge skill gaps.
+- **Career Insights**: CV guides, interview preparation tips, and labor market trends specific to Uganda.
 
 ## Recent Improvements
 

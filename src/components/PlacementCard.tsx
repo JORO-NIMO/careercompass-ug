@@ -18,6 +18,8 @@ interface PlacementCardProps {
   verified?: boolean;
   boosted?: boolean;
   boostEndsAt?: string | null;
+  deadline?: string;
+  applicationLink?: string;
 }
 
 const PlacementCard = ({
@@ -33,6 +35,8 @@ const PlacementCard = ({
   verified = false,
   boosted = false,
   boostEndsAt,
+  deadline,
+  applicationLink,
 }: PlacementCardProps) => {
   const { user } = useAuth();
 
@@ -133,7 +137,24 @@ const PlacementCard = ({
           </div>
         ) : null}
         {isAuthenticated ? (
-          <Button size="sm" className="min-w-[80px]">Apply Now</Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            {deadline && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mr-2">
+                <span className={new Date(deadline) < new Date() ? "text-destructive font-bold" : ""}>
+                  Deadline: {new Date(deadline).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+            {applicationLink ? (
+              <Button size="sm" className="min-w-[80px]" asChild>
+                <a href={applicationLink} target="_blank" rel="noopener noreferrer">
+                  Apply External <Sparkles className="ml-1 w-3 h-3" />
+                </a>
+              </Button>
+            ) : (
+              <Button size="sm" className="min-w-[80px]">Apply Now</Button>
+            )}
+          </div>
         ) : (
           <Button size="sm" className="min-w-[80px]" onClick={() => { window.location.href = '/signin'; }}>
             Sign in

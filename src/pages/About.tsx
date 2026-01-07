@@ -87,7 +87,7 @@ const About = () => {
               <div className="text-center space-y-4">
                 <h3 className="text-xl font-semibold">Innovation</h3>
                 <p className="text-muted-foreground">
-                  Using technology to create smarter matching between education partners, talent, and employers
+                  Using technology to create efficient connections between education partners, talent, and employers
                 </p>
               </div>
             </div>

@@ -68,7 +68,7 @@ export function PageVisitCounter() {
     return (
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 px-3 py-1 rounded-full">
             <Users className="w-3 h-3" />
-            <span>{count.toLocaleString()} Live Visits</span>
+            <span>{count.toLocaleString()} Active Users</span>
         </div>
     );
 }
