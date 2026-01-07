@@ -1,5 +1,13 @@
 
-self.addEventListener('push', function(event) {
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+self.addEventListener('push', function (event) {
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
@@ -18,12 +26,12 @@ self.addEventListener('push', function(event) {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', function (event) {
   event.notification.close();
   const url = event.notification.data && event.notification.data.url;
   if (url) {
     event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
         for (const client of clientList) {
           if (client.url === url && 'focus' in client) {
             return client.focus();
