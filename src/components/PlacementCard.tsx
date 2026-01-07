@@ -49,7 +49,7 @@ const PlacementCard = ({
     : null;
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-200 border-border hover:border-primary/20 group">
+    <Card className="hover:shadow-lg transition-all duration-200 border-primary/20 hover:border-primary/40 group">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
@@ -152,7 +152,9 @@ const PlacementCard = ({
                 </a>
               </Button>
             ) : (
-              <Button size="sm" className="min-w-[80px]">Apply Now</Button>
+              <Button size="sm" className="min-w-[80px]" asChild>
+                <Link to={`/placements/${id}`}>Apply Now</Link>
+              </Button>
             )}
           </div>
         ) : (

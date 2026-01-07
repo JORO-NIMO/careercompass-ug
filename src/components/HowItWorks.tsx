@@ -41,7 +41,7 @@ const HowItWorks = () => {
           {steps.map((step, index) => {
             const IconComponent = step.icon;
             return (
-              <Card key={index} className="text-center border-primary/10 hover:border-primary/30 transition-colors">
+              <Card key={index} className="text-center border-primary/40 hover:border-primary/60 transition-colors">
                 <CardContent className="pt-8 pb-6 space-y-4">
                   <div className="flex items-center justify-center w-16 h-16 bg-primary rounded-full mx-auto">
                     <IconComponent className="w-8 h-8 text-primary-foreground" />

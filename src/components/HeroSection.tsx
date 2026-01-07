@@ -50,7 +50,7 @@ const HeroSection = () => {
 
           {/* Quick Search */}
           <div className="max-w-2xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3 p-2 bg-background border border-primary/20 rounded-lg shadow-lg">
+            <div className="flex flex-col sm:flex-row gap-3 p-2 bg-background border border-primary/40 rounded-lg shadow-lg">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input
