@@ -73,7 +73,6 @@ const Index = () => {
       />
       <main className="flex-grow">
         <HeroSection />
-        <HeroSection />
         <div className="container mx-auto px-4 relative z-20">
           <SearchFilters />
         </div>
