@@ -179,6 +179,7 @@ const Updates = () => {
                                                     }
                                                 } else {
                                                     await navigator.clipboard.writeText(shareUrl);
+                                                    alert("Link copied to clipboard");
                                                 }
                                             }}
                                         >
