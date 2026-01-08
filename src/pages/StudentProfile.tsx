@@ -19,6 +19,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
 	Dialog,
 	DialogContent,
@@ -444,6 +445,11 @@ const StudentProfile = () => {
 		setPreviewOpen(true);
 	};
 
+	const completeness = [
+		firstName, lastName, email, phoneNumber, cvLink, schoolName,
+		courseOfStudy, yearOfStudy, stage, focusArea, region, district, availability
+	].filter(Boolean).length / 13 * 100;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<main className="py-16">
@@ -452,6 +458,13 @@ const StudentProfile = () => {
 						<div className="text-center">
 							<h1 className="text-3xl font-bold">Talent Profile</h1>
 							<p className="text-muted-foreground">Complete your profile to unlock tailored learning and career matches</p>
+							<div className="mt-4 max-w-md mx-auto">
+								<div className="flex justify-between text-sm mb-1">
+									<span>Completeness</span>
+									<span>{Math.round(completeness)}%</span>
+								</div>
+								<Progress value={completeness} className="h-2" />
+							</div>
 						</div>
 
 						<Card>
