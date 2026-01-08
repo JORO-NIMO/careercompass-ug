@@ -33,9 +33,13 @@ function sanitizeFilenameBase(name: string): string {
     safe = safe.replace(/^_+|_+$/g, '');
 
     return safe || 'file';
-}
+const ADMIN_UPLOADS_BUCKET = 'admin_uploads';
+const MAX_POST_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 async function uploadPostImage(file: File): Promise<string> {
+    if (file.size > MAX_POST_IMAGE_SIZE_BYTES) {
+        throw new Error('File too large. Maximum allowed size is 5MB.');
+    }
     const extension = getFileExtension(file.name);
     const safeBaseName = sanitizeFilenameBase(file.name);
     const path = `posts/${crypto.randomUUID()}-${safeBaseName}.${extension}`;
