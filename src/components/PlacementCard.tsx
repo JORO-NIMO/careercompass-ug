@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Building, Clock, DollarSign, Users, Bookmark, Sparkles, Share2 } from "lucide-react";
+import { MapPin, Building, Clock, DollarSign, Users, Bookmark, Sparkles, Share2, ShieldCheck } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "react-router-dom";
 import { useAuth } from '@/hooks/useAuth';
 
@@ -61,9 +62,19 @@ const PlacementCard = ({
             <div className="flex items-center gap-2">
               <p className="text-muted-foreground font-medium">{company}</p>
               {verified && (
-                <Badge variant="secondary" className="text-xs">
-                  Verified
-                </Badge>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="secondary" className="text-xs cursor-help flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-primary" />
+                        Verified
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Verified by PlacementBridge.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
