@@ -830,218 +830,218 @@ const ForCompanies = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Logo (Optional - Upload to override default)</Label>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
-                          // We upload immediately on selection for simplicity in this flow,
-                          // storing the URL in state to be submitted with createListing
-                          // Note: We need a state for logoUrl. I'll add it below this edit.
-                          setSubmitting(true);
-                          const { uploadListingLogo } = await import("@/services/listingsService");
-                          const url = await uploadListingLogo(file);
-                          setListingLogoUrl(url); // We need to define this state
-                          toast({ title: "Logo Uploaded", description: "Logo ready for publication." });
-                        } catch (err: any) {
-                          toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
-                        } finally {
-                          setSubmitting(false);
+
+                  <div className="space-y-2">
+                    <Label>Logo (Optional - Upload to override default)</Label>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            // We upload immediately on selection for simplicity in this flow,
+                            // storing the URL in state to be submitted with createListing
+                            // Note: We need a state for logoUrl. I'll add it below this edit.
+                            setSubmitting(true);
+                            const { uploadListingLogo } = await import("@/services/listingsService");
+                            const url = await uploadListingLogo(file);
+                            setListingLogoUrl(url); // We need to define this state
+                            toast({ title: "Logo Uploaded", description: "Logo ready for publication." });
+                          } catch (err: any) {
+                            toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+                          } finally {
+                            setSubmitting(false);
+                          }
                         }
-                      }
-                    }}
-                  />
-                  {/* We need to use listingLogoUrl from state here if I could access it, but I haven't defined it yet.
+                      }}
+                    />
+                    {/* We need to use listingLogoUrl from state here if I could access it, but I haven't defined it yet.
                             I will assume I can add the state variable definition in a separate Edit.
                         */}
-                </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Role description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe the role, responsibilities, and ideal candidate…"
-                    rows={6}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Region</Label>
-                    <Select value={region || undefined} onValueChange={setRegion}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select region" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {regionOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="online">Online / Remote</SelectItem>
-                        <SelectItem value="other">Other (Specify)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {region === 'other' && (
+                    <Label htmlFor="description">Role description</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Describe the role, responsibilities, and ideal candidate…"
+                      rows={6}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Region</Label>
+                      <Select value={region || undefined} onValueChange={setRegion}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select region" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {regionOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="online">Online / Remote</SelectItem>
+                          <SelectItem value="other">Other (Specify)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {region === 'other' && (
+                        <Input
+                          className="mt-2"
+                          placeholder="Enter region name"
+                          value={customRegion}
+                          onChange={(e) => setCustomRegion(e.target.value)}
+                          required
+                        />
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deadline">Application deadline</Label>
                       <Input
-                        className="mt-2"
-                        placeholder="Enter region name"
-                        value={customRegion}
-                        onChange={(e) => setCustomRegion(e.target.value)}
-                        required
+                        id="deadline"
+                        type="date"
+                        value={applicationDeadline}
+                        onChange={(e) => setApplicationDeadline(e.target.value)}
                       />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-border p-4 bg-muted/20">
+                    <div className="space-y-2">
+                      <Label htmlFor="app-method">How should users apply?</Label>
+                      <Select value={applicationMethod} onValueChange={setApplicationMethod}>
+                        <SelectTrigger id="app-method">
+                          <SelectValue placeholder="Select application method" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="website">Internal (via PlacementBridge)</SelectItem>
+                          <SelectItem value="whatsapp">WhatsApp Connect</SelectItem>
+                          <SelectItem value="email">Email Application</SelectItem>
+                          <SelectItem value="url">External Website / Form</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {applicationMethod === 'whatsapp' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="whatsapp">WhatsApp Number (with country code)</Label>
+                        <Input
+                          id="whatsapp"
+                          placeholder="e.g. +256700000000"
+                          value={whatsappNumber}
+                          onChange={(e) => setWhatsappNumber(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {applicationMethod === 'email' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="email">Application Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="jobs@company.com"
+                          value={applicationEmail}
+                          onChange={(e) => setApplicationEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                    )}
+
+                    {(applicationMethod === 'url' || applicationMethod === 'website') && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                        <Label htmlFor="url">{applicationMethod === 'url' ? 'External URL' : 'Website URL (Optional)'}</Label>
+                        <Input
+                          id="url"
+                          type="url"
+                          placeholder="https://company.com/apply"
+                          value={applicationUrl}
+                          onChange={(e) => setApplicationUrl(e.target.value)}
+                          required={applicationMethod === 'url'}
+                        />
+                      </div>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="deadline">Application deadline</Label>
-                    <Input
-                      id="deadline"
-                      type="date"
-                      value={applicationDeadline}
-                      onChange={(e) => setApplicationDeadline(e.target.value)}
-                    />
-                  </div>
-                </div>
 
-                <div className="space-y-4 rounded-lg border border-border p-4 bg-muted/20">
-                  <div className="space-y-2">
-                    <Label htmlFor="app-method">How should users apply?</Label>
-                    <Select value={applicationMethod} onValueChange={setApplicationMethod}>
-                      <SelectTrigger id="app-method">
-                        <SelectValue placeholder="Select application method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="website">Internal (via PlacementBridge)</SelectItem>
-                        <SelectItem value="whatsapp">WhatsApp Connect</SelectItem>
-                        <SelectItem value="email">Email Application</SelectItem>
-                        <SelectItem value="url">External Website / Form</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {applicationMethod === 'whatsapp' && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                      <Label htmlFor="whatsapp">WhatsApp Number (with country code)</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Industry</Label>
+                      <Select value={industry || undefined} onValueChange={setIndustry}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select industry" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {industryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="stipend">Salary / Stipend Range</Label>
                       <Input
-                        id="whatsapp"
-                        placeholder="e.g. +256700000000"
-                        value={whatsappNumber}
-                        onChange={(e) => setWhatsappNumber(e.target.value)}
-                        required
+                        id="stipend"
+                        placeholder="e.g. 500,000 - 800,000 UGX/month"
+                        value={stipend}
+                        onChange={(e) => setStipend(e.target.value)}
                       />
                     </div>
-                  )}
-
-                  {applicationMethod === 'email' && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                      <Label htmlFor="email">Application Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="jobs@company.com"
-                        value={applicationEmail}
-                        onChange={(e) => setApplicationEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {(applicationMethod === 'url' || applicationMethod === 'website') && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                      <Label htmlFor="url">{applicationMethod === 'url' ? 'External URL' : 'Website URL (Optional)'}</Label>
-                      <Input
-                        id="url"
-                        type="url"
-                        placeholder="https://company.com/apply"
-                        value={applicationUrl}
-                        onChange={(e) => setApplicationUrl(e.target.value)}
-                        required={applicationMethod === 'url'}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Industry</Label>
-                    <Select value={industry || undefined} onValueChange={setIndustry}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select industry" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {industryOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="stipend">Salary / Stipend Range</Label>
-                    <Input
-                      id="stipend"
-                      placeholder="e.g. 500,000 - 800,000 UGX/month"
-                      value={stipend}
-                      onChange={(e) => setStipend(e.target.value)}
-                    />
+
+                  <div className="text-sm text-muted-foreground">
+                    Opportunities publish immediately. If we flag a listing, it will pause until resolved, and any boosts resume once it is cleared.
                   </div>
-                </div>
 
-                <div className="text-sm text-muted-foreground">
-                  Opportunities publish immediately. If we flag a listing, it will pause until resolved, and any boosts resume once it is cleared.
-                </div>
-
-                <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                  {submitting ? 'Publishing…' : 'Publish Opportunity'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </section>
-    </div>
+                  <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+                    {submitting ? 'Publishing…' : 'Publish Opportunity'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </section>
+        </div>
       </main >
 
-  <Dialog open={submissionSuccess} onOpenChange={setSubmissionSuccess}>
-    <DialogContent className="sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          Opportunity Published!
-        </DialogTitle>
-        <DialogDescription>
-          Your listing is now live. Candidates can view and apply immediately.
-        </DialogDescription>
-      </DialogHeader>
-      <div className="flex flex-col gap-4 py-4">
-        <div className="rounded-md bg-green-50 p-4 text-sm text-green-900 border border-green-200">
-          <p className="font-medium">What happens next?</p>
-          <ul className="list-disc pl-4 mt-2 space-y-1">
-            <li>Your opportunity appears in search results instantly.</li>
-            <li>We notify matched candidates via email.</li>
-            <li>You'll receive applications directly to your email.</li>
-          </ul>
-        </div>
-      </div>
-      <DialogFooter className="sm:justify-start">
-        <Button type="button" variant="secondary" onClick={() => setSubmissionSuccess(false)}>
-          Post Another Opportunity
-        </Button>
-        <Button type="button" onClick={() => navigate('/find-talent')}>
-          View Live Listing
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      <Dialog open={submissionSuccess} onOpenChange={setSubmissionSuccess}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Opportunity Published!
+            </DialogTitle>
+            <DialogDescription>
+              Your listing is now live. Candidates can view and apply immediately.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="rounded-md bg-green-50 p-4 text-sm text-green-900 border border-green-200">
+              <p className="font-medium">What happens next?</p>
+              <ul className="list-disc pl-4 mt-2 space-y-1">
+                <li>Your opportunity appears in search results instantly.</li>
+                <li>We notify matched candidates via email.</li>
+                <li>You'll receive applications directly to your email.</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-start">
+            <Button type="button" variant="secondary" onClick={() => setSubmissionSuccess(false)}>
+              Post Another Opportunity
+            </Button>
+            <Button type="button" onClick={() => navigate('/find-talent')}>
+              View Live Listing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div >
   );
