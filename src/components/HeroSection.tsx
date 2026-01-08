@@ -28,9 +28,9 @@ const HeroSection = () => {
         <img
           src={heroImage}
           alt="Uganda learners, professionals, and employers collaborating"
-          className="w-full h-full object-cover opacity-10"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background to-background/90"></div>
+        <div className="absolute inset-0 bg-black/40"></div>
       </div>
 
       <div className="container mx-auto px-4 relative z-10 py-16 md:py-24">
