@@ -249,7 +249,11 @@ export function AdminPostsManager() {
                                         onChange={(e) => {
                                             const file = e.target.files?.[0];
                                             if (file) {
-                                                // Create a preview URL
+                                                // Revoke previously created object URL (if any) to avoid memory leaks
+                                                if (form.image_url && form.image_url.startsWith('blob:')) {
+                                                    URL.revokeObjectURL(form.image_url);
+                                                }
+                                                // Create a new preview URL
                                                 const previewUrl = URL.createObjectURL(file);
                                                 setForm({ ...form, image_url: previewUrl, image: file });
                                             }
