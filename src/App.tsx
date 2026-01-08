@@ -28,6 +28,7 @@ const LearningHub = lazy(() => import("./pages/LearningHub"));
 const JobFeed = lazy(() => import("./pages/JobFeed"));
 const CVBuilder = lazy(() => import("./pages/CVBuilder"));
 const FindTalent = lazy(() => import("./pages/FindTalent"));
+const Updates = lazy(() => import("./pages/Updates"));
 
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -106,6 +107,7 @@ function AppRouter() {
           <Route path="/jobs" element={<JobFeed />} />
           <Route path="/cv-builder" element={<CVBuilder />} />
           <Route path="/find-talent" element={<FindTalent />} />
+          <Route path="/updates" element={<Updates />} />
 
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />

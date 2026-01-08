@@ -33,17 +33,17 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-background to-background/90"></div>
       </div>
 
-      <div className="container mx-auto px-4 relative z-10 py-12">
+      <div className="container mx-auto px-4 relative z-10 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           {/* Main Heading */}
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight tracking-tight">
               Bridge to Your{" "}
-              <span className="text-primary bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+              <span className="text-primary bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent block sm:inline">
                 Future Career
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Bridge Uganda's learners, professionals, and employers with opportunities that span education and careers. Discover internships, training, and roles curated by region, industry, and focus area.
             </p>
           </div>
