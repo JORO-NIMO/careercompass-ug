@@ -178,7 +178,15 @@ const Updates = () => {
                                                         // Ignore aborts
                                                     }
                                                 } else {
-                                                    await navigator.clipboard.writeText(shareUrl);
+                                                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                                                        try {
+                                                            await navigator.clipboard.writeText(shareUrl);
+                                                        } catch (err) {
+                                                            window.alert("Unable to copy the link to your clipboard. Please copy it manually from the address bar.");
+                                                        }
+                                                    } else {
+                                                        window.alert("Sharing is not supported in this browser. Please copy the link from the address bar.");
+                                                    }
                                                     alert("Link copied to clipboard");
                                                 }
                                             }}
