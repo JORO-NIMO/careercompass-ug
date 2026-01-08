@@ -510,14 +510,46 @@ const StudentProfile = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label htmlFor="cv-link">CV Link (Google Drive / Online)</Label>
-										<Input
-											id="cv-link"
-											placeholder="https://drive.google.com/..."
-											value={cvLink}
-											onChange={(event) => setCvLink(event.target.value)}
-											disabled={loadingProfile || saving}
-										/>
+										<Label htmlFor="cv-link">CV / Resume</Label>
+										<div className="space-y-2">
+											<Input
+												id="cv-link"
+												placeholder="Paste a link (Google Drive, LinkedIn...)"
+												value={cvLink}
+												onChange={(event) => setCvLink(event.target.value)}
+												disabled={loadingProfile || saving}
+											/>
+											<div className="relative">
+												<div className="absolute inset-0 flex items-center">
+													<span className="w-full border-t" />
+												</div>
+												<div className="relative flex justify-center text-xs uppercase">
+													<span className="bg-background px-2 text-muted-foreground">Or Upload PDF</span>
+												</div>
+											</div>
+											<Input
+												type="file"
+												accept=".pdf,.doc,.docx"
+												onChange={async (e) => {
+													const file = e.target.files?.[0];
+													if (file) {
+														try {
+															setSaving(true);
+															const { uploadCV } = await import("@/services/profilesService");
+															if (!user) return;
+															const url = await uploadCV(file, user.id);
+															setCvLink(url);
+															toast({ title: "CV Uploaded", description: "File uploaded successfully. Don't forget to save your profile." });
+														} catch (err: any) {
+															toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+														} finally {
+															setSaving(false);
+														}
+													}
+												}}
+												disabled={loadingProfile || saving}
+											/>
+										</div>
 										<p className="text-[10px] text-muted-foreground">Recruiters will use this to view your professional history.</p>
 									</div>
 									<div className="space-y-2">
