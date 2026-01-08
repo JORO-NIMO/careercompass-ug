@@ -194,11 +194,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
             onSuccess();
         } catch (error) {
             console.error('Upload failed:', error);
-            toast({
-                title: "Upload Failed",
-                description: "There was an error uploading the placements.",
-                variant: "destructive",
-            });
+            toast({ title: "Upload Failed", variant: "destructive" });
         } finally {
             setUploading(false);
         }
@@ -227,7 +223,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                     {['upload', 'mapping', 'preview'].map((s, i) => (
                         <div key={s} className="flex items-center">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step === s ? 'bg-primary text-white' :
-                                    ['mapping', 'preview'].indexOf(step) > i ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
+                                ['mapping', 'preview'].indexOf(step) > i ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
                                 }`}>
                                 {['mapping', 'preview'].indexOf(step) > i ? <Check className="h-4 w-4" /> : i + 1}
                             </div>
