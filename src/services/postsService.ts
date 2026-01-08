@@ -4,9 +4,41 @@ import { logAdminAction } from './adminService';
 
 const ADMIN_UPLOADS_BUCKET = 'admin_uploads';
 
+function getFileExtension(name: string): string {
+    const lastDotIndex = name.lastIndexOf('.');
+    // If there is no dot, or it's the first/last character, fall back to a default extension
+    if (lastDotIndex <= 0 || lastDotIndex === name.length - 1) {
+        return 'jpg';
+    }
+
+    const rawExt = name.slice(lastDotIndex + 1).toLowerCase();
+    // Remove any characters that are not alphanumeric from the extension
+    const cleanedExt = rawExt.replace(/[^a-z0-9]/g, '');
+
+    return cleanedExt || 'jpg';
+}
+
+function sanitizeFilenameBase(name: string): string {
+    const lastDotIndex = name.lastIndexOf('.');
+    const base = lastDotIndex > 0 ? name.slice(0, lastDotIndex) : name;
+
+    // Normalize unicode (remove accents) where supported
+    const normalized = base.normalize
+        ? base.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+        : base;
+
+    // Replace any sequence of non-alphanumeric characters with a single underscore
+    let safe = normalized.replace(/[^a-zA-Z0-9]+/g, '_');
+    // Trim leading and trailing underscores
+    safe = safe.replace(/^_+|_+$/g, '');
+
+    return safe || 'file';
+}
+
 async function uploadPostImage(file: File): Promise<string> {
-    const extension = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.') + 1) : 'jpg';
-    const path = `posts/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}.${extension}`;
+    const extension = getFileExtension(file.name);
+    const safeBaseName = sanitizeFilenameBase(file.name);
+    const path = `posts/${crypto.randomUUID()}-${safeBaseName}.${extension}`;
 
     const { error: uploadError } = await supabase.storage.from(ADMIN_UPLOADS_BUCKET).upload(path, file);
     if (uploadError) {
