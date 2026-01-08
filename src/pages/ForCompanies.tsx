@@ -60,6 +60,7 @@ const ForCompanies = () => {
   const [companyName, setCompanyName] = useState('');
   const [description, setDescription] = useState('');
   const [region, setRegion] = useState('');
+  const [customRegion, setCustomRegion] = useState('');
   const [industry, setIndustry] = useState('');
   const [stipend, setStipend] = useState('');
   const [availableSlots, setAvailableSlots] = useState('');
@@ -320,7 +321,7 @@ const ForCompanies = () => {
       return;
     }
 
-    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry) {
+    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry || (region === 'other' && !customRegion.trim())) {
       toast({
         title: "Missing information",
         description: "Please complete all required fields before submitting.",
@@ -345,7 +346,8 @@ const ForCompanies = () => {
         whatsapp_number: applicationMethod === 'whatsapp' ? whatsappNumber.trim() : undefined,
         application_email: applicationMethod === 'email' ? applicationEmail.trim() : undefined,
         application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
-        region: region,
+        application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
+        region: region === 'other' ? customRegion.trim() : region,
         industry: industry,
         logo_url: listingLogoUrl || undefined,
       });
@@ -361,6 +363,7 @@ const ForCompanies = () => {
       setPositionTitle('');
       setDescription('');
       setRegion('');
+      setCustomRegion('');
       setIndustry('');
       setStipend('');
       setAvailableSlots('');
@@ -885,8 +888,18 @@ const ForCompanies = () => {
                           </SelectItem>
                         ))}
                         <SelectItem value="online">Online / Remote</SelectItem>
+                        <SelectItem value="other">Other (Specify)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {region === 'other' && (
+                      <Input
+                        className="mt-2"
+                        placeholder="Enter region name"
+                        value={customRegion}
+                        onChange={(e) => setCustomRegion(e.target.value)}
+                        required
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="deadline">Application deadline</Label>
