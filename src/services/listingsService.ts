@@ -78,6 +78,37 @@ export async function searchSmartListings(queryText: string) {
   }
 }
 
+/**
+ * Upload a logo for a listing to 'company-media' bucket
+ */
+export async function uploadListingLogo(file: File): Promise<string> {
+  const maxSize = 2 * 1024 * 1024; // 2MB
+  if (file.size > maxSize) {
+    throw new Error('File size must be less than 2MB');
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+  const filePath = `listing-logos/${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('company-media')
+    .upload(filePath, file, {
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error('Upload error:', uploadError);
+    throw new Error('Failed to upload logo');
+  }
+
+  const { data } = supabase.storage
+    .from('company-media')
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+}
+
 export async function fetchListings(): Promise<ListingWithCompany[]> {
   try {
     const response = await fetch('/api/listings');
