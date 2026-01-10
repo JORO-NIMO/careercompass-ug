@@ -42,6 +42,7 @@ interface FormState {
     status: 'draft' | 'published' | 'archived';
     scheduled_for: string;
     image_url: string;
+    image?: File;
     cta_text: string;
     cta_link: string;
 }
@@ -115,6 +116,7 @@ export function AdminPostsManager() {
                 ...form,
                 scheduled_for: form.scheduled_for || null,
                 image_url: form.image_url || null,
+                image: form.image, // Pass the file object
                 cta_text: form.cta_text || null,
                 cta_link: form.cta_link || null,
             };
@@ -238,16 +240,32 @@ export function AdminPostsManager() {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="post-image">Featured Image URL (Optional)</Label>
-                                <div className="flex gap-2">
+                                <Label htmlFor="post-image">Featured Image {activePost ? '(leave empty to keep existing)' : ''}</Label>
+                                <div className="space-y-2">
                                     <Input
                                         id="post-image"
-                                        value={form.image_url}
-                                        onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                                        placeholder="https://images.unsplash.com/..."
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                // Revoke previously created object URL (if any) to avoid memory leaks
+                                                if (form.image_url && form.image_url.startsWith('blob:')) {
+                                                    URL.revokeObjectURL(form.image_url);
+                                                }
+                                                // Create a new preview URL
+                                                const previewUrl = URL.createObjectURL(file);
+                                                setForm({ ...form, image_url: previewUrl, image: file });
+                                            }
+                                        }}
                                     />
                                     {form.image_url && (
-                                        <img src={form.image_url} alt="Preview" className="h-10 w-10 object-cover rounded border" />
+                                        <div className="relative w-20 h-20 rounded border overflow-hidden group">
+                                            <img src={form.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                            {form.image_url.startsWith('blob:') && (
+                                                <Badge className="absolute bottom-0 right-0 scale-75">New</Badge>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

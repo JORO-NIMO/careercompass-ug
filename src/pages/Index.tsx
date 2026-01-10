@@ -73,7 +73,7 @@ const Index = () => {
       />
       <main className="flex-grow">
         <HeroSection />
-        <div className="container mx-auto px-4 -mt-16 relative z-20">
+        <div className="container mx-auto px-4 mt-8 relative z-20">
           <SearchFilters />
         </div>
         <PlatformNews />
@@ -86,7 +86,7 @@ const Index = () => {
               <Link
                 key={segment.title}
                 to={segment.href}
-                className="group flex h-full flex-col justify-between rounded-2xl border border-primary/40 bg-background/90 p-6 shadow-sm backdrop-blur transition hover:border-primary hover:bg-primary/5"
+                className="group flex h-full flex-col justify-between rounded-2xl border border-primary/40 bg-background p-6 shadow-sm transition hover:border-primary hover:bg-primary/5"
               >
                 <div className="space-y-3">
                   <h3 className="text-2xl font-semibold text-foreground">{segment.title}</h3>

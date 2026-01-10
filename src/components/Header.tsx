@@ -40,7 +40,7 @@ const Header = () => {
   };
 
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         {/* Logo */}
@@ -131,42 +131,62 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden border-t border-border bg-background">
-          <div className="container mx-auto px-4 py-4 space-y-3">
-            <Link to="/find-placements" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+        <div className="md:hidden fixed inset-0 top-16 z-40 bg-background border-t border-border overflow-y-auto">
+          <div className="container mx-auto px-4 py-6 space-y-4">
+            <Link
+              to="/find-placements"
+              className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Find Placements
             </Link>
-            <Link to="/find-talent" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              to="/find-talent"
+              className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Find Talent
             </Link>
-            <Link to="/application-tips" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              to="/application-tips"
+              className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Resources
             </Link>
-            <Link to="/for-companies" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+            <Link
+              to="/for-companies"
+              className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+              onClick={() => setIsMenuOpen(false)}
+            >
               For Companies
             </Link>
             {isAdmin && (
-              <Link to="/admin" className="block py-2 text-muted-foreground hover:text-primary transition-colors">
+              <Link
+                to="/admin"
+                className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 Admin Dashboard
               </Link>
             )}
-            <div className="pt-3 space-y-2 border-t border-border">
+            <div className="pt-6 space-y-3">
               {user ? (
                 <>
-                  <Link to="/profile" className="block">
-                    <Button variant="outline" className="w-full">Profile</Button>
+                  <Link to="/profile" className="block" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full h-12 text-base">Profile</Button>
                   </Link>
-                  <Button variant="ghost" className="w-full" onClick={handleSignOut}>
+                  <Button variant="ghost" className="w-full h-12 text-base justify-start" onClick={() => { handleSignOut(); setIsMenuOpen(false); }}>
                     Sign Out
                   </Button>
                 </>
               ) : (
                 <>
-                  <Link to="/signin" className="block">
-                    <Button variant="outline" className="w-full">Sign In</Button>
+                  <Link to="/signin" className="block" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="outline" className="w-full h-12 text-base">Sign In</Button>
                   </Link>
-                  <Link to="/for-companies" className="block">
-                    <Button variant="hero" className="w-full">Post Placement</Button>
+                  <Link to="/for-companies" className="block" onClick={() => setIsMenuOpen(false)}>
+                    <Button variant="hero" className="w-full h-12 text-base">Post Placement</Button>
                   </Link>
                 </>
               )}

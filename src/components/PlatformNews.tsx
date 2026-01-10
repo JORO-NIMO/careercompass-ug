@@ -57,7 +57,11 @@ export const PlatformNews = () => {
                     <Megaphone className="h-8 w-8 text-primary" />
                     Latest Updates
                 </h2>
-
+                <Button variant="ghost" asChild>
+                    <Link to="/updates" className="flex items-center gap-2">
+                        View All <ArrowRight className="h-4 w-4" />
+                    </Link>
+                </Button>
             </div>
 
             {loading ? (

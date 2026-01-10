@@ -19,6 +19,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
 	Dialog,
 	DialogContent,
@@ -444,6 +445,11 @@ const StudentProfile = () => {
 		setPreviewOpen(true);
 	};
 
+	const completeness = [
+		firstName, lastName, email, phoneNumber, cvLink, schoolName,
+		courseOfStudy, yearOfStudy, stage, focusArea, region, district, availability
+	].filter(Boolean).length / 13 * 100;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<main className="py-16">
@@ -452,6 +458,13 @@ const StudentProfile = () => {
 						<div className="text-center">
 							<h1 className="text-3xl font-bold">Talent Profile</h1>
 							<p className="text-muted-foreground">Complete your profile to unlock tailored learning and career matches</p>
+							<div className="mt-4 max-w-md mx-auto">
+								<div className="flex justify-between text-sm mb-1">
+									<span>Completeness</span>
+									<span>{Math.round(completeness)}%</span>
+								</div>
+								<Progress value={completeness} className="h-2" />
+							</div>
 						</div>
 
 						<Card>
@@ -510,14 +523,46 @@ const StudentProfile = () => {
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div className="space-y-2">
-										<Label htmlFor="cv-link">CV Link (Google Drive / Online)</Label>
-										<Input
-											id="cv-link"
-											placeholder="https://drive.google.com/..."
-											value={cvLink}
-											onChange={(event) => setCvLink(event.target.value)}
-											disabled={loadingProfile || saving}
-										/>
+										<Label htmlFor="cv-link">CV / Resume</Label>
+										<div className="space-y-2">
+											<Input
+												id="cv-link"
+												placeholder="Paste a link (Google Drive, LinkedIn...)"
+												value={cvLink}
+												onChange={(event) => setCvLink(event.target.value)}
+												disabled={loadingProfile || saving}
+											/>
+											<div className="relative">
+												<div className="absolute inset-0 flex items-center">
+													<span className="w-full border-t" />
+												</div>
+												<div className="relative flex justify-center text-xs uppercase">
+													<span className="bg-background px-2 text-muted-foreground">Or Upload PDF</span>
+												</div>
+											</div>
+											<Input
+												type="file"
+												accept=".pdf,.doc,.docx"
+												onChange={async (e) => {
+													const file = e.target.files?.[0];
+													if (file) {
+														try {
+															setSaving(true);
+															const { uploadCV } = await import("@/services/profilesService");
+															if (!user) return;
+															const url = await uploadCV(file, user.id);
+															setCvLink(url);
+															toast({ title: "CV Uploaded", description: "File uploaded successfully. Don't forget to save your profile." });
+														} catch (err: any) {
+															toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+														} finally {
+															setSaving(false);
+														}
+													}
+												}}
+												disabled={loadingProfile || saving}
+											/>
+										</div>
 										<p className="text-[10px] text-muted-foreground">Recruiters will use this to view your professional history.</p>
 									</div>
 									<div className="space-y-2">

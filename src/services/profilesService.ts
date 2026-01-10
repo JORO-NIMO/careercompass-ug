@@ -119,3 +119,23 @@ export async function updateProfile(profile: Partial<Profile>): Promise<Profile>
 
     return data.item;
 }
+
+export async function uploadCV(file: File, userId: string): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        throw new Error(uploadError.message);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+}
