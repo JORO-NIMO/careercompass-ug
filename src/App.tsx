@@ -42,6 +42,7 @@ const TopInternships = lazy(() => import("./pages/TopInternships"));
 const CareerTrendsBlog = lazy(() => import("./pages/CareerTrendsBlog"));
 const UpdateDetails = lazy(() => import("./pages/UpdateDetails"));
 const ApplicationTips = lazy(() => import("./pages/ApplicationTips"));
+const PublicDataView = lazy(() => import("./pages/PublicDataView"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -185,6 +186,7 @@ const App = () => (
                   <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
                   <Route path="/updates/:id" element={<UpdateDetails />} />
                   <Route path="/application-tips" element={<ApplicationTips />} />
+                  <Route path="/data/:id" element={<PublicDataView />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
