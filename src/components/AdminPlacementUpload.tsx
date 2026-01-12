@@ -337,47 +337,55 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                                 <Plus className="mr-2 h-4 w-4" /> Add Row
                             </Button>
                         </div>
-                        <div className="rounded-md border max-h-[400px] overflow-auto">
+                        <div className="rounded-md border max-h-[500px] overflow-auto shadow-sm bg-background">
                             <Table>
-                                <TableHeader>
+                                <TableHeader className="sticky top-0 bg-secondary z-10">
                                     <TableRow>
                                         <TableHead className="w-8">#</TableHead>
-                                        <TableHead>Position</TableHead>
-                                        <TableHead>Company</TableHead>
-                                        <TableHead>Region</TableHead>
-                                        <TableHead>Industry</TableHead>
-                                        <TableHead>Stipend</TableHead>
+                                        {DB_FIELDS.filter(f => {
+                                            const mappedValues = new Set(Object.values(columnMapping));
+                                            return mappedValues.has(f.key);
+                                        }).map(field => (
+                                            <TableHead key={field.key} className="whitespace-nowrap">
+                                                {field.label} {field.required ? '*' : ''}
+                                            </TableHead>
+                                        ))}
                                         <TableHead className="w-16">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {mappedData.map((row, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                                            {(['position_title', 'company_name', 'region', 'industry', 'stipend'] as const).map(field => (
-                                                <TableCell key={field}>
-                                                    {editingCell?.row === index && editingCell?.field === field ? (
+                                        <TableRow key={index} className="group transition-colors hover:bg-muted/50">
+                                            <TableCell className="text-muted-foreground font-mono text-xs">{index + 1}</TableCell>
+                                            {DB_FIELDS.filter(f => {
+                                                const mappedValues = new Set(Object.values(columnMapping));
+                                                return mappedValues.has(f.key);
+                                            }).map(field => (
+                                                <TableCell key={field.key} className="relative py-2">
+                                                    {editingCell?.row === index && editingCell?.field === field.key ? (
                                                         <Input
                                                             autoFocus
-                                                            defaultValue={row[field] as string}
-                                                            onBlur={(e) => updateCell(index, field, e.target.value)}
-                                                            onKeyDown={(e) => e.key === 'Enter' && updateCell(index, field, (e.target as HTMLInputElement).value)}
-                                                            className="h-8"
+                                                            defaultValue={row[field.key as keyof ParsedPlacement] as string}
+                                                            onBlur={(e) => updateCell(index, field.key as keyof ParsedPlacement, e.target.value)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && updateCell(index, field.key as keyof ParsedPlacement, (e.target as HTMLInputElement).value)}
+                                                            className="h-8 min-w-[120px]"
                                                         />
                                                     ) : (
-                                                        <span
-                                                            className="cursor-pointer hover:text-primary flex items-center gap-1"
-                                                            onClick={() => setEditingCell({ row: index, field })}
+                                                        <div
+                                                            className="cursor-pointer hover:text-primary min-h-[1.5rem] flex items-center justify-between gap-2 px-1 rounded hover:bg-muted"
+                                                            onClick={() => setEditingCell({ row: index, field: field.key })}
                                                         >
-                                                            {row[field] || <span className="text-muted-foreground italic">empty</span>}
-                                                            <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100" />
-                                                        </span>
+                                                            <span className="truncate max-w-[200px]" title={String(row[field.key as keyof ParsedPlacement] || '')}>
+                                                                {row[field.key as keyof ParsedPlacement] || <span className="text-muted-foreground/50 italic text-xs">empty</span>}
+                                                            </span>
+                                                            <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-40" />
+                                                        </div>
                                                     )}
                                                 </TableCell>
                                             ))}
                                             <TableCell>
-                                                <Button variant="ghost" size="icon" onClick={() => deleteRow(index)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                <Button variant="ghost" size="icon" onClick={() => deleteRow(index)} className="hover:bg-destructive/10 hover:text-destructive h-8 w-8">
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
@@ -385,15 +393,20 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                                 </TableBody>
                             </Table>
                         </div>
-                        <div className="flex justify-between pt-4">
-                            <Button variant="outline" onClick={() => setStep('mapping')}>
+                        <div className="flex justify-between pt-4 gap-4">
+                            <Button variant="outline" onClick={() => setStep('mapping')} className="flex-1 max-w-[200px]">
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Mapping
                             </Button>
-                            <Button onClick={handleUpload} disabled={uploading || mappedData.length === 0}>
-                                {uploading ? "Uploading..." : (
+                            <Button onClick={handleUpload} disabled={uploading || mappedData.length === 0} className="flex-1 shadow-lg shadow-primary/20">
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Posting...
+                                    </>
+                                ) : (
                                     <>
                                         <Upload className="mr-2 h-4 w-4" />
-                                        Upload {mappedData.length} Placements
+                                        Post {mappedData.length} Opportunities
                                     </>
                                 )}
                             </Button>
