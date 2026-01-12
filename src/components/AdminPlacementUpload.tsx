@@ -72,7 +72,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 return;
             }
 
-            const columns = Object.keys(data[0]);
+            const columns = Object.keys(data[0]).filter(c => c && String(c).trim() !== "");
             setRawData(data);
             setExcelColumns(columns);
 
@@ -268,14 +268,14 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                                         {field.required && <span className="text-red-500">*</span>}
                                     </label>
                                     <Select
-                                        value={columnMapping[field.key] || ''}
-                                        onValueChange={(value) => setColumnMapping(prev => ({ ...prev, [field.key]: value }))}
+                                        value={columnMapping[field.key] || 'unmapped'}
+                                        onValueChange={(value) => setColumnMapping(prev => ({ ...prev, [field.key]: value === 'unmapped' ? '' : value }))}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select column..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">-- None --</SelectItem>
+                                            <SelectItem value="unmapped">-- None --</SelectItem>
                                             {excelColumns.map(col => (
                                                 <SelectItem key={col} value={col}>{col}</SelectItem>
                                             ))}
