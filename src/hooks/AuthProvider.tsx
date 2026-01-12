@@ -42,7 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         void (async () => {
           try {
             const u = nextSession.user;
-            await supabase.from('profiles').upsert([
+            const { error: upsertError } = await supabase.from('profiles').upsert([
               {
                 id: u.id,
                 email: u.email ?? null,
@@ -50,8 +50,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 updated_at: new Date().toISOString(),
               },
             ], { onConflict: 'id' });
+
+            if (upsertError) {
+              console.warn('Profile sync failed with error:', upsertError);
+            }
           } catch (err) {
-            console.warn('Failed to upsert profile on auth change', err);
+            console.warn('Unhandled error during profile upsert', err);
           }
         })();
 

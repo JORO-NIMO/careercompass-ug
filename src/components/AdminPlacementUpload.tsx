@@ -20,10 +20,12 @@ const DB_FIELDS = [
     { key: 'industry', label: 'Industry', required: false },
     { key: 'stipend', label: 'Stipend', required: false },
     { key: 'available_slots', label: 'Available Slots', required: false },
-    { key: 'website', label: 'Website', required: false },
-    { key: 'email', label: 'Email', required: false },
-    { key: 'phone', label: 'Phone', required: false },
+    { key: 'website_url', label: 'Website URL', required: false },
+    { key: 'contact_email', label: 'Contact Email', required: false },
+    { key: 'contact_phone', label: 'Contact Phone', required: false },
     { key: 'contact_name', label: 'Contact Name', required: false },
+    { key: 'deadline', label: 'Deadline', required: false },
+    { key: 'application_link', label: 'Application Link', required: false },
 ] as const;
 
 type DBFieldKey = typeof DB_FIELDS[number]['key'];
@@ -36,10 +38,12 @@ interface ParsedPlacement {
     industry: string;
     stipend: string;
     available_slots: number;
-    website?: string;
-    email?: string;
-    phone?: string;
+    website_url?: string;
+    contact_email?: string;
+    contact_phone?: string;
     contact_name?: string;
+    deadline?: string;
+    application_link?: string;
 }
 
 type Step = 'upload' | 'mapping' | 'preview';
@@ -86,10 +90,12 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 industry: ['industry', 'sector', 'category', 'field', 'department'],
                 stipend: ['stipend', 'salary', 'pay', 'allowance', 'wage', 'compensation'],
                 available_slots: ['slots', 'openings', 'vacancies', 'number', 'positions'],
-                website: ['website', 'url', 'web', 'link'],
-                email: ['email', 'e-mail', 'mail'],
-                phone: ['phone', 'telephone', 'mobile', 'cell'],
+                website_url: ['website', 'url', 'web', 'link'],
+                contact_email: ['email', 'e-mail', 'mail'],
+                contact_phone: ['phone', 'telephone', 'mobile', 'cell'],
                 contact_name: ['contact', 'contact name', 'contact person', 'representative'],
+                deadline: ['deadline', 'expiry', 'ends'],
+                application_link: ['apply', 'application', 'application link', 'form'],
             };
 
             columns.forEach(col => {
@@ -127,17 +133,19 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
         });
 
         const mapped = rawData.map(row => ({
-            position_title: row[inverseMapping.position_title!] || 'Untitled',
-            company_name: row[inverseMapping.company_name!] || 'Unknown',
-            description: row[inverseMapping.description!] || '',
-            region: row[inverseMapping.region!] || 'Central',
-            industry: row[inverseMapping.industry!] || 'Other',
+            position_title: String(row[inverseMapping.position_title!] || 'Untitled'),
+            company_name: String(row[inverseMapping.company_name!] || 'Unknown'),
+            description: String(row[inverseMapping.description!] || ''),
+            region: String(row[inverseMapping.region!] || 'Central'),
+            industry: String(row[inverseMapping.industry!] || 'Other'),
             stipend: String(row[inverseMapping.stipend!] || 'Unpaid'),
             available_slots: Number(row[inverseMapping.available_slots!]) || 1,
-            website: row[inverseMapping.website!] || undefined,
-            email: row[inverseMapping.email!] || undefined,
-            phone: row[inverseMapping.phone!] || undefined,
-            contact_name: row[inverseMapping.contact_name!] || undefined,
+            website_url: row[inverseMapping.website_url!] ? String(row[inverseMapping.website_url!]) : undefined,
+            contact_email: row[inverseMapping.contact_email!] ? String(row[inverseMapping.contact_email!]) : undefined,
+            contact_phone: row[inverseMapping.contact_phone!] ? String(row[inverseMapping.contact_phone!]) : undefined,
+            contact_name: row[inverseMapping.contact_name!] ? String(row[inverseMapping.contact_name!]) : undefined,
+            deadline: row[inverseMapping.deadline!] ? new Date(row[inverseMapping.deadline!]).toISOString() : undefined,
+            application_link: row[inverseMapping.application_link!] ? String(row[inverseMapping.application_link!]) : undefined,
         }));
         setMappedData(mapped);
         setStep('preview');
@@ -204,9 +212,13 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
             setMappedData([]);
             setStep('upload');
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Upload failed:', error);
-            toast({ title: "Upload Failed", variant: "destructive" });
+            toast({
+                title: "Upload Failed",
+                description: error.message || "An error occurred while communicating with the database.",
+                variant: "destructive"
+            });
         } finally {
             setUploading(false);
         }
