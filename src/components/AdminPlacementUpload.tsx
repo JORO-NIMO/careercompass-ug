@@ -20,10 +20,12 @@ const DB_FIELDS = [
     { key: 'industry', label: 'Industry', required: false },
     { key: 'stipend', label: 'Stipend', required: false },
     { key: 'available_slots', label: 'Available Slots', required: false },
-    { key: 'website', label: 'Website', required: false },
-    { key: 'email', label: 'Email', required: false },
-    { key: 'phone', label: 'Phone', required: false },
+    { key: 'website_url', label: 'Website URL', required: false },
+    { key: 'contact_email', label: 'Contact Email', required: false },
+    { key: 'contact_phone', label: 'Contact Phone', required: false },
     { key: 'contact_name', label: 'Contact Name', required: false },
+    { key: 'deadline', label: 'Deadline', required: false },
+    { key: 'application_link', label: 'Application Link', required: false },
 ] as const;
 
 type DBFieldKey = typeof DB_FIELDS[number]['key'];
@@ -36,10 +38,12 @@ interface ParsedPlacement {
     industry: string;
     stipend: string;
     available_slots: number;
-    website?: string;
-    email?: string;
-    phone?: string;
+    website_url?: string;
+    contact_email?: string;
+    contact_phone?: string;
     contact_name?: string;
+    deadline?: string;
+    application_link?: string;
 }
 
 type Step = 'upload' | 'mapping' | 'preview';
@@ -48,7 +52,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
     const [step, setStep] = useState<Step>('upload');
     const [rawData, setRawData] = useState<any[]>([]);
     const [excelColumns, setExcelColumns] = useState<string[]>([]);
-    const [columnMapping, setColumnMapping] = useState<Record<DBFieldKey, string>>({} as any);
+    const [columnMapping, setColumnMapping] = useState<Record<string, DBFieldKey | 'ignore'>>({});
     const [mappedData, setMappedData] = useState<ParsedPlacement[]>([]);
     const [uploading, setUploading] = useState(false);
     const [editingCell, setEditingCell] = useState<{ row: number; field: string } | null>(null);
@@ -72,13 +76,13 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 return;
             }
 
-            const columns = Object.keys(data[0]);
+            const columns = Object.keys(data[0]).filter(c => c && String(c).trim() !== "");
             setRawData(data);
             setExcelColumns(columns);
 
             // Auto-suggest mappings based on fuzzy match
-            const suggestions: Record<string, string> = {};
-            const aliases: Record<string, string[]> = {
+            const initialMapping: Record<string, DBFieldKey | 'ignore'> = {};
+            const aliases: Record<DBFieldKey, string[]> = {
                 position_title: ['position', 'title', 'role', 'job title', 'job_title', 'vacancy'],
                 company_name: ['company', 'organization', 'employer', 'firm', 'organisation'],
                 description: ['description', 'details', 'job description', 'summary', 'about'],
@@ -86,22 +90,28 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 industry: ['industry', 'sector', 'category', 'field', 'department'],
                 stipend: ['stipend', 'salary', 'pay', 'allowance', 'wage', 'compensation'],
                 available_slots: ['slots', 'openings', 'vacancies', 'number', 'positions'],
-                website: ['website', 'url', 'web', 'link'],
-                email: ['email', 'e-mail', 'mail'],
-                phone: ['phone', 'telephone', 'mobile', 'cell'],
+                website_url: ['website', 'url', 'web', 'link'],
+                contact_email: ['email', 'e-mail', 'mail'],
+                contact_phone: ['phone', 'telephone', 'mobile', 'cell'],
                 contact_name: ['contact', 'contact name', 'contact person', 'representative'],
+                deadline: ['deadline', 'expiry', 'ends'],
+                application_link: ['apply', 'application', 'application link', 'form'],
             };
 
-            for (const [field, fieldAliases] of Object.entries(aliases)) {
-                const match = columns.find(col =>
-                    fieldAliases.some(alias => col.toLowerCase().includes(alias))
-                );
-                if (match) {
-                    suggestions[field] = match;
-                }
-            }
+            columns.forEach(col => {
+                const lowerCol = col.toLowerCase();
+                let foundField: DBFieldKey | 'ignore' = 'ignore';
 
-            setColumnMapping(suggestions as any);
+                for (const [field, fieldAliases] of Object.entries(aliases)) {
+                    if (fieldAliases.some(alias => lowerCol.includes(alias))) {
+                        foundField = field as DBFieldKey;
+                        break;
+                    }
+                }
+                initialMapping[col] = foundField;
+            });
+
+            setColumnMapping(initialMapping);
             setStep('mapping');
 
             toast({
@@ -114,18 +124,28 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
 
     // Step 2: Apply column mapping
     const applyMapping = () => {
+        // Create an inverse mapping for easier lookup during row processing
+        const inverseMapping: Partial<Record<DBFieldKey, string>> = {};
+        Object.entries(columnMapping).forEach(([excelCol, dbField]) => {
+            if (dbField !== 'ignore') {
+                inverseMapping[dbField] = excelCol;
+            }
+        });
+
         const mapped = rawData.map(row => ({
-            position_title: row[columnMapping.position_title] || 'Untitled',
-            company_name: row[columnMapping.company_name] || 'Unknown',
-            description: row[columnMapping.description] || '',
-            region: row[columnMapping.region] || 'Central',
-            industry: row[columnMapping.industry] || 'Other',
-            stipend: String(row[columnMapping.stipend] || 'Unpaid'),
-            available_slots: Number(row[columnMapping.available_slots]) || 1,
-            website: row[columnMapping.website] || undefined,
-            email: row[columnMapping.email] || undefined,
-            phone: row[columnMapping.phone] || undefined,
-            contact_name: row[columnMapping.contact_name] || undefined,
+            position_title: String(row[inverseMapping.position_title!] || 'Untitled'),
+            company_name: String(row[inverseMapping.company_name!] || 'Unknown'),
+            description: String(row[inverseMapping.description!] || ''),
+            region: String(row[inverseMapping.region!] || 'Central'),
+            industry: String(row[inverseMapping.industry!] || 'Other'),
+            stipend: String(row[inverseMapping.stipend!] || 'Unpaid'),
+            available_slots: Number(row[inverseMapping.available_slots!]) || 1,
+            website_url: row[inverseMapping.website_url!] ? String(row[inverseMapping.website_url!]) : undefined,
+            contact_email: row[inverseMapping.contact_email!] ? String(row[inverseMapping.contact_email!]) : undefined,
+            contact_phone: row[inverseMapping.contact_phone!] ? String(row[inverseMapping.contact_phone!]) : undefined,
+            contact_name: row[inverseMapping.contact_name!] ? String(row[inverseMapping.contact_name!]) : undefined,
+            deadline: row[inverseMapping.deadline!] ? new Date(row[inverseMapping.deadline!]).toISOString() : undefined,
+            application_link: row[inverseMapping.application_link!] ? String(row[inverseMapping.application_link!]) : undefined,
         }));
         setMappedData(mapped);
         setStep('preview');
@@ -192,16 +212,21 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
             setMappedData([]);
             setStep('upload');
             onSuccess();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Upload failed:', error);
-            toast({ title: "Upload Failed", variant: "destructive" });
+            toast({
+                title: "Upload Failed",
+                description: error.message || "An error occurred while communicating with the database.",
+                variant: "destructive"
+            });
         } finally {
             setUploading(false);
         }
     };
 
     const requiredFieldsMapped = useMemo(() => {
-        return DB_FIELDS.filter(f => f.required).every(f => columnMapping[f.key]);
+        const mappedFields = new Set(Object.values(columnMapping));
+        return DB_FIELDS.filter(f => f.required).every(f => mappedFields.has(f.key));
     }, [columnMapping]);
 
     return (
@@ -213,7 +238,7 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 </CardTitle>
                 <CardDescription>
                     {step === 'upload' && 'Step 1: Upload your Excel or CSV file'}
-                    {step === 'mapping' && 'Step 2: Map your columns to database fields'}
+                    {step === 'mapping' && 'Step 2: Assign Excel columns to database fields'}
                     {step === 'preview' && 'Step 3: Review, edit, and confirm upload'}
                 </CardDescription>
             </CardHeader>
@@ -255,29 +280,37 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                 {step === 'mapping' && (
                     <>
                         <Alert>
-                            <AlertTitle>Map Your Columns</AlertTitle>
+                            <AlertTitle>Select Columns to Post</AlertTitle>
                             <AlertDescription>
-                                Select which Excel column corresponds to each database field. Required fields are marked with *.
+                                For each column in your file, decide which database field it maps to.
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {DB_FIELDS.filter(f => f.required).map(f => (
+                                        <Badge key={f.key} variant={Object.values(columnMapping).includes(f.key) ? "secondary" : "destructive"} className="text-[10px]">
+                                            {f.label} *
+                                        </Badge>
+                                    ))}
+                                </div>
                             </AlertDescription>
                         </Alert>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {DB_FIELDS.map(field => (
-                                <div key={field.key} className="space-y-1">
-                                    <label className="text-sm font-medium flex items-center gap-1">
-                                        {field.label}
-                                        {field.required && <span className="text-red-500">*</span>}
+                            {excelColumns.map(col => (
+                                <div key={col} className="space-y-1 p-3 border rounded-lg bg-muted/30">
+                                    <label className="text-sm font-semibold truncate block" title={col}>
+                                        Column: "{col}"
                                     </label>
                                     <Select
-                                        value={columnMapping[field.key] || ''}
-                                        onValueChange={(value) => setColumnMapping(prev => ({ ...prev, [field.key]: value }))}
+                                        value={columnMapping[col] || 'ignore'}
+                                        onValueChange={(value) => setColumnMapping(prev => ({ ...prev, [col]: value as DBFieldKey | 'ignore' }))}
                                     >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select column..." />
+                                        <SelectTrigger className="w-full bg-background">
+                                            <SelectValue placeholder="Map to..." />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="">-- None --</SelectItem>
-                                            {excelColumns.map(col => (
-                                                <SelectItem key={col} value={col}>{col}</SelectItem>
+                                            <SelectItem value="ignore">-- Ignore --</SelectItem>
+                                            {DB_FIELDS.map(field => (
+                                                <SelectItem key={field.key} value={field.key}>
+                                                    {field.label} {field.required ? '*' : ''}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -304,47 +337,55 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                                 <Plus className="mr-2 h-4 w-4" /> Add Row
                             </Button>
                         </div>
-                        <div className="rounded-md border max-h-[400px] overflow-auto">
+                        <div className="rounded-md border max-h-[500px] overflow-auto shadow-sm bg-background">
                             <Table>
-                                <TableHeader>
+                                <TableHeader className="sticky top-0 bg-secondary z-10">
                                     <TableRow>
                                         <TableHead className="w-8">#</TableHead>
-                                        <TableHead>Position</TableHead>
-                                        <TableHead>Company</TableHead>
-                                        <TableHead>Region</TableHead>
-                                        <TableHead>Industry</TableHead>
-                                        <TableHead>Stipend</TableHead>
+                                        {DB_FIELDS.filter(f => {
+                                            const mappedValues = new Set(Object.values(columnMapping));
+                                            return mappedValues.has(f.key);
+                                        }).map(field => (
+                                            <TableHead key={field.key} className="whitespace-nowrap">
+                                                {field.label} {field.required ? '*' : ''}
+                                            </TableHead>
+                                        ))}
                                         <TableHead className="w-16">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {mappedData.map((row, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                                            {(['position_title', 'company_name', 'region', 'industry', 'stipend'] as const).map(field => (
-                                                <TableCell key={field}>
-                                                    {editingCell?.row === index && editingCell?.field === field ? (
+                                        <TableRow key={index} className="group transition-colors hover:bg-muted/50">
+                                            <TableCell className="text-muted-foreground font-mono text-xs">{index + 1}</TableCell>
+                                            {DB_FIELDS.filter(f => {
+                                                const mappedValues = new Set(Object.values(columnMapping));
+                                                return mappedValues.has(f.key);
+                                            }).map(field => (
+                                                <TableCell key={field.key} className="relative py-2">
+                                                    {editingCell?.row === index && editingCell?.field === field.key ? (
                                                         <Input
                                                             autoFocus
-                                                            defaultValue={row[field] as string}
-                                                            onBlur={(e) => updateCell(index, field, e.target.value)}
-                                                            onKeyDown={(e) => e.key === 'Enter' && updateCell(index, field, (e.target as HTMLInputElement).value)}
-                                                            className="h-8"
+                                                            defaultValue={row[field.key as keyof ParsedPlacement] as string}
+                                                            onBlur={(e) => updateCell(index, field.key as keyof ParsedPlacement, e.target.value)}
+                                                            onKeyDown={(e) => e.key === 'Enter' && updateCell(index, field.key as keyof ParsedPlacement, (e.target as HTMLInputElement).value)}
+                                                            className="h-8 min-w-[120px]"
                                                         />
                                                     ) : (
-                                                        <span
-                                                            className="cursor-pointer hover:text-primary flex items-center gap-1"
-                                                            onClick={() => setEditingCell({ row: index, field })}
+                                                        <div
+                                                            className="cursor-pointer hover:text-primary min-h-[1.5rem] flex items-center justify-between gap-2 px-1 rounded hover:bg-muted"
+                                                            onClick={() => setEditingCell({ row: index, field: field.key })}
                                                         >
-                                                            {row[field] || <span className="text-muted-foreground italic">empty</span>}
-                                                            <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100" />
-                                                        </span>
+                                                            <span className="truncate max-w-[200px]" title={String(row[field.key as keyof ParsedPlacement] || '')}>
+                                                                {row[field.key as keyof ParsedPlacement] || <span className="text-muted-foreground/50 italic text-xs">empty</span>}
+                                                            </span>
+                                                            <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-40" />
+                                                        </div>
                                                     )}
                                                 </TableCell>
                                             ))}
                                             <TableCell>
-                                                <Button variant="ghost" size="icon" onClick={() => deleteRow(index)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                <Button variant="ghost" size="icon" onClick={() => deleteRow(index)} className="hover:bg-destructive/10 hover:text-destructive h-8 w-8">
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
@@ -352,15 +393,20 @@ export const AdminPlacementUpload = ({ onSuccess }: { onSuccess: () => void }) =
                                 </TableBody>
                             </Table>
                         </div>
-                        <div className="flex justify-between pt-4">
-                            <Button variant="outline" onClick={() => setStep('mapping')}>
+                        <div className="flex justify-between pt-4 gap-4">
+                            <Button variant="outline" onClick={() => setStep('mapping')} className="flex-1 max-w-[200px]">
                                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Mapping
                             </Button>
-                            <Button onClick={handleUpload} disabled={uploading || mappedData.length === 0}>
-                                {uploading ? "Uploading..." : (
+                            <Button onClick={handleUpload} disabled={uploading || mappedData.length === 0} className="flex-1 shadow-lg shadow-primary/20">
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Posting...
+                                    </>
+                                ) : (
                                     <>
                                         <Upload className="mr-2 h-4 w-4" />
-                                        Upload {mappedData.length} Placements
+                                        Post {mappedData.length} Opportunities
                                     </>
                                 )}
                             </Button>

@@ -1,9 +1,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./hooks/AuthProvider";
+import { useAuth } from "./hooks/useAuth";
 import { usePageTracking } from "./hooks/usePageTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Header from "@/components/Header";
@@ -41,6 +42,7 @@ const TopInternships = lazy(() => import("./pages/TopInternships"));
 const CareerTrendsBlog = lazy(() => import("./pages/CareerTrendsBlog"));
 const UpdateDetails = lazy(() => import("./pages/UpdateDetails"));
 const ApplicationTips = lazy(() => import("./pages/ApplicationTips"));
+const PublicDataView = lazy(() => import("./pages/PublicDataView"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -128,6 +130,17 @@ function AppRouter() {
   );
 }
 
+// Protected Route Component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <PageLoader />;
+  if (!user) return <Navigate to="/signin" state={{ from: location }} replace />;
+
+  return <>{children}</>;
+};
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -135,7 +148,50 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>
-            <AppRouter />
+            <AppLayout>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/find-placements" element={<FindPlacements />} />
+                  <Route path="/for-companies" element={<ForCompanies />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/signin" element={<SignIn />} />
+                  <Route path="/profile" element={<StudentProfile />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/notification-preferences" element={<NotificationPreferences />} />
+                  <Route path="/feedback" element={<FeedbackPage />} />
+                  <Route path="/admin/analytics" element={<AdminAnalytics />} />
+                  <Route path="/learning" element={<LearningHub />} />
+                  <Route path="/jobs" element={<JobFeed />} />
+                  <Route path="/cv-builder" element={<CVBuilder />} />
+                  <Route
+                    path="/find-talent"
+                    element={
+                      <ProtectedRoute>
+                        <FindTalent />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/updates" element={<Updates />} />
+
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/dashboard" element={<UserDashboard />} />
+                  <Route path="/oauth/consent" element={<OAuthConsent />} />
+                  <Route path="/guides/how-to-write-a-cv" element={<HowToWriteACV />} />
+                  <Route path="/guides/interview-tips-uganda" element={<InterviewTipsUganda />} />
+                  <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
+                  <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
+                  <Route path="/updates/:id" element={<UpdateDetails />} />
+                  <Route path="/application-tips" element={<ApplicationTips />} />
+                  <Route path="/data/:id" element={<PublicDataView />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </AppLayout>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

@@ -1,12 +1,3 @@
-  const signInWithGoogle = async (): Promise<{ error: AuthError | null }> => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-    return { error };
-  };
-
-  const signInWithGithub = async (): Promise<{ error: AuthError | null }> => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'github' });
-    return { error };
-  };
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import type { AuthError, Session, User } from "@supabase/supabase-js";
 
@@ -51,7 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         void (async () => {
           try {
             const u = nextSession.user;
-            await supabase.from('profiles').upsert([
+            const { error: upsertError } = await supabase.from('profiles').upsert([
               {
                 id: u.id,
                 email: u.email ?? null,
@@ -59,8 +50,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 updated_at: new Date().toISOString(),
               },
             ], { onConflict: 'id' });
+
+            if (upsertError) {
+              console.warn('Profile sync failed with error:', upsertError);
+            }
           } catch (err) {
-            console.warn('Failed to upsert profile on auth change', err);
+            console.warn('Unhandled error during profile upsert', err);
           }
         })();
 
@@ -107,6 +102,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const signInWithGoogle = async (): Promise<{ error: AuthError | null }> => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    return { error };
+  };
+
+  const signInWithGithub = async (): Promise<{ error: AuthError | null }> => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'github' });
+    return { error };
+  };
 
   const signIn = async (email: string, password: string): Promise<{ error: AuthError | null }> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
