@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Database, Table, Trash2, Globe, Lock, ExternalLink, ArrowRight } from "lucide-react";
+import { Loader2, Plus, Database, Table, Trash2, Globe, Lock, ExternalLink, ArrowRight, Eye } from "lucide-react";
 import { DataCollection } from './types';
 import { GenericUploadWizard } from './GenericUploadWizard';
 import { DynamicDataExplorer } from './DynamicDataExplorer';
