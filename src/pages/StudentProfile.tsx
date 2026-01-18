@@ -280,7 +280,6 @@ const StudentProfile = () => {
 		const loadProfile = async () => {
 			setLoadingProfile(true);
 			const { data, error } = await supabase
-			const { data, error } = await supabase
 				.from("profiles")
 				.select("full_name, areas_of_interest, location, experience_level, availability_status, email, country, gender, nationality, passport_or_nin, education_history")
 				.eq("id", user.id)

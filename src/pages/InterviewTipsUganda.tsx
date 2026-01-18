@@ -14,7 +14,7 @@ const InterviewTipsUganda = () => {
         description="Practical interview preparation advice for students and graduates pursuing internships, apprenticeships, and entry-level roles."
         keywords={[
           "interview tips",
-          internship interview questions",
+          "internship interview questions",
           "campus career interview preparation",
           "how to prepare for interviews",
         ]}
