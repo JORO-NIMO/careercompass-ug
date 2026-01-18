@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const QUICK_LINKS = [
   {
     title: "Find Placements",
-    description: "Browse internships, apprenticeships, and graduate roles across Uganda.",
+    description: "Browse internships, apprenticeships, and graduate roles across the world.",
     href: "/find-placements",
   },
   {

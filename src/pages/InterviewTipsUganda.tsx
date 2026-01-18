@@ -10,28 +10,28 @@ const InterviewTipsUganda = () => {
   return (
     <>
       <SEO
-        title="Interview Tips for Students in Uganda | PlacementBridge"
-        description="Practical interview preparation advice for Ugandan students and graduates pursuing internships, apprenticeships, and entry-level roles."
+        title="Interview Tips for preparation of employment | PlacementBridge"
+        description="Practical interview preparation advice for students and graduates pursuing internships, apprenticeships, and entry-level roles."
         keywords={[
-          "interview tips uganda",
-          "uganda internship interview questions",
+          "interview tips",
+          internship interview questions",
           "campus career interview preparation",
-          "how to prepare for interviews in uganda",
+          "how to prepare for interviews",
         ]}
-        canonical="/guides/interview-tips-uganda"
+        canonical="/guides/interview-tips"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "HowTo",
-          name: "Interview Tips for Students in Uganda",
+          name: "Interview Tips for Students",
           description:
-            "Step-by-step interview preparation guidance covering research, confidence, and culture-specific expectations for Ugandan internships.",
+            "Step-by-step interview preparation guidance covering research, confidence, and culture-specific expectations for internships.",
           totalTime: "PT3H",
           supply: "Internet connection, company research notes, resume, sample questions",
           step: [
             {
               "@type": "HowToStep",
               name: "Research the employer",
-              text: "Understand mission, products, and latest news from Ugandan or African sources.",
+              text: "Understand mission, products, and latest news from sources.",
             },
             {
               "@type": "HowToStep",
@@ -46,9 +46,9 @@ const InterviewTipsUganda = () => {
           <div className="max-w-4xl mx-auto space-y-10">
             <div className="space-y-4 text-center">
               <Badge variant="secondary" className="mx-auto w-fit">Interview Coaching</Badge>
-              <h1 className="text-4xl font-bold text-foreground">Interview tips for students in Uganda</h1>
+              <h1 className="text-4xl font-bold text-foreground">Interview tips</h1>
               <p className="text-lg text-muted-foreground">
-                Impress hiring managers with culturally-aware preparation. These tips are based on feedback from Ugandan HR teams, innovation hubs, and graduate trainee coordinators.
+                Impress hiring managers with culturally-aware preparation. These tips are based on feedback fromn HR teams, innovation hubs, and graduate trainee coordinators.
               </p>
             </div>
 
@@ -90,7 +90,7 @@ const InterviewTipsUganda = () => {
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-foreground">“Tell us about yourself.”</h3>
                   <p>
-                    Structure: education background → relevant project → reason you want this opportunity. Keep it under two minutes and tie back to the role's mission within Uganda.
+                    Structure: education background → relevant project → reason you want this opportunity. Keep it under two minutes and tie back to the role's mission within.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -102,7 +102,7 @@ const InterviewTipsUganda = () => {
                 <div className="space-y-2">
                   <h3 className="text-lg font-semibold text-foreground">“What do you know about our organisation?”</h3>
                   <p>
-                    Reference current programmes, beneficiaries, awards, or international partnerships. Mention how your long-term goals align with expanding impact in Uganda or the region.
+                    Reference current programmes, beneficiaries, awards, or international partnerships. Mention how your long-term goals align with expanding impact in or the region.
                   </p>
                 </div>
               </CardContent>
@@ -114,7 +114,7 @@ const InterviewTipsUganda = () => {
               </AlertTitle>
               <AlertDescription className="space-y-2 text-sm text-muted-foreground">
                 <p>Showing up late without notification, reading directly from a script, or ignoring follow-up instructions can cost you the offer.</p>
-                <p>Carry printed copies of your CV, academic transcripts, and any recommendation letters—many Ugandan employers still request physical documents.</p>
+                <p>Carry printed copies of your CV, academic transcripts, and any recommendation letters—manyn employers still request physical documents.</p>
               </AlertDescription>
             </Alert>
 
@@ -147,7 +147,7 @@ const InterviewTipsUganda = () => {
             <div className="flex flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
               <h2 className="text-2xl font-semibold text-foreground">Need interview coaching?</h2>
               <p className="text-sm text-muted-foreground">
-                Book a mock interview with PlacementBridge mentors and receive personalised feedback tailored to Ugandan hiring expectations.
+                Book a mock interview with PlacementBridge mentors and receive personalised feedback tailored ton hiring expectations.
               </p>
               <Button variant="hero" asChild>
                 <a href="mailto:joronimoamanya@gmail.com?subject=Interview%20Coaching%20Request">Request a session</a>
@@ -162,4 +162,4 @@ const InterviewTipsUganda = () => {
   );
 };
 
-export default InterviewTipsUganda;
+export default InterviewTip;

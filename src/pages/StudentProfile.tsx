@@ -33,6 +33,9 @@ import { Loader2, Plus, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import ReactFlagsSelect from "react-flags-select";
 import {
 	Institution,
 	getInstitutesByCategory,
@@ -136,7 +139,12 @@ const StudentProfile = () => {
 	const [lastName, setLastName] = useState("");
 	const [email, setEmail] = useState("");
 	const [phoneNumber, setPhoneNumber] = useState("");
+	const [country, setCountry] = useState("");
+	const [nationality, setNationality] = useState("");
+	const [passportOrNin, setPassportOrNin] = useState("");
+	const [gender, setGender] = useState("");
 	const [interests, setInterests] = useState<string[]>(["Technology", "Finance"]);
+	const [educationHistory, setEducationHistory] = useState<any[]>([]);
 	const [newInterest, setNewInterest] = useState("");
 	const [institutionType, setInstitutionType] = useState<"University" | "Institute">("University");
 	const [institutionId, setInstitutionId] = useState<string | undefined>(undefined);
@@ -237,8 +245,14 @@ const StudentProfile = () => {
 					institutionId?: string;
 					region: UgandaRegion;
 					district: string;
+					country: string;
+					gender: string;
 				}>;
 				if (parsed.phoneNumber) setPhoneNumber(parsed.phoneNumber);
+				if (parsed.country) setCountry(parsed.country);
+				if (parsed.nationality) setNationality(parsed.nationality);
+				if (parsed.passportOrNin) setPassportOrNin(parsed.passportOrNin);
+				if (parsed.gender) setGender(parsed.gender);
 				if (parsed.cvLink) setCvLink(parsed.cvLink);
 				if (parsed.bio) setBio(parsed.bio);
 				if (parsed.focusArea) setFocusArea(parsed.focusArea);
@@ -266,8 +280,9 @@ const StudentProfile = () => {
 		const loadProfile = async () => {
 			setLoadingProfile(true);
 			const { data, error } = await supabase
+			const { data, error } = await supabase
 				.from("profiles")
-				.select("full_name, areas_of_interest, location, experience_level, availability_status, email")
+				.select("full_name, areas_of_interest, location, experience_level, availability_status, email, country, gender, nationality, passport_or_nin, education_history")
 				.eq("id", user.id)
 				.maybeSingle();
 
@@ -325,6 +340,13 @@ const StudentProfile = () => {
 				if (data.email) {
 					setEmail(data.email);
 				}
+				if (data.country) setCountry(data.country);
+				if (data.nationality) setNationality(data.nationality);
+				if (data.passport_or_nin) setPassportOrNin(data.passport_or_nin);
+				if (data.gender) setGender(data.gender);
+				if (Array.isArray(data.education_history)) {
+					setEducationHistory(data.education_history);
+				}
 				if (data.cv_url) {
 					setCvLink(data.cv_url);
 				}
@@ -361,6 +383,10 @@ const StudentProfile = () => {
 		const trimmedDistrict = districtToCache?.trim();
 		const payload = {
 			phoneNumber,
+			country,
+			nationality,
+			passportOrNin,
+			gender,
 			cvLink,
 			bio,
 			focusArea,
@@ -426,6 +452,11 @@ const StudentProfile = () => {
 				course_of_study: courseOfStudy.trim() || null,
 				year_of_study: yearOfStudy || null,
 				portfolio_url: portfolioUrl.trim() || null,
+				country: country || null,
+				nationality: nationality || null,
+				passport_or_nin: passportOrNin || null,
+				gender: gender || null,
+				education_history: educationHistory || [],
 			});
 
 			persistExtraFields(user.id, { region: effectiveRegion, district });
@@ -447,8 +478,9 @@ const StudentProfile = () => {
 
 	const completeness = [
 		firstName, lastName, email, phoneNumber, cvLink, schoolName,
-		courseOfStudy, yearOfStudy, stage, focusArea, region, district, availability
-	].filter(Boolean).length / 13 * 100;
+		courseOfStudy, yearOfStudy, stage, focusArea, region, district, availability,
+		country, gender, nationality
+	].filter(Boolean).length / 16 * 100;
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -510,15 +542,72 @@ const StudentProfile = () => {
 									</p>
 								</div>
 
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2">
+										<Label className="text-sm font-medium">Gender</Label>
+										<Select value={gender} onValueChange={setGender} disabled={loadingProfile || saving}>
+											<SelectTrigger>
+												<SelectValue placeholder="Select Gender" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="Male">Male</SelectItem>
+												<SelectItem value="Female">Female</SelectItem>
+												<SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
+
+									<div className="space-y-2">
+										<Label className="text-sm font-medium">Nationality</Label>
+										<div className="[&_button]:w-full [&_button]:h-10 [&_button]:border-input [&_button]:bg-background [&_button]:text-sm [&_button]:ring-offset-background [&_button]:placeholder:text-muted-foreground [&_button]:focus:outline-none [&_button]:focus:ring-2 [&_button]:focus:ring-ring [&_button]:focus:ring-offset-2 [&_button]:disabled:cursor-not-allowed [&_button]:disabled:opacity-50">
+											<ReactFlagsSelect
+												selected={nationality}
+												onSelect={(code) => setNationality(code)}
+												searchable
+												placeholder="Select Nationality"
+												disabled={loadingProfile || saving}
+												className="w-full"
+											/>
+										</div>
+									</div>
+
+									<div className="space-y-2">
+										<Label className="text-sm font-medium">Country of Residence</Label>
+										<div className="[&_button]:w-full [&_button]:h-10 [&_button]:border-input [&_button]:bg-background [&_button]:text-sm [&_button]:ring-offset-background [&_button]:placeholder:text-muted-foreground [&_button]:focus:outline-none [&_button]:focus:ring-2 [&_button]:focus:ring-ring [&_button]:focus:ring-offset-2 [&_button]:disabled:cursor-not-allowed [&_button]:disabled:opacity-50">
+											<ReactFlagsSelect
+												selected={country}
+												onSelect={(code) => setCountry(code)}
+												searchable
+												placeholder="Select Country"
+												disabled={loadingProfile || saving}
+												className="w-full"
+											/>
+										</div>
+									</div>
+
+									<div className="space-y-2">
+										<Label htmlFor="passport">Passport Number / NIN</Label>
+										<Input
+											id="passport"
+											placeholder="Passport No. or National ID"
+											value={passportOrNin}
+											onChange={(event) => setPassportOrNin(event.target.value)}
+											disabled={loadingProfile || saving}
+										/>
+									</div>
+								</div>
+
 								<div className="space-y-2">
 									<Label htmlFor="phone">Phone Number</Label>
-									<Input
-										id="phone"
-										placeholder="+256 756128513"
-										value={phoneNumber}
-										onChange={(event) => setPhoneNumber(event.target.value)}
-										disabled={loadingProfile || saving}
-									/>
+									<div className="[&_input]:flex [&_input]:h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-input [&_input]:bg-background [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:ring-offset-background [&_input]:file:border-0 [&_input]:file:bg-transparent [&_input]:file:text-sm [&_input]:file:font-medium [&_input]:placeholder:text-muted-foreground [&_input]:focus-visible:outline-none [&_input]:focus-visible:ring-2 [&_input]:focus-visible:ring-ring [&_input]:focus-visible:ring-offset-2 [&_input]:disabled:cursor-not-allowed [&_input]:disabled:opacity-50">
+										<PhoneInput
+											placeholder="Enter phone number"
+											value={phoneNumber}
+											onChange={(val) => setPhoneNumber(val?.toString() || "")}
+											defaultCountry={country as any || "UG"}
+											disabled={loadingProfile || saving}
+										/>
+									</div>
 								</div>
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">

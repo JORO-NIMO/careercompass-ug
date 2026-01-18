@@ -89,6 +89,7 @@ export default async function (req: Request) {
         company_id?: string | null;
         is_featured?: boolean;
         display_order?: number;
+        image_url?: string | null;
       } | null;
 
       const title = payload?.title?.trim();
@@ -108,6 +109,7 @@ export default async function (req: Request) {
           company_id: payload?.company_id?.trim() || null,
           is_featured: payload?.is_featured ?? false,
           display_order: displayOrder,
+          image_url: payload?.image_url?.trim() || null,
         })
         .select('*')
         .maybeSingle();
@@ -127,6 +129,7 @@ export default async function (req: Request) {
         company_id?: string | null;
         is_featured?: boolean;
         display_order?: number;
+        image_url?: string | null;
       } | null;
 
       if (!payload) {
@@ -161,6 +164,10 @@ export default async function (req: Request) {
 
       if (payload.display_order !== undefined) {
         updates.display_order = payload.display_order;
+      }
+
+      if (payload.image_url !== undefined) {
+        updates.image_url = payload.image_url?.trim() || null;
       }
 
       if (Object.keys(updates).length === 0) {

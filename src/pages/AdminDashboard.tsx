@@ -16,6 +16,7 @@ import { AdminListingsManager } from '@/components/AdminListingsManager';
 import { AdminPlacementUpload } from '@/components/AdminPlacementUpload';
 import { AdminPostsManager } from '@/components/AdminPostsManager';
 import { GenericDataManager } from '@/components/AdminGenericData/GenericDataManager';
+import { AdminLearningResourcesManager } from '@/components/AdminLearningResourcesManager';
 
 
 interface Placement {
@@ -226,6 +227,10 @@ const AdminDashboard = () => {
 
           <div className="mb-8">
             <AdminPostsManager />
+          </div>
+
+          <div className="mb-8">
+            <AdminLearningResourcesManager />
           </div>
 
           <div className="mb-8">

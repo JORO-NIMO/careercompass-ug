@@ -155,6 +155,7 @@ export async function createListing(payload: {
   status?: 'draft' | 'published' | 'archived';
   expires_at?: string;
   logo_url?: string;
+  image_url?: string;
   banner_urls?: string[];
 }): Promise<Listing> {
   const { data, error } = await supabase
@@ -175,6 +176,7 @@ export async function createListing(payload: {
       status: payload.status ?? 'published',
       expires_at: payload.expires_at,
       logo_url: payload.logo_url,
+      image_url: payload.image_url,
       banner_urls: payload.banner_urls,
     })
     .select('*')
@@ -211,6 +213,7 @@ export async function updateListing(id: string, payload: {
   status?: 'draft' | 'published' | 'archived';
   expires_at?: string;
   logo_url?: string;
+  image_url?: string;
   banner_urls?: string[];
 }): Promise<Listing> {
   const { data, error } = await supabase
@@ -231,6 +234,7 @@ export async function updateListing(id: string, payload: {
       status: payload.status,
       expires_at: payload.expires_at,
       logo_url: payload.logo_url,
+      image_url: payload.image_url,
       banner_urls: payload.banner_urls,
     })
     .eq('id', id)

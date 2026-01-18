@@ -80,6 +80,7 @@ class ErrorBoundary extends Component<Props, State> {
               <h1 className="text-2xl font-bold">Something went wrong</h1>
               <p className="text-muted-foreground">
                 We're sorry, but something unexpected happened. Please try refreshing the page.
+                This Could be an internet issue!
               </p>
             </div>
 
