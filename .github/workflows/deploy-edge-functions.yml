@@ -40,4 +40,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
+          # Optionally set function secrets if provided as repository secrets
+          if [ -n "${{ secrets.SUPABASE_URL }}" ]; then supabase secrets set SUPABASE_URL="${{ secrets.SUPABASE_URL }}"; fi
+          if [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then supabase secrets set SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"; fi
+          if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then supabase secrets set OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"; fi
+          if [ -n "${{ secrets.GROQ_API_KEY }}" ]; then supabase secrets set GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}"; fi
+          if [ -n "${{ secrets.GOOGLE_API_KEY }}" ]; then supabase secrets set GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}"; fi
+          if [ -n "${{ secrets.MODEL_OVERRIDE }}" ]; then supabase secrets set MODEL_OVERRIDE="${{ secrets.MODEL_OVERRIDE }}"; fi
           supabase functions deploy
