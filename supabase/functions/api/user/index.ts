@@ -32,115 +32,125 @@ async function handleRegister(req: Request) {
   const auth = await ensureAuthenticated(req);
   if (!auth.user) return auth.response!;
 
-  const payload = await req.json().catch(() => null) as RegisterPayload | null;
-  if (!payload) {
-    return jsonError('Invalid JSON payload', 400);
-  }
-
-  const name = trimOrNull(payload.name ?? '');
-  const location = trimOrNull(payload.location ?? '');
-  if (!name || !location) {
-    return jsonError('Company name and location are required', 400);
-  }
-
-  const normalizedWebsite = normalizeWebsite(payload.website_url);
-  if (!normalizedWebsite) {
-    return jsonError('Valid website URL is required', 400);
-  }
-
-  const supabase = createSupabaseServiceClient();
-
-  const { data: ownedCompanies, error: listError } = await supabase
-    .from('companies')
-    .select('id, name, formatted_address, location_raw, maps_verified, web_verified, approved')
-    .eq('owner_id', auth.user.id);
-
-  if (listError) {
-    console.error('load owned companies error', listError);
-    return jsonError('Failed to prepare company verification', 500);
-  }
-
-  const normalizeComparable = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
-  const locationComparable = normalizeComparable(location);
-  const existing = (ownedCompanies ?? []).find((company) => {
-    if (!company) return false;
-    const nameMatch = company.name?.trim().toLowerCase() === name.toLowerCase();
-    if (!nameMatch) return false;
-    const formattedComparable = normalizeComparable(company.formatted_address);
-    const rawComparable = normalizeComparable(company.location_raw);
-    return formattedComparable === locationComparable || rawComparable === locationComparable;
-  });
-
-  const verification = await runVerificationChecks({ location, website_url: normalizedWebsite });
-  const mapsVerified = verification.maps.verified || Boolean(existing?.maps_verified);
-  const webVerified = verification.web.verified || Boolean(existing?.web_verified);
-  const autoApproved = mapsVerified && webVerified;
-  const approved = autoApproved || Boolean(existing?.approved);
-
-  const writePayload = {
-    name,
-    owner_id: auth.user.id,
-    location_raw: location,
-    maps_place_id: verification.maps.placeId ?? null,
-    formatted_address: verification.maps.formattedAddress ?? null,
-    website_url: normalizedWebsite,
-    contact_email: trimOrNull(payload.contact_email) ?? auth.user.email ?? null,
-    maps_verified: mapsVerified,
-    web_verified: webVerified,
-    approved,
-    verification_notes: buildVerificationNotes(verification),
-  };
-
-  let data;
-  let error;
-
-  if (existing?.id) {
-    const result = await supabase
-      .from('companies')
-      .update(writePayload)
-      .eq('id', existing.id)
-      .select()
-      .maybeSingle();
-    data = result.data;
-    error = result.error;
-  } else {
-    const result = await supabase
-      .from('companies')
-      .insert({ ...writePayload, created_by: auth.user.id })
-      .select()
-      .maybeSingle();
-    data = result.data;
-    error = result.error;
-  }
-
-  if (error) {
-    if (error.code === '23505') {
-      return jsonError('A company with the same name and location already exists', 409);
+  try {
+    const payload = await req.json().catch(() => null) as RegisterPayload | null;
+    if (!payload) {
+      return jsonError('Invalid JSON payload', 400);
     }
-    console.error('register company error', error);
-    return jsonError('Failed to register company', 500);
-  }
 
-  return jsonSuccess({ item: data, verification }, autoApproved ? 200 : 202);
+    const name = trimOrNull(payload.name ?? '');
+    const location = trimOrNull(payload.location ?? '');
+    if (!name || !location) {
+      return jsonError('Company name and location are required', 400);
+    }
+
+    const normalizedWebsite = normalizeWebsite(payload.website_url);
+    if (!normalizedWebsite) {
+      return jsonError('Valid website URL is required', 400);
+    }
+
+    const supabase = createSupabaseServiceClient();
+
+    const { data: ownedCompanies, error: listError } = await supabase
+      .from('companies')
+      .select('id, name, formatted_address, location_raw, maps_verified, web_verified, approved')
+      .eq('owner_id', auth.user.id);
+
+    if (listError) {
+      console.error('load owned companies error', listError);
+      return jsonError('Failed to prepare company verification', 500);
+    }
+
+    const normalizeComparable = (value: string | null | undefined) => (value ?? '').trim().toLowerCase();
+    const locationComparable = normalizeComparable(location);
+    const existing = (ownedCompanies ?? []).find((company) => {
+      if (!company) return false;
+      const nameMatch = company.name?.trim().toLowerCase() === name.toLowerCase();
+      if (!nameMatch) return false;
+      const formattedComparable = normalizeComparable(company.formatted_address);
+      const rawComparable = normalizeComparable(company.location_raw);
+      return formattedComparable === locationComparable || rawComparable === locationComparable;
+    });
+
+    const verification = await runVerificationChecks({ location, website_url: normalizedWebsite });
+    const mapsVerified = verification.maps.verified || Boolean(existing?.maps_verified);
+    const webVerified = verification.web.verified || Boolean(existing?.web_verified);
+    const autoApproved = mapsVerified && webVerified;
+    const approved = autoApproved || Boolean(existing?.approved);
+
+    const writePayload = {
+      name,
+      owner_id: auth.user.id,
+      location_raw: location,
+      maps_place_id: verification.maps.placeId ?? null,
+      formatted_address: verification.maps.formattedAddress ?? null,
+      website_url: normalizedWebsite,
+      contact_email: trimOrNull(payload.contact_email) ?? auth.user.email ?? null,
+      maps_verified: mapsVerified,
+      web_verified: webVerified,
+      approved,
+      verification_notes: buildVerificationNotes(verification),
+    };
+
+    let data;
+    let error;
+
+    if (existing?.id) {
+      const result = await supabase
+        .from('companies')
+        .update(writePayload)
+        .eq('id', existing.id)
+        .select()
+        .maybeSingle();
+      data = result.data;
+      error = result.error;
+    } else {
+      const result = await supabase
+        .from('companies')
+        .insert({ ...writePayload, created_by: auth.user.id })
+        .select()
+        .maybeSingle();
+      data = result.data;
+      error = result.error;
+    }
+
+    if (error) {
+      if ((error as { code?: string }).code === '23505') {
+        return jsonError('A company with the same name and location already exists', 409);
+      }
+      console.error('register company error', error);
+      return jsonError('Failed to register company', 500);
+    }
+
+    return jsonSuccess({ item: data, verification }, autoApproved ? 200 : 202);
+  } catch (err) {
+    console.error('handleRegister unexpected error', err);
+    return jsonError('Internal server error', 500);
+  }
 }
 
 async function handleList(req: Request) {
   const auth = await ensureAuthenticated(req);
   if (!auth.user) return auth.response!;
 
-  const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase
-    .from('companies')
-    .select('*')
-    .eq('owner_id', auth.user.id)
-    .order('created_at', { ascending: false });
+  try {
+    const supabase = createSupabaseServiceClient();
+    const { data, error } = await supabase
+      .from('companies')
+      .select('*')
+      .eq('owner_id', auth.user.id)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('list companies error', error);
-    return jsonError('Failed to load companies', 500);
+    if (error) {
+      console.error('list companies error', error);
+      return jsonError('Failed to load companies', 500);
+    }
+
+    return jsonSuccess({ items: data ?? [] });
+  } catch (err) {
+    console.error('handleList unexpected error', err);
+    return jsonError('Internal server error', 500);
   }
-
-  return jsonSuccess({ items: data ?? [] });
 }
 
 export default async function (req: Request) {

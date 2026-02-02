@@ -8,6 +8,7 @@ type SEOProps = {
   keywords?: string[];
   canonical?: string;
   jsonLd?: JsonLd;
+  siteName?: string;
 };
 
 function upsertMetaTag(name: string, content: string) {
@@ -49,22 +50,69 @@ function insertJsonLd(jsonLd: JsonLd) {
   document.head.append(script);
 }
 
-const SEO = ({ title, description, keywords, canonical, jsonLd }: SEOProps) => {
+const DEFAULT_DESCRIPTION = "All jobs in one place — find internships, entry-level roles, and career opportunities worldwide.";
+
+const SEO = ({ title, description = DEFAULT_DESCRIPTION, keywords, canonical, jsonLd, siteName }: SEOProps) => {
   useEffect(() => {
     document.title = title;
 
     if (description) {
       upsertMetaTag("description", description);
+      // Open Graph description
+      const ogDescSel = 'meta[property="og:description"]';
+      let ogDesc = document.querySelector<HTMLMetaElement>(ogDescSel);
+      if (!ogDesc) {
+        ogDesc = document.createElement("meta");
+        ogDesc.setAttribute("property", "og:description");
+        document.head.append(ogDesc);
+      }
+      ogDesc.setAttribute("content", description);
+      // Twitter description
+      upsertMetaTag("twitter:description", description);
     }
 
     if (keywords?.length) {
       upsertMetaTag("keywords", keywords.join(", "));
     }
 
-    if (canonical) {
-      const url = canonical.startsWith("http") ? canonical : `${window.location.origin}${canonical}`;
+    {
+      const url = canonical
+        ? (canonical.startsWith("http") ? canonical : `${window.location.origin}${canonical}`)
+        : window.location.href;
       upsertCanonicalLink(url);
+      // Open Graph URL
+      const ogUrlSel = 'meta[property="og:url"]';
+      let ogUrl = document.querySelector<HTMLMetaElement>(ogUrlSel);
+      if (!ogUrl) {
+        ogUrl = document.createElement("meta");
+        ogUrl.setAttribute("property", "og:url");
+        document.head.append(ogUrl);
+      }
+      ogUrl.setAttribute("content", url);
     }
+
+    // Open Graph title
+    const ogTitleSel = 'meta[property="og:title"]';
+    let ogTitle = document.querySelector<HTMLMetaElement>(ogTitleSel);
+    if (!ogTitle) {
+      ogTitle = document.createElement("meta");
+      ogTitle.setAttribute("property", "og:title");
+      document.head.append(ogTitle);
+    }
+    ogTitle.setAttribute("content", title);
+
+    // Open Graph site_name
+    const ogSiteSel = 'meta[property="og:site_name"]';
+    let ogSite = document.querySelector<HTMLMetaElement>(ogSiteSel);
+    if (!ogSite) {
+      ogSite = document.createElement("meta");
+      ogSite.setAttribute("property", "og:site_name");
+      document.head.append(ogSite);
+    }
+    ogSite.setAttribute("content", siteName || title);
+
+    // Twitter title
+    upsertMetaTag("twitter:title", title);
 
     if (jsonLd) {
       insertJsonLd(jsonLd);
@@ -75,7 +123,7 @@ const SEO = ({ title, description, keywords, canonical, jsonLd }: SEOProps) => {
         removeExistingJsonLd();
       }
     };
-  }, [title, description, keywords, canonical, jsonLd]);
+  }, [title, description, keywords, canonical, jsonLd, siteName]);
 
   return null;
 };

@@ -2,10 +2,56 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "crons": [
+    {
+      "path": "/cron/ingest-jobs",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/cron/match-notify",
+      "schedule": "0 */4 * * *"
+    },
+    {
+      "path": "/cron/ai-usage-alerts",
+      "schedule": "0 20 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://js.hcaptcha.com https://*.supabase.co; connect-src 'self' https://*.supabase.co https://api.openai.com https://onesignal.com https://api.brevo.com https://app.posthog.com https://*.sentry.io; frame-src https://*.hcaptcha.com;"
+        },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Permissions-Policy", "value": "geolocation=(self), microphone=(), camera=(), payment=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/api/:path*"
+    },
+    {
+      "source": "/cron/ingest-jobs",
+      "destination": "https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/ingest-jobs"
+    },
+    {
+      "source": "/cron/match-notify",
+      "destination": "https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/match-notify"
+    },
+    {
+      "source": "/cron/ai-usage-alerts",
+      "destination": "https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/ai-usage-alerts"
+    },
+    {
+      "source": "/access-control",
+      "destination": "https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/access-control"
     },
     {
       "source": "/(.*)",

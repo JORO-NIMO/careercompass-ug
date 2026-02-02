@@ -1,0 +1,368 @@
+{
+  "name": "CareerCompass Match & Notify",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notify-matches",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [100, 300],
+      "webhookId": "notify-matches"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/match_profile_to_jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $json.user_id, p_limit: 5 }) }}"
+      },
+      "id": "match-jobs",
+      "name": "Match Jobs to Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/job_alerts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "active",
+              "value": "eq.true"
+            },
+            {
+              "name": "select",
+              "value": "user_id,criteria,channels,last_notified_at"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-alerts",
+      "name": "Get Active Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter users who should be notified\nconst alerts = $('Get Active Alerts').first().json;\nconst matches = $input.all();\nconst notifications = [];\n\nfor (const alert of alerts) {\n  // Rate limit: don't notify if notified in last 4 hours\n  if (alert.last_notified_at) {\n    const lastNotified = new Date(alert.last_notified_at);\n    const hoursSince = (Date.now() - lastNotified.getTime()) / (1000 * 60 * 60);\n    if (hoursSince < 4) continue;\n  }\n  \n  // Find matches for this user\n  const userMatches = matches.filter(m => {\n    const job = m.json;\n    const criteria = alert.criteria || {};\n    \n    // Check region filter\n    if (criteria.regions?.length > 0) {\n      if (!criteria.regions.some(r => job.region?.includes(r))) {\n        return false;\n      }\n    }\n    \n    // Check industry filter\n    if (criteria.industries?.length > 0) {\n      if (!criteria.industries.includes(job.industry)) {\n        return false;\n      }\n    }\n    \n    return true;\n  });\n  \n  if (userMatches.length > 0) {\n    notifications.push({\n      json: {\n        user_id: alert.user_id,\n        channels: alert.channels,\n        matches: userMatches.slice(0, 3).map(m => m.json),\n        match_count: userMatches.length\n      }\n    });\n  }\n}\n\nreturn notifications;"
+      },
+      "id": "filter-matches",
+      "name": "Filter & Rate Limit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.channels.includes('push') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "filter-push",
+      "name": "Has Push Channel",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/functions/v1/notifications",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  type: 'job_match',\n  user_id: $json.user_id,\n  title: `${$json.match_count} new job${$json.match_count > 1 ? 's' : ''} match your profile!`,\n  body: $json.matches[0].position_title + ' at ' + $json.matches[0].company_name,\n  data: { matches: $json.matches.map(m => m.id) }\n}) }}"
+      },
+      "id": "send-push",
+      "name": "Send Push Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1100, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.channels.includes('sms') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "filter-sms",
+      "name": "Has SMS Channel",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.africastalking.com/version1/messaging",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apiKey",
+              "value": "={{ $env.AFRICASTALKING_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "username",
+              "value": "={{ $env.AFRICASTALKING_USERNAME }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.phone_number }}"
+            },
+            {
+              "name": "message",
+              "value": "=CareerCompass: {{ $json.match_count }} new job(s) match your profile! {{ $json.matches[0].position_title }} at {{ $json.matches[0].company_name }}. Visit careercompass.app to apply."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-sms",
+      "name": "Send SMS (Africa's Talking)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1100, 400],
+      "notes": "Configure Africa's Talking credentials"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/job_alerts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "user_id",
+              "value": "=eq.{{ $json.user_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ last_notified_at: new Date().toISOString() }) }}"
+      },
+      "id": "update-last-notified",
+      "name": "Update Last Notified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1300, 300]
+    },
+    {
+      "parameters": {},
+      "id": "end",
+      "name": "Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active Alerts": {
+      "main": [
+        [
+          {
+            "node": "Match Jobs to Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Jobs to Profile": {
+      "main": [
+        [
+          {
+            "node": "Filter & Rate Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Rate Limit": {
+      "main": [
+        [
+          {
+            "node": "Has Push Channel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Has SMS Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Push Channel": {
+      "main": [
+        [
+          {
+            "node": "Send Push Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has SMS Channel": {
+      "main": [
+        [
+          {
+            "node": "Send SMS (Africa's Talking)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Push Notification": {
+      "main": [
+        [
+          {
+            "node": "Update Last Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send SMS (Africa's Talking)": {
+      "main": [
+        [
+          {
+            "node": "Update Last Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Last Notified": {
+      "main": [
+        [
+          {
+            "node": "Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": ["automation", "notifications", "matching"],
+  "triggerCount": 1,
+  "updatedAt": "2026-01-31T00:00:00.000Z",
+  "versionId": "1"
+}

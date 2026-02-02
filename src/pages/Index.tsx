@@ -58,7 +58,7 @@ const Index = () => {
           "talent",
 
         ]}
-        canonical="/"
+        canonical="https://www.placementbridge.org/"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebSite",
@@ -76,7 +76,22 @@ const Index = () => {
             target: `${baseUrl}/find-placements?keywords={search_term_string}`,
             "query-input": "required name=search_term_string",
           },
+          // Strengthen brand entity with Organization markup
+          organization: {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "PlacementBridge",
+            url: baseUrl,
+            logo: `${baseUrl}/assets/og-image.png`,
+            sameAs: [
+              "https://twitter.com/PlacementBridge",
+              "https://www.linkedin.com/company/placementbridge",
+              "https://www.facebook.com/PlacementBridge",
+              // Add authoritative profiles if available (Crunchbase/Wikipedia)
+            ],
+          },
         }}
+        siteName="All jobs in one place"
       />
       <main className="flex-grow">
         <HeroSection />

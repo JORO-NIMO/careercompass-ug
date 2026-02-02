@@ -2,10 +2,12 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { jsonError } from './responses.ts';
 
+const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'null';
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, prefer',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Vary': 'Origin',
 };
 
 export interface AuthResult {
@@ -62,9 +64,11 @@ export function unauthorizedResponse(message: string = 'Unauthorized'): Response
  */
 export function handleCors(req: Request): Response | null {
   if (req.method === 'OPTIONS') {
+    const origin = req.headers.get('Origin') || '';
+    const allow = allowedOrigin && origin === allowedOrigin ? origin : corsHeaders['Access-Control-Allow-Origin'];
     return new Response(null, {
       status: 204,
-      headers: corsHeaders
+      headers: { ...corsHeaders, 'Access-Control-Allow-Origin': allow }
     });
   }
   return null;

@@ -109,6 +109,25 @@ const handler = async (req: Request) => {
       return jsonError('Database insert failed', 500);
     }
 
+    // Upsert user IP address for auditing (authenticated only)
+    try {
+      const forwarded = req.headers.get('x-forwarded-for') || '';
+      const ip = forwarded.split(',')[0].trim() || null;
+      const ua = req.headers.get('user-agent') || null;
+      if (ip) {
+        const { error: ipErr } = await supabase.rpc('upsert_user_ip', {
+          p_user_id: user.id,
+          p_ip: ip,
+          p_user_agent: ua,
+        });
+        if (ipErr) {
+          console.warn('Failed to upsert user IP:', ipErr.message);
+        }
+      }
+    } catch (e) {
+      console.warn('upsert user ip error:', e);
+    }
+
     return jsonSuccess({ inserted: validEvents.length });
   } catch (err) {
     console.error('events function error:', err);

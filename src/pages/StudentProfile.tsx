@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Loader2, Plus, X, MapPin } from "lucide-react";
-// ...existing imports...
+import { getAllCountries, getCitiesOfCountry } from '@/lib/location-utils';
+import { CVUpload } from "@/components/CVUpload";
 // For reverse geocoding
 const REVERSE_GEOCODE_API = "https://nominatim.openstreetmap.org/reverse?format=jsonv2";
 import QuickNavigation from "@/components/QuickNavigation";
@@ -29,13 +30,13 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Plus, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import ReactFlagsSelect from "react-flags-select";
+// Local alias for phone input country code to avoid any-casts
+type PhoneCountryCode = string;
 import {
 	Institution,
 	getInstitutesByCategory,
@@ -45,6 +46,8 @@ import {
 } from "@/lib/institutions";
 import { REGION_DISTRICT_GROUPS, UgandaRegion, findRegionForDistrict } from "@/lib/uganda-districts";
 import { updateProfile } from "@/services/profilesService";
+import { useLocale } from "@/hooks/LocaleProvider";
+import { listCountries, listStates, listCities, listDistricts } from "@/services/locationService";
 
 const RECOMMENDED_INTERESTS = [
 	"Technology",
@@ -85,6 +88,15 @@ const getExtraStorageKey = (userId: string) => `placementbridge-profile-extra:${
 
 const StudentProfile = () => {
 	const [geoLoading, setGeoLoading] = useState(false);
+	const { locale } = useLocale();
+	const showUgandaFields = locale === "uganda";
+	const [profileRole, setProfileRole] = useState<"student" | "professional">("student");
+	const isStudent = profileRole === "student";
+	
+	// Get all countries for dropdowns
+	const allCountries = useMemo(() => getAllCountries(), []);
+	
+	// (removed early declarations; moved below after state for clarity)
 	// Helper: Reverse geocode lat/lon to district/region
 	const reverseGeocode = async (lat: number, lon: number) => {
 		const url = `${REVERSE_GEOCODE_API}&lat=${lat}&lon=${lon}`;
@@ -142,9 +154,14 @@ const StudentProfile = () => {
 	const [country, setCountry] = useState("");
 	const [nationality, setNationality] = useState("");
 	const [passportOrNin, setPassportOrNin] = useState("");
+	// Get cities for selected country (depends on `country` state)
+	const countryCities = useMemo(() => {
+		if (!country) return [];
+		return getCitiesOfCountry(country);
+	}, [country]);
 	const [gender, setGender] = useState("");
 	const [interests, setInterests] = useState<string[]>(["Technology", "Finance"]);
-	const [educationHistory, setEducationHistory] = useState<any[]>([]);
+	const [educationHistory, setEducationHistory] = useState<string[]>([]);
 	const [newInterest, setNewInterest] = useState("");
 	const [institutionType, setInstitutionType] = useState<"University" | "Institute">("University");
 	const [institutionId, setInstitutionId] = useState<string | undefined>(undefined);
@@ -221,7 +238,7 @@ const StudentProfile = () => {
 		setLegacyLocation("");
 	};
 
-	const districtOptions = region
+	const regionDistrictOptions = region
 		? REGION_DISTRICT_GROUPS.find((group) => group.region === region)?.districts ?? []
 		: [];
 
@@ -247,6 +264,8 @@ const StudentProfile = () => {
 					district: string;
 					country: string;
 					gender: string;
+					nationality: string;
+					passportOrNin: string;
 				}>;
 				if (parsed.phoneNumber) setPhoneNumber(parsed.phoneNumber);
 				if (parsed.country) setCountry(parsed.country);
@@ -281,7 +300,7 @@ const StudentProfile = () => {
 			setLoadingProfile(true);
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("full_name, areas_of_interest, location, experience_level, availability_status, email, country, gender, nationality, passport_or_nin, education_history")
+				.select("full_name, areas_of_interest, location, experience_level, availability_status, email")
 				.eq("id", user.id)
 				.maybeSingle();
 
@@ -339,28 +358,8 @@ const StudentProfile = () => {
 				if (data.email) {
 					setEmail(data.email);
 				}
-				if (data.country) setCountry(data.country);
-				if (data.nationality) setNationality(data.nationality);
-				if (data.passport_or_nin) setPassportOrNin(data.passport_or_nin);
-				if (data.gender) setGender(data.gender);
-				if (Array.isArray(data.education_history)) {
-					setEducationHistory(data.education_history);
-				}
-				if (data.cv_url) {
-					setCvLink(data.cv_url);
-				}
-				if (data.school_name) {
-					setSchoolName(data.school_name);
-				}
-				if (data.course_of_study) {
-					setCourseOfStudy(data.course_of_study);
-				}
-				if (data.year_of_study) {
-					setYearOfStudy(data.year_of_study);
-				}
-				if (data.portfolio_url) {
-					setPortfolioUrl(data.portfolio_url);
-				}
+				// Additional local-only fields (country, nationality, passport/NIN, gender, education history, CV, school, course, year, portfolio)
+				// are managed via localStorage and UI state only, not stored in the profiles table.
 			}
 
 			setLoadingProfile(false);
@@ -443,19 +442,9 @@ const StudentProfile = () => {
 			await updateProfile({
 				full_name: fullName,
 				areas_of_interest: interestPayload,
-				location: locationPayload as string | null, // Type cast compatible with service
+				location: locationPayload as string | null,
 				experience_level: stage || null,
 				availability_status: availability || null,
-				cv_url: cvLink.trim() || null,
-				school_name: schoolName.trim() || null,
-				course_of_study: courseOfStudy.trim() || null,
-				year_of_study: yearOfStudy || null,
-				portfolio_url: portfolioUrl.trim() || null,
-				country: country || null,
-				nationality: nationality || null,
-				passport_or_nin: passportOrNin || null,
-				gender: gender || null,
-				education_history: educationHistory || [],
 			});
 
 			persistExtraFields(user.id, { region: effectiveRegion, district });
@@ -504,6 +493,18 @@ const StudentProfile = () => {
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2">
+										<Label>Profile Type</Label>
+										<Select value={profileRole} onValueChange={(v) => setProfileRole(v as "student" | "professional")} disabled={loadingProfile || saving}>
+											<SelectTrigger>
+												<SelectValue placeholder="Select type" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="student">Student</SelectItem>
+												<SelectItem value="professional">Professional</SelectItem>
+											</SelectContent>
+										</Select>
+									</div>
 									<div className="space-y-2">
 										<Label htmlFor="firstname">First Name</Label>
 										<Input
@@ -558,30 +559,34 @@ const StudentProfile = () => {
 
 									<div className="space-y-2">
 										<Label className="text-sm font-medium">Nationality</Label>
-										<div className="[&_button]:w-full [&_button]:h-10 [&_button]:border-input [&_button]:bg-background [&_button]:text-sm [&_button]:ring-offset-background [&_button]:placeholder:text-muted-foreground [&_button]:focus:outline-none [&_button]:focus:ring-2 [&_button]:focus:ring-ring [&_button]:focus:ring-offset-2 [&_button]:disabled:cursor-not-allowed [&_button]:disabled:opacity-50">
-											<ReactFlagsSelect
-												selected={nationality}
-												onSelect={(code) => setNationality(code)}
-												searchable
-												placeholder="Select Nationality"
-												disabled={loadingProfile || saving}
-												className="w-full"
-											/>
-										</div>
+										<Select value={nationality} onValueChange={setNationality} disabled={loadingProfile || saving}>
+											<SelectTrigger>
+												<SelectValue placeholder="Select Nationality" />
+											</SelectTrigger>
+											<SelectContent className="max-h-80">
+												{allCountries.map((c) => (
+													<SelectItem key={c.isoCode} value={c.isoCode}>
+														{c.flag} {c.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 									</div>
 
 									<div className="space-y-2">
 										<Label className="text-sm font-medium">Country of Residence</Label>
-										<div className="[&_button]:w-full [&_button]:h-10 [&_button]:border-input [&_button]:bg-background [&_button]:text-sm [&_button]:ring-offset-background [&_button]:placeholder:text-muted-foreground [&_button]:focus:outline-none [&_button]:focus:ring-2 [&_button]:focus:ring-ring [&_button]:focus:ring-offset-2 [&_button]:disabled:cursor-not-allowed [&_button]:disabled:opacity-50">
-											<ReactFlagsSelect
-												selected={country}
-												onSelect={(code) => setCountry(code)}
-												searchable
-												placeholder="Select Country"
-												disabled={loadingProfile || saving}
-												className="w-full"
-											/>
-										</div>
+										<Select value={country} onValueChange={setCountry} disabled={loadingProfile || saving}>
+											<SelectTrigger>
+												<SelectValue placeholder="Select Country" />
+											</SelectTrigger>
+											<SelectContent className="max-h-80">
+												{allCountries.map((c) => (
+													<SelectItem key={c.isoCode} value={c.isoCode}>
+														{c.flag} {c.name}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 									</div>
 
 									<div className="space-y-2">
@@ -596,16 +601,39 @@ const StudentProfile = () => {
 									</div>
 								</div>
 
-								<div className="space-y-2">
-									<Label htmlFor="phone">Phone Number</Label>
-									<div className="[&_input]:flex [&_input]:h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-input [&_input]:bg-background [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:ring-offset-background [&_input]:file:border-0 [&_input]:file:bg-transparent [&_input]:file:text-sm [&_input]:file:font-medium [&_input]:placeholder:text-muted-foreground [&_input]:focus-visible:outline-none [&_input]:focus-visible:ring-2 [&_input]:focus-visible:ring-ring [&_input]:focus-visible:ring-offset-2 [&_input]:disabled:cursor-not-allowed [&_input]:disabled:opacity-50">
-										<PhoneInput
-											placeholder="Enter phone number"
-											value={phoneNumber}
-											onChange={(val) => setPhoneNumber(val?.toString() || "")}
-											defaultCountry={country as any || "UG"}
-											disabled={loadingProfile || saving}
-										/>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div className="space-y-2">
+										<Label htmlFor="phone">Phone Number</Label>
+										<div className="[&_input]:flex [&_input]:h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-input [&_input]:bg-background [&_input]:px-3 [&_input]:py-2 [&_input]:text-sm [&_input]:ring-offset-background [&_input]:file:border-0 [&_input]:file:bg-transparent [&_input]:file:text-sm [&_input]:file:font-medium [&_input]:placeholder:text-muted-foreground [&_input]:focus-visible:outline-none [&_input]:focus-visible:ring-2 [&_input]:focus-visible:ring-ring [&_input]:focus-visible:ring-offset-2 [&_input]:disabled:cursor-not-allowed [&_input]:disabled:opacity-50">
+											<PhoneInput
+												placeholder="Enter phone number"
+												value={phoneNumber}
+												onChange={(val) => setPhoneNumber(val?.toString() || "")}
+												disabled={loadingProfile || saving}
+											/>
+										</div>
+									</div>
+									
+									<div className="space-y-2">
+										<Label htmlFor="current-town">Current Town / City</Label>
+										<Select value={location} onValueChange={setLocation} disabled={loadingProfile || saving || !country}>
+											<SelectTrigger>
+												<SelectValue placeholder={country ? "Select town / city" : "Select country first"} />
+											</SelectTrigger>
+											<SelectContent className="max-h-80">
+												{countryCities.length > 0 ? (
+													countryCities.map((city) => (
+														<SelectItem key={city.name} value={city.name}>
+															{city.name}
+														</SelectItem>
+													))
+												) : (
+													<SelectItem value="other" disabled>
+														No cities available for this country
+													</SelectItem>
+												)}
+											</SelectContent>
+										</Select>
 									</div>
 								</div>
 
@@ -641,8 +669,9 @@ const StudentProfile = () => {
 															const url = await uploadCV(file, user.id);
 															setCvLink(url);
 															toast({ title: "CV Uploaded", description: "File uploaded successfully. Don't forget to save your profile." });
-														} catch (err: any) {
-															toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+														} catch (err: unknown) {
+															const message = err instanceof Error ? err.message : "Unknown error";
+															toast({ title: "Upload Failed", description: message, variant: "destructive" });
 														} finally {
 															setSaving(false);
 														}
@@ -805,9 +834,10 @@ const StudentProfile = () => {
 								</div>
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									{showUgandaFields && isStudent && (
 									<div className="space-y-2">
 										<div className="flex items-center gap-2">
-											<Label>Region in Uganda</Label>
+											<Label>Region</Label>
 											<Button
 												type="button"
 												size="icon"
@@ -834,6 +864,8 @@ const StudentProfile = () => {
 											</SelectContent>
 										</Select>
 									</div>
+									)}
+									{showUgandaFields && isStudent && (
 									<div className="space-y-2">
 										<Label>District</Label>
 										<Select
@@ -845,7 +877,7 @@ const StudentProfile = () => {
 												<SelectValue placeholder={region ? "Select district" : "Select region first"} />
 											</SelectTrigger>
 											<SelectContent className="max-h-80">
-												{districtOptions.map((option) => (
+												{regionDistrictOptions.map((option) => (
 													<SelectItem key={option} value={option}>
 														{option}
 													</SelectItem>
@@ -858,6 +890,7 @@ const StudentProfile = () => {
 											</p>
 										)}
 									</div>
+									)}
 									<div className="space-y-2">
 										<Label>Availability</Label>
 										<Select value={availability || undefined} onValueChange={setAvailability} disabled={loadingProfile || saving}>
@@ -874,6 +907,9 @@ const StudentProfile = () => {
 										</Select>
 									</div>
 								</div>
+																{!showUgandaFields && (
+								  <p className="text-xs text-muted-foreground mt-2">Region/District options appear when locale is set to Uganda.</p>
+								)}
 							</CardContent>
 						</Card>
 
@@ -947,8 +983,18 @@ const StudentProfile = () => {
 								<CardTitle>Additional Information</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-4">
+								{/* AI-Powered CV Upload */}
+								<CVUpload
+									onSuccess={(data) => {
+										toast({
+											title: "Profile Enhanced",
+											description: `Found ${data.skills.length} skills. AI job matching is now enabled!`,
+										});
+									}}
+								/>
+
 								<div className="space-y-2">
-									<Label htmlFor="cv">CV/Resume Link</Label>
+									<Label htmlFor="cv">CV/Resume Link (Optional)</Label>
 									<Input
 										id="cv"
 										placeholder="https://drive.google.com/file/d/..."
@@ -956,6 +1002,9 @@ const StudentProfile = () => {
 										onChange={(event) => setCvLink(event.target.value)}
 										disabled={loadingProfile || saving}
 									/>
+									<p className="text-xs text-muted-foreground">
+										Or paste a link to your CV if you prefer not to upload
+									</p>
 								</div>
 
 								<div className="space-y-2">

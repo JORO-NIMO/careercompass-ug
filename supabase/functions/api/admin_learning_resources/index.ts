@@ -1,6 +1,13 @@
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
 import { verifyAuth, unauthorizedResponse, handleCors } from '../_shared/auth.ts';
-import { jsonError, jsonSuccess } from '../_shared/responses.ts';
+import { jsonError, jsonSuccess, withRateLimitHeaders, withRequestIdHeaders, jsonErrorWithId } from '../_shared/responses.ts';
+import { getRequestId } from '../../_shared/request.ts';
+import {
+    checkRateLimitUnified as checkRateLimit,
+    getClientIdentifier,
+    rateLimitExceededResponse,
+    RATE_LIMITS,
+} from '../../_shared/rateLimit.ts';
 
 function getSegments(url: URL): string[] {
     const parts = url.pathname.split('/').filter(Boolean);
@@ -41,20 +48,36 @@ export default async function (req: Request) {
         return jsonError('Admin role required', 403);
     }
 
+    // Rate limit admin operations per user/IP
+    const clientId = getClientIdentifier(req, user.id);
+    const rl = await checkRateLimit(clientId, RATE_LIMITS.admin);
+    if (!rl.allowed) {
+        const reqId = getRequestId(req);
+        return rateLimitExceededResponse(rl.resetAt, reqId);
+    }
+    const reqId = getRequestId(req);
+    const rateHeaders = withRequestIdHeaders(withRateLimitHeaders({}, rl.remaining, rl.resetAt), reqId);
+
     const url = new URL(req.url);
     const segments = getSegments(url);
     const resourceId = segments[0] ?? null;
+    const limitParam = Number(url.searchParams.get('limit') || '0');
+    const pageLimit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : null;
 
     try {
         if (req.method === 'GET' && !resourceId) {
-            const { data, error: fetchError } = await supabase
+            let query = supabase
                 .from('learning_resources')
                 .select('*')
                 .order('display_order', { ascending: true })
                 .order('created_at', { ascending: false });
+            if (pageLimit) {
+                query = query.limit(pageLimit);
+            }
+            const { data, error: fetchError } = await query;
 
-            if (fetchError) return jsonError(fetchError.message, 500);
-            return jsonSuccess({ items: data ?? [] });
+            if (fetchError) return jsonErrorWithId(fetchError.message, 500, {}, rateHeaders, reqId);
+            return jsonSuccess({ items: data ?? [] }, 200, rateHeaders);
         }
 
         if (req.method === 'POST' && !resourceId) {
@@ -73,8 +96,8 @@ export default async function (req: Request) {
                 .select('*')
                 .maybeSingle();
 
-            if (insertError) return jsonError(insertError.message, 500);
-            return jsonSuccess({ item: data }, 201);
+            if (insertError) return jsonErrorWithId(insertError.message, 500, {}, rateHeaders, reqId);
+            return jsonSuccess({ item: data }, 201, rateHeaders);
         }
 
         if (req.method === 'PUT' && resourceId) {
@@ -94,8 +117,8 @@ export default async function (req: Request) {
                 .select('*')
                 .maybeSingle();
 
-            if (updateError) return jsonError(updateError.message, 500);
-            return jsonSuccess({ item: data });
+            if (updateError) return jsonErrorWithId(updateError.message, 500, {}, rateHeaders, reqId);
+            return jsonSuccess({ item: data }, 200, rateHeaders);
         }
 
         if (req.method === 'DELETE' && resourceId) {
@@ -104,12 +127,12 @@ export default async function (req: Request) {
                 .delete()
                 .eq('id', resourceId);
 
-            if (deleteError) return jsonError(deleteError.message, 500);
-            return jsonSuccess({});
+            if (deleteError) return jsonErrorWithId(deleteError.message, 500, {}, rateHeaders, reqId);
+            return jsonSuccess({}, 200, rateHeaders);
         }
 
-        return jsonError('Method not allowed', 405);
+        return jsonErrorWithId('Method not allowed', 405, {}, rateHeaders, reqId);
     } catch (err) {
-        return jsonError(err instanceof Error ? err.message : String(err), 500);
+        return jsonErrorWithId(err instanceof Error ? err.message : String(err), 500, {}, rateHeaders, reqId);
     }
 }

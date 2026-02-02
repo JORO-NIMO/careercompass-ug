@@ -5,6 +5,8 @@ import path from 'path';
 export default defineConfig({
     plugins: [react()],
     test: {
+        // Use vmThreads pool to avoid worker startup timeouts on Windows
+        pool: 'vmThreads',
         globals: true,
         environment: 'jsdom',
         setupFiles: ['./src/test/setup.ts'],

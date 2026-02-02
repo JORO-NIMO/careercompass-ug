@@ -45,6 +45,7 @@ export class ApiError extends Error {
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean>;
+  timeoutMs?: number; // optional request timeout
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -87,19 +88,36 @@ function buildUrl(path: string, params?: Record<string, string | number | boolea
 
 async function request<T>(
   path: string,
-  { params, headers, ...options }: RequestOptions = {}
+  { params, headers, timeoutMs, ...options }: RequestOptions = {}
 ): Promise<T> {
   const url = buildUrl(path, params);
 
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-  });
+  const controller = new AbortController();
+  let timer: number | undefined;
+  if (typeof timeoutMs === 'number' && timeoutMs > 0 && typeof window !== 'undefined') {
+    timer = window.setTimeout(() => controller.abort(), timeoutMs);
+  }
 
-  return handleResponse<T>(response);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+    });
+    return handleResponse<T>(response);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError('Request timed out', 408);
+    }
+    throw err;
+  } finally {
+    if (typeof timer === 'number' && typeof window !== 'undefined') {
+      window.clearTimeout(timer);
+    }
+  }
 }
 
 // API client methods

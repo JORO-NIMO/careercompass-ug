@@ -9,10 +9,10 @@ const trendSections = [
   {
     title: "Digital roles outpace traditional employment",
     description:
-      "Data analysts, cloud support associates, and product managers are the three fastest-growing roles across Kampala startups and regional tech hubs.",
+      "Data analysts, cloud support associates, and product managers are among the fastest-growing roles across global startups and tech hubs.",
     insightPoints: [
       "SaaS and fintech scale-ups prioritise interns who can query SQL databases and visualise KPIs in Looker Studio or Power BI.",
-      "Remote-first teams increasingly hire Ugandan graduates as product analysts and QA engineers due to timezone alignment with Europe.",
+      "Remote-first teams increasingly hire graduates as product analysts and QA engineers across time zones.",
     ],
   },
   {
@@ -20,7 +20,7 @@ const trendSections = [
     description:
       "NGOs and green energy companies are onboarding fellows to support carbon accounting, clean cooking initiatives, and circular economy pilots.",
     insightPoints: [
-      "Expect hybrid roles requiring field work in Northern and Western Uganda combined with data reporting from Kampala offices.",
+      "Expect hybrid roles requiring field work combined with data reporting from regional offices.",
       "Applicants with GIS, data storytelling, or community mobilisation experience stand out in interviews.",
     ],
   },
@@ -29,7 +29,7 @@ const trendSections = [
     description:
       "Content studios, podcast platforms, and tourism collectives now hire social media and storytelling interns throughout the year.",
     insightPoints: [
-      "Knowledge of Luganda, Runyankole, and Swahili adds value for localisation projects.",
+      "Multilingual skills add value for localisation projects.",
       "Short-form video, motion graphics, and audio editing remain high-demand skill sets.",
     ],
   },
@@ -45,21 +45,21 @@ const CareerTrendsBlog = () => {
   return (
     <>
       <SEO
-        title="Career Trends in Uganda 2025 | PlacementBridge Insights"
-        description="Quarterly report tracking internship and placement trends across Uganda including tech, sustainability, and creative economy opportunities."
+        title="Global Career Trends 2025 | PlacementBridge Insights"
+        description="Quarterly report tracking internship and placement trends worldwide including tech, sustainability, and creative economy opportunities."
         keywords={[
-          "career trends uganda",
-          "uganda internship statistics",
+          "career trends",
+          "internship statistics",
           "graduate employment insights",
           "placementbridge career report",
         ]}
-        canonical="/insights/career-trends"
+        canonical="https://www.placementbridge.org/insights/career-trends"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "BlogPosting",
-          headline: "Career Trends in Uganda 2025",
+          headline: "Global Career Trends 2025",
           description:
-            "Insights from PlacementBridge on the fastest-growing internship sectors, in-demand skills, and hiring statistics for Ugandan graduates.",
+            "Insights from PlacementBridge on the fastest-growing internship sectors, in-demand skills, and hiring signals for graduates worldwide.",
           author: {
             "@type": "Organization",
             name: "PlacementBridge",
@@ -70,13 +70,14 @@ const CareerTrendsBlog = () => {
             "@id": "https://www.placementbridge.org/insights/career-trends",
           },
         }}
+        siteName="All jobs in one place"
       />
       <main className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto space-y-10">
             <div className="space-y-4 text-center">
               <Badge variant="secondary" className="mx-auto w-fit">PlacementBridge Insights</Badge>
-              <h1 className="text-4xl font-bold text-foreground">Career trends reshaping internships in Uganda</h1>
+              <h1 className="text-4xl font-bold text-foreground">Global career trends reshaping internships</h1>
               <p className="text-lg text-muted-foreground">
                 Our quarterly insights blend marketplace data, employer interviews, and student surveys. Use these signals to tailor your skills, CV, and opportunity pipeline.
               </p>
@@ -143,7 +144,7 @@ const CareerTrendsBlog = () => {
             <Separator />
             <div className="rounded-2xl border border-border/70 bg-background/80 p-6 text-sm text-muted-foreground">
               <p>
-                PlacementBridge aggregates opportunities from verified organisations. Subscribe to our newsletter for fresh internships, fellowships, and graduate programmes across Uganda every Monday morning.
+                PlacementBridge aggregates opportunities from verified organisations. Subscribe to our newsletter for fresh internships, fellowships, and graduate programmes worldwide every Monday morning.
               </p>
             </div>
 

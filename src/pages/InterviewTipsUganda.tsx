@@ -18,7 +18,7 @@ const InterviewTipsUganda = () => {
           "campus career interview preparation",
           "how to prepare for interviews",
         ]}
-        canonical="/guides/interview-tips"
+        canonical="https://www.placementbridge.org/guides/interview-tips"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "HowTo",
@@ -40,6 +40,7 @@ const InterviewTipsUganda = () => {
             },
           ],
         }}
+        siteName="All jobs in one place"
       />
       <main className="py-16">
         <div className="container mx-auto px-4">

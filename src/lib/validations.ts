@@ -65,7 +65,7 @@ export const paymentIntentSchema = z.object({
 export const companyRegistrationSchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters'),
   location: z.string().min(5, 'Please provide a detailed location'),
-  website_url: z.string().min(4, 'Website is required'),
+  website_url: z.string().url('Enter a valid URL').optional(),
   contact_email: z.string().email('Enter a valid contact email').optional(),
 });
 

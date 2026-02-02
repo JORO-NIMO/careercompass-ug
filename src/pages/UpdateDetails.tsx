@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import DOMPurify from 'dompurify';
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ const UpdateDetails = () => {
             <SEO
                 title={`${post.title} - PlacementBridge Updates`}
                 description={post.content.slice(0, 160).replace(/<[^>]*>/g, '')}
+                siteName="All jobs in one place"
             />
 
             <div className="container mx-auto px-4 py-8 max-w-3xl">
@@ -130,13 +132,13 @@ const UpdateDetails = () => {
                     <div className="rounded-lg border border-border/50 bg-card p-6 md:p-8 shadow-sm">
                         <div
                             className="prose prose-stone dark:prose-invert max-w-none prose-headings:font-bold prose-a:text-primary"
-                            dangerouslySetInnerHTML={{ __html: post.content }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content || '') }}
                         />
 
                         {post.cta_link && (
                             <div className="mt-8 pt-6 border-t border-border flex justify-center">
                                 <Button size="lg" className="w-full sm:w-auto" asChild>
-                                    <a href={post.cta_link} target="_blank" rel="noopener noreferrer">
+                                    <a href={(() => { try { const u = new URL(post.cta_link); return (u.protocol === 'http:' || u.protocol === 'https:') ? u.toString() : '#'; } catch { return '#'; } })()} target="_blank" rel="noopener noreferrer">
                                         {post.cta_text || "Learn More"}
                                     </a>
                                 </Button>

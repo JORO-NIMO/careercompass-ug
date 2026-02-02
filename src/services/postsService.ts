@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api-client';
 import type { AdminPost } from '@/types/admin';
 import { logAdminAction } from './adminService';
 
@@ -76,37 +77,15 @@ export async function createPost(payload: Partial<AdminPost> & { image?: File })
         image_url = await uploadPostImage(payload.image);
     }
 
-    // Remove the image File object from payload before sending to DB
     const { image, ...dbPayload } = payload;
+    const body = {
+        ...dbPayload,
+        image_url,
+        author_id: user?.id,
+    };
 
-    const { data, error } = await (supabase.from('posts' as any) as any)
-        .insert({
-            ...dbPayload,
-            image_url,
-            author_id: user?.id,
-            published_at: payload.status === 'published' ? new Date().toISOString() : null,
-        })
-        .select('*')
-        .single();
-
-    if (error) {
-        console.error('createPost error details:', JSON.stringify(error, null, 2));
-        throw new Error(`Failed to create post: ${error.message} (${error.code})`);
-    }
-
-    // Try logging, but don't fail operation if logging fails
-    try {
-        await logAdminAction({
-            action: 'create',
-            targetTable: 'posts',
-            targetId: data.id,
-            changes: data,
-        });
-    } catch (logError) {
-        console.warn('Failed to log admin action for createPost:', logError);
-    }
-
-    return data as AdminPost;
+    const res = await apiClient.post<{ item: AdminPost }>(`/api/admin_posts`, body, { timeoutMs: 10000 });
+    return res.item;
 }
 
 export async function updatePost(id: string, payload: Partial<AdminPost> & { image?: File }): Promise<AdminPost> {
@@ -115,48 +94,15 @@ export async function updatePost(id: string, payload: Partial<AdminPost> & { ima
         image_url = await uploadPostImage(payload.image);
     }
 
-    // Remove the image File object from payload before sending to DB
     const { image, ...dbPayload } = payload;
+    const body = { ...dbPayload, image_url };
 
-    const { data, error } = await (supabase.from('posts' as any) as any)
-        .update({
-            ...dbPayload,
-            image_url,
-            updated_at: new Date().toISOString(),
-            published_at: payload.status === 'published' ? new Date().toISOString() : undefined,
-        })
-        .eq('id', id)
-        .select('*')
-        .single();
-
-    if (error) {
-        console.error('updatePost error:', error);
-        throw new Error(error.message || 'Failed to update post');
-    }
-
-    await logAdminAction({
-        action: 'update',
-        targetTable: 'posts',
-        targetId: id,
-        changes: payload,
-    });
-
-    return data as AdminPost;
+    const res = await apiClient.put<{ item: AdminPost }>(`/api/admin_posts/${id}`, body, { timeoutMs: 10000 });
+    await logAdminAction({ action: 'update', targetTable: 'posts', targetId: id, changes: payload });
+    return res.item;
 }
 
 export async function deletePost(id: string): Promise<void> {
-    const { error } = await (supabase.from('posts' as any) as any)
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        console.error('deletePost error:', error);
-        throw new Error(error.message || 'Failed to delete post');
-    }
-
-    await logAdminAction({
-        action: 'delete',
-        targetTable: 'posts',
-        targetId: id,
-    });
+    await apiClient.delete(`/api/admin_posts/${id}`, { timeoutMs: 10000 });
+    await logAdminAction({ action: 'delete', targetTable: 'posts', targetId: id });
 }

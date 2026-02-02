@@ -210,7 +210,7 @@ const ApplicationTips = () => {
           <div className="text-center space-y-3 mb-8">
             <h2 className="text-2xl font-semibold text-foreground">Explore our resources and insights</h2>
             <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-              Deepen your search with career guides, interview preparation, labour market research, and curated learning pathways for Uganda.
+              Deepen your search with career guides, interview preparation, labour market research, and curated learning pathways worldwide.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -218,14 +218,14 @@ const ApplicationTips = () => {
               {
                 href: "/guides/how-to-write-a-cv",
                 category: "Career guide",
-                title: "Craft a competitive Ugandan CV",
-                description: "Step-by-step advice, templates, and recruiter-backed insights tailored to local hiring teams.",
+                title: "Craft a competitive CV",
+                description: "Step-by-step advice, templates, and recruiter-backed insights tailored to hiring teams.",
               },
               {
-                href: "/guides/interview-tips-uganda",
+                href: "/guides/interview-tips",
                 category: "Interview prep",
                 title: "Ace interviews with confidence",
-                description: "Master panel etiquette, storytelling, and follow-up habits that resonate with employers across Uganda.",
+                description: "Master etiquette, storytelling, and follow-up habits that resonate with employers globally.",
               },
               {
                 href: "/insights/career-trends",

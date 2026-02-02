@@ -1,0 +1,43 @@
+# GitHub Actions: Scheduled Job Ingestion (Backup Scheduler)
+# Free for public repos, 2000 mins/month for private repos
+# This is a BACKUP to pg_cron - runs 15 mins after to catch failures
+
+name: Job Ingestion Pipeline (Backup)
+
+on:
+  schedule:
+    # Run every 6 hours, 15 minutes AFTER pg_cron (offset for failover)
+    - cron: '15 */6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ingest-jobs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Job Ingestion
+        run: |
+          curl -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/ingest-jobs" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -d '{}' \
+            --fail-with-body
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  match-notify:
+    runs-on: ubuntu-latest
+    needs: ingest-jobs
+    steps:
+      - name: Trigger Match & Notify
+        run: |
+          curl -X POST \
+            "${{ secrets.SUPABASE_URL }}/functions/v1/match-notify" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -d '{}' \
+            --fail-with-body
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

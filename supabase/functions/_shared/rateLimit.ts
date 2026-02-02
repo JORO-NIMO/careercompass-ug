@@ -120,22 +120,63 @@ export function rateLimitHeaders(remaining: number, resetAt: number): Record<str
 /**
  * Create a 429 Too Many Requests response
  */
-export function rateLimitExceededResponse(resetAt: number): Response {
+export function rateLimitExceededResponse(resetAt: number, requestId?: string): Response {
   const retryAfter = Math.ceil((resetAt - Date.now()) / 1000);
-  return new Response(
-    JSON.stringify({
-      error: 'Too many requests',
-      retryAfter,
-    }),
-    {
-      status: 429,
-      headers: {
-        'Content-Type': 'application/json',
-        'Retry-After': String(retryAfter),
-        ...rateLimitHeaders(0, resetAt),
-      },
+  const body = JSON.stringify({
+    error: 'Too many requests',
+    retryAfter,
+    ...(requestId ? { request_id: requestId } : {}),
+  });
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Retry-After': String(retryAfter),
+    ...rateLimitHeaders(0, resetAt),
+  };
+  if (requestId) headers['X-Request-Id'] = requestId;
+  return new Response(body, { status: 429, headers });
+}
+
+/** Unified rate limit check: optional shared backend (Postgres), fallback to in-memory. */
+export async function checkRateLimitUnified(
+  identifier: string,
+  config: RateLimitConfig = { limit: 60, windowSecs: 60 }
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const backend = (typeof Deno !== 'undefined' && Deno.env.get('RATE_LIMIT_BACKEND')) || '';
+  if (backend.toLowerCase() === 'pg') {
+    try {
+      const { createSupabaseServiceClient } = await import('./sbClient.ts');
+      const supabase = createSupabaseServiceClient();
+      const now = Date.now();
+      const windowMs = config.windowSecs * 1000;
+      const resetAtMs = now + windowMs;
+      // Upsert counter row; schema expectation: table rate_limits(key text primary key, count int, reset_at timestamptz)
+      const { data: existing } = await supabase
+        .from('rate_limits')
+        .select('count, reset_at')
+        .eq('key', identifier)
+        .maybeSingle();
+
+      if (!existing || (existing.reset_at && Date.parse(existing.reset_at) < now)) {
+        await supabase
+          .from('rate_limits')
+          .upsert({ key: identifier, count: 1, reset_at: new Date(resetAtMs).toISOString() }, { onConflict: 'key' });
+        return { allowed: true, remaining: config.limit - 1, resetAt: resetAtMs };
+      }
+
+      const newCount = (existing.count ?? 0) + 1;
+      await supabase
+        .from('rate_limits')
+        .update({ count: newCount })
+        .eq('key', identifier);
+      if (newCount > config.limit) {
+        return { allowed: false, remaining: 0, resetAt: Date.parse(existing.reset_at) };
+      }
+      return { allowed: true, remaining: config.limit - newCount, resetAt: Date.parse(existing.reset_at) };
+    } catch {
+      // Fallback to in-memory on error
     }
-  );
+  }
+  return checkRateLimit(identifier, config);
 }
 
 // Default configurations for different endpoint types

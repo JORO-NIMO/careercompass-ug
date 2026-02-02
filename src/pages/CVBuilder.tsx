@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Download, Plus, Trash2, Eye, EyeOff, Save, RotateCcw, Printer } from "lucide-react";
 import { toast } from "sonner";
+import PageAssistant from "@/components/PageAssistant";
 
 interface Experience {
   id: string;
@@ -463,7 +464,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, fullName: e.target.value }
                       })}
-                      placeholder="Aine Conerald"
+                      placeholder="Alex Johnson"
                     />
                   </div>
                   <div>
@@ -476,7 +477,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, email: e.target.value }
                       })}
-                      placeholder="aine@example.domain"
+                      placeholder="alex@example.com"
                     />
                   </div>
                   <div>
@@ -488,11 +489,11 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, phone: e.target.value }
                       })}
-                      placeholder="+256 726000000"
+                      placeholder="+1 555 123 4567"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">Town / City</Label>
                     <Input
                       id="location"
                       value={cvData.personalInfo.location}
@@ -500,7 +501,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, location: e.target.value }
                       })}
-                      placeholder="Mbarara, Uganda"
+                      placeholder="e.g. Kampala, UG"
                     />
                   </div>
                   <div>
@@ -524,7 +525,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, website: e.target.value }
                       })}
-                      placeholder="yourwebsite.domain"
+                      placeholder="yourportfolio.com"
                     />
                   </div>
                 </div>
@@ -785,7 +786,7 @@ const CVBuilder = () => {
                     <div className="space-y-2">
                       <Label>Phone</Label>
                       <Input
-                        placeholder="+256..."
+                        placeholder="e.g., +1 555 000 0000"
                         value={newReferee.phone}
                         onChange={(e) => setNewReferee({ ...newReferee, phone: e.target.value })}
                       />
@@ -886,9 +887,7 @@ const CVBuilder = () => {
               padding: 0 !important;
               margin: 0 !important;
             }
-            .print\:max-h-none {
-              max-height: none !important;
-            }
+            /* print-max-h-none helper removed to avoid escape issues */
             pre {
               white-space: pre-wrap !important;
               word-wrap: break-word !important;
@@ -902,6 +901,15 @@ const CVBuilder = () => {
           }
         `}</style>
       </div>
+      <PageAssistant
+        currentPage="cv-builder"
+        context={{ sectionCounts: { exp: cvData.experience.length, edu: cvData.education.length }, hasSummary: !!cvData.summary?.trim() }}
+        suggestions={[
+          'How can I improve my career summary?',
+          'Rewrite this bullet for impact',
+          'What sections should I add to match data analytics roles?'
+        ]}
+      />
     </div>
   );
 };

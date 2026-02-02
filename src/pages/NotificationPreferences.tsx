@@ -1,6 +1,11 @@
-
-
+import React from 'react';
 import PushOptIn from '@/components/PushOptIn';
+import { useNotificationPreferences } from '@/hooks/useNotifications';
+import type { NotificationChannel, NotificationType } from '@/types/notifications';
+import { ASSISTANT_PAGE_KEYS, getAssistantPrefs, setAssistantPrefs } from '@/lib/assistantConfig';
+import { loadAssistantPrefsFromServer, saveAssistantPrefsToServer } from '@/services/userSettings';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const channels: NotificationChannel[] = ['in_app', 'email', 'push'];
 const types: NotificationType[] = ['session', 'deadline', 'admin_alert', 'admin_broadcast', 'custom'];
@@ -16,7 +21,13 @@ const NotificationPreferences: React.FC = () => {
 
   // Build a map: type -> channel -> enabled
   const prefsMap: Record<NotificationType, Partial<Record<NotificationChannel, boolean>>> = React.useMemo(() => {
-    const map: Record<NotificationType, Partial<Record<NotificationChannel, boolean>>> = {};
+    const map: Record<NotificationType, Partial<Record<NotificationChannel, boolean>>> = {
+      session: {},
+      deadline: {},
+      admin_alert: {},
+      admin_broadcast: {},
+      custom: {},
+    };
     for (const t of types) map[t] = {};
     for (const pref of preferences) {
       if (types.includes(pref.type as NotificationType) && channels.includes(pref.channel as NotificationChannel)) {
@@ -55,6 +66,49 @@ const NotificationPreferences: React.FC = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* AI Assistant Settings */}
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>AI Assistant Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {(() => {
+              const prefs = getAssistantPrefs();
+              const updateGlobal = async (enabled: boolean) => {
+                const next = { ...prefs, enabled };
+                setAssistantPrefs(next);
+                await saveAssistantPrefsToServer(next);
+              };
+              const updatePage = async (key: string, enabled: boolean) => {
+                const next = { ...prefs, pages: { ...prefs.pages, [key]: enabled } };
+                setAssistantPrefs(next);
+                await saveAssistantPrefsToServer(next);
+              };
+              // On first render, attempt to load from server
+              void loadAssistantPrefsFromServer();
+              return (
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2">
+                    <Checkbox checked={prefs.enabled} onCheckedChange={(v) => void updateGlobal(Boolean(v))} />
+                    <span>Enable AI Assistant</span>
+                  </label>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {Object.entries(ASSISTANT_PAGE_KEYS).map(([label, key]) => (
+                      <label key={key} className="flex items-center gap-2 p-2 border rounded">
+                        <Checkbox checked={!!prefs.pages[key]} onCheckedChange={(v) => void updatePage(key, Boolean(v))} />
+                        <span>{label}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{key}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

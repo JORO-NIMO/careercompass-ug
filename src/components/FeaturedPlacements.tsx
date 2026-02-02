@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { fetchListings, type ListingWithCompany } from '@/services/listingsService';
 import { CuratedListingCard } from '@/components/CuratedListingCard';
+import JobPostingJsonLd from '@/components/JobPostingJsonLd';
 
 interface PlacementData {
   id: string;
@@ -21,6 +22,9 @@ interface PlacementData {
   deadline?: string;
   application_link?: string;
 }
+          {curatedListings.length > 0 && (
+            <JobPostingJsonLd jobs={curatedListings} />
+          )}
 
 interface BoostData {
   entity_id: string;

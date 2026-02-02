@@ -27,7 +27,7 @@ const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
-          alt="Uganda learners, professionals, and employers collaborating"
+          alt="Learners, professionals, and employers collaborating worldwide"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40"></div>

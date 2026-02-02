@@ -4,7 +4,16 @@ import NotificationBell from "@/components/NotificationBell";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
+import { trackAction } from "@/lib/analytics";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocale } from "@/hooks/LocaleProvider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,6 +42,7 @@ const Header = () => {
     loadUnread();
   }, [user]);
   const navigate = useNavigate();
+  const { locale, setLocale } = useLocale();
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,31 +53,40 @@ const Header = () => {
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
-        {/* Logo */}
-        <Link to="/" className="flex items-center space-x-3 mr-8">
-          <img src="/favicon.ico" alt="PlacementBridge" className="w-12 h-12 rounded-md object-cover" />
-          <span className="text-3xl font-bold text-foreground">PlacementBridge</span>
+        <Link to="/" className="flex items-center space-x-2 shrink-0">
+          <img src="/favicon.ico" alt="PlacementBridge" className="w-8 h-8 rounded-md object-cover" />
+          <span className="text-xl font-bold text-foreground">PlacementBridge</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/find-placements" className="text-muted-foreground hover:text-primary transition-colors">
+        <nav className="hidden md:flex items-center space-x-4 ml-8">
+          <Link to="/find-placements" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
             Find Placements
           </Link>
-          <Link to="/find-talent" className="text-muted-foreground hover:text-primary transition-colors">
+          <Link to="/find-talent" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
             Find Talent
           </Link>
-          <Link to="/application-tips" className="text-muted-foreground hover:text-primary transition-colors">
+          <Link to="/application-tips" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
             Resources
           </Link>
-          <Link to="/for-companies" className="text-muted-foreground hover:text-primary transition-colors">
+{user && (
+            <Link to="/opportunities-chat" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
+              AI Chat
+            </Link>
+          )}
+          <Link to="/for-companies" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
             For Companies
           </Link>
           {isAdmin && (
-            <Link to="/admin" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-              <Shield className="w-4 h-4" />
-              Admin
-            </Link>
+            <>
+              <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap">
+                <Shield className="w-4 h-4" />
+                Admin
+              </Link>
+              <Link to="/admin/security" className="text-sm text-muted-foreground hover:text-primary transition-colors whitespace-nowrap">
+                Security
+              </Link>
+            </>
           )}
         </nav>
 
@@ -79,6 +98,7 @@ const Header = () => {
             const input = form.elements.namedItem('q') as HTMLInputElement;
             const query = input.value.trim();
             if (query) {
+              trackAction('search.query', { query });
               const target = window.location.pathname.includes('find-talent') ? '/find-talent' : '/find-placements';
               window.location.href = `${target}?q=${encodeURIComponent(query)}`;
             }
@@ -95,6 +115,18 @@ const Header = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-3">
+          <div className="flex items-center gap-2 mr-2">
+            <span className="text-xs text-muted-foreground">Locale</span>
+            <Select value={locale} onValueChange={(v) => setLocale(v as any)}>
+              <SelectTrigger className="h-8 w-[130px]">
+                <SelectValue placeholder="Global" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="global">Global</SelectItem>
+                <SelectItem value="uganda">Uganda</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {user ? (
             <>
               <NotificationBell unread={unread} onClick={() => navigate('/notifications')} />
@@ -108,10 +140,10 @@ const Header = () => {
             </>
           ) : (
             <>
-              <Link to="/signin">
+              <Link to="/signin" onClick={() => trackAction('cta.click', { cta_id: 'nav.signin', context: { location: 'header' } })}>
                 <Button variant="outline">Sign In</Button>
               </Link>
-              <Link to="/for-companies">
+              <Link to="/for-companies" onClick={() => trackAction('cta.click', { cta_id: 'nav.post_placement', context: { location: 'header' } })}>
                 <Button variant="hero">Post Placement</Button>
               </Link>
             </>
@@ -133,6 +165,18 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden fixed inset-0 top-16 z-40 bg-background border-t border-border overflow-y-auto">
           <div className="container mx-auto px-4 py-6 space-y-4">
+            <div className="flex items-center gap-3 pb-4 border-b border-border/50">
+              <span className="text-xs text-muted-foreground">Locale</span>
+              <Select value={locale} onValueChange={(v) => { setLocale(v as any); }}>
+                <SelectTrigger className="h-9 w-[160px]">
+                  <SelectValue placeholder="Global" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="global">Global</SelectItem>
+                  <SelectItem value="uganda">Uganda</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Link
               to="/find-placements"
               className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
@@ -155,6 +199,13 @@ const Header = () => {
               Resources
             </Link>
             <Link
+              to="/opportunities-chat"
+              className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Opportunities Chat
+            </Link>
+            <Link
               to="/for-companies"
               className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
               onClick={() => setIsMenuOpen(false)}
@@ -162,13 +213,22 @@ const Header = () => {
               For Companies
             </Link>
             {isAdmin && (
-              <Link
-                to="/admin"
-                className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Admin Dashboard
-              </Link>
+              <>
+                <Link
+                  to="/admin"
+                  className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Admin Dashboard
+                </Link>
+                <Link
+                  to="/admin/security"
+                  className="block py-3 text-lg font-medium text-muted-foreground hover:text-primary transition-colors border-b border-border/50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Security
+                </Link>
+              </>
             )}
             <div className="pt-6 space-y-3">
               {user ? (
