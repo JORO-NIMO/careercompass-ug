@@ -48,3 +48,54 @@ jobs:
           if [ -n "${{ secrets.GOOGLE_API_KEY }}" ]; then supabase secrets set GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}"; fi
           if [ -n "${{ secrets.MODEL_OVERRIDE }}" ]; then supabase secrets set MODEL_OVERRIDE="${{ secrets.MODEL_OVERRIDE }}"; fi
           supabase functions deploy
+
+  verify:
+    name: Verify endpoints
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Build base URL
+        id: vars
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "SUPABASE_URL secret not set; skipping verification." >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "base=${{ secrets.SUPABASE_URL }}" >> $GITHUB_OUTPUT
+          fi
+      - name: Verify access-control
+        if: steps.vars.outputs.skip != 'true'
+        run: |
+          set -e
+          BASE="${{ steps.vars.outputs.base }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/functions/v1/access-control")
+          echo "access-control status: $code"
+          # allow 200 or 403 (blocked)
+          if [ "$code" != "200" ] && [ "$code" != "403" ]; then
+            echo "access-control failed with $code" >&2
+            exit 1
+          fi
+      - name: Verify ai-usage-alerts
+        if: steps.vars.outputs.skip != 'true'
+        run: |
+          set -e
+          BASE="${{ steps.vars.outputs.base }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/functions/v1/ai-usage-alerts")
+          echo "ai-usage-alerts status: $code"
+          if [ "$code" != "200" ]; then
+            echo "ai-usage-alerts failed with $code" >&2
+            exit 1
+          fi
+      - name: Verify chat-agent
+        if: steps.vars.outputs.skip != 'true'
+        run: |
+          set -e
+          BASE="${{ steps.vars.outputs.base }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/functions/v1/chat-agent" \
+            -H 'Content-Type: application/json' \
+            --data '{"message":"Find software internships"}')
+          echo "chat-agent status: $code"
+          if [ "$code" != "200" ]; then
+            echo "chat-agent failed with $code" >&2
+            exit 1
+          fi
