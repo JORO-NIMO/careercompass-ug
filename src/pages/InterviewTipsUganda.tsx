@@ -163,4 +163,4 @@ const InterviewTipsUganda = () => {
   );
 };
 
-export default InterviewTip;
+export default InterviewTipsUganda;
