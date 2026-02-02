@@ -22,9 +22,6 @@ interface PlacementData {
   deadline?: string;
   application_link?: string;
 }
-          {curatedListings.length > 0 && (
-            <JobPostingJsonLd jobs={curatedListings} />
-          )}
 
 interface BoostData {
   entity_id: string;
