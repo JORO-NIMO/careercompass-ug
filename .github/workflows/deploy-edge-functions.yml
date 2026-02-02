@@ -1,0 +1,101 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/deploy-edge-functions.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          if [ -z "$SUPABASE_PROJECT_REF" ]; then
+            echo "Missing SUPABASE_PROJECT_REF secret" >&2
+            exit 1
+          fi
+          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+
+      - name: Deploy all functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # Optionally set function secrets if provided as repository secrets
+          if [ -n "${{ secrets.SUPABASE_URL }}" ]; then supabase secrets set SUPABASE_URL="${{ secrets.SUPABASE_URL }}"; fi
+          if [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then supabase secrets set SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"; fi
+          if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then supabase secrets set OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"; fi
+          if [ -n "${{ secrets.GROQ_API_KEY }}" ]; then supabase secrets set GROQ_API_KEY="${{ secrets.GROQ_API_KEY }}"; fi
+          if [ -n "${{ secrets.GOOGLE_API_KEY }}" ]; then supabase secrets set GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}"; fi
+          if [ -n "${{ secrets.MODEL_OVERRIDE }}" ]; then supabase secrets set MODEL_OVERRIDE="${{ secrets.MODEL_OVERRIDE }}"; fi
+          supabase functions deploy
+
+  verify:
+    name: Verify endpoints
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Build base URL
+        id: vars
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "SUPABASE_URL secret not set; skipping verification." >> $GITHUB_STEP_SUMMARY
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "base=${{ secrets.SUPABASE_URL }}" >> $GITHUB_OUTPUT
+          fi
+      - name: Verify access-control
+        if: steps.vars.outputs.skip != 'true'
+        run: |
+          set -e
+          BASE="${{ steps.vars.outputs.base }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/functions/v1/access-control")
+          echo "access-control status: $code"
+          # allow 200 or 403 (blocked)
+          if [ "$code" != "200" ] && [ "$code" != "403" ]; then
+            echo "access-control failed with $code" >&2
+            exit 1
+          fi
+      - name: Verify ai-usage-alerts
+        if: steps.vars.outputs.skip != 'true'
+        run: |
+          set -e
+          BASE="${{ steps.vars.outputs.base }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/functions/v1/ai-usage-alerts")
+          echo "ai-usage-alerts status: $code"
+          if [ "$code" != "200" ]; then
+            echo "ai-usage-alerts failed with $code" >&2
+            exit 1
+          fi
+      - name: Verify chat-agent
+        if: steps.vars.outputs.skip != 'true'
+        run: |
+          set -e
+          BASE="${{ steps.vars.outputs.base }}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/functions/v1/chat-agent" \
+            -H 'Content-Type: application/json' \
+            --data '{"message":"Find software internships"}')
+          echo "chat-agent status: $code"
+          if [ "$code" != "200" ]; then
+            echo "chat-agent failed with $code" >&2
+            exit 1
+          fi
