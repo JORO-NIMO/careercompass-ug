@@ -120,7 +120,7 @@ export default async function (req: Request) {
           cta_text: payload.cta_text,
           cta_link: payload.cta_link,
           author_id: user.id,
-          published_at: status === 'published' ? new Date().toISOString() : null,
+          published_at: payload.status === 'published' ? new Date().toISOString() : null,
         })
         .select('*')
         .maybeSingle();
