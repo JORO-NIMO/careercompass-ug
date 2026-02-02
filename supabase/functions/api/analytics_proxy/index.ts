@@ -1,7 +1,7 @@
 // Proxy to send server-side events to PostHog (or store for later)
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
 import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
-import { jsonError, jsonSuccess, withRateLimitHeaders, withRequestIdHeaders, jsonErrorWithId } from '../..//_shared/responses.ts';
+import { jsonError, jsonSuccess, withRateLimitHeaders, withRequestIdHeaders, jsonErrorWithId } from '../../_shared/responses.ts';
 import { getRequestId } from '../../_shared/request.ts';
 import {
   checkRateLimitUnified as checkRateLimit,
