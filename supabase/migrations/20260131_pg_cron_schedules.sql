@@ -11,7 +11,7 @@ GRANT USAGE ON SCHEMA cron TO postgres;
 -- This calls your Edge Function to ingest jobs
 SELECT cron.schedule(
   'ingest-jobs',           -- job name
-  '0 */6 * * *',           -- every 6 hours
+  '0 7 * * *',             -- once per day at 07:00 UTC (Hobby limit)
   $$
   SELECT net.http_post(
     url := 'https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/ingest-jobs',
@@ -30,7 +30,7 @@ SELECT cron.schedule(
 
 SELECT cron.schedule(
   'match-notify',
-  '0 */4 * * *',           -- every 4 hours
+  '30 7 * * *',            -- once per day at 07:30 UTC (Hobby limit)
   $$
   SELECT net.http_post(
     url := 'https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/match-notify',
