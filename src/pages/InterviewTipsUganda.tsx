@@ -148,7 +148,7 @@ const InterviewTipsUganda = () => {
             <div className="flex flex-col items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
               <h2 className="text-2xl font-semibold text-foreground">Need interview coaching?</h2>
               <p className="text-sm text-muted-foreground">
-                Book a mock interview with PlacementBridge mentors and receive personalised feedback tailored ton hiring expectations.
+                Book a mock interview with PlacementBridge mentors and receive personalised feedback tailored to hiring expectations.
               </p>
               <Button variant="hero" asChild>
                 <a href="mailto:joronimoamanya@gmail.com?subject=Interview%20Coaching%20Request">Request a session</a>
