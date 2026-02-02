@@ -55,6 +55,7 @@ interface ListingFormState {
   status: 'draft' | 'published' | 'archived';
   expiresAt: string;
   logoUrl: string;
+  imageUrl: string;
 }
 
 const DEFAULT_FORM_STATE: ListingFormState = {
@@ -73,6 +74,7 @@ const DEFAULT_FORM_STATE: ListingFormState = {
   status: 'draft',
   expiresAt: '',
   logoUrl: '',
+  imageUrl: '',
 };
 
 export function AdminListingsManager() {
@@ -177,6 +179,7 @@ export function AdminListingsManager() {
       status: (listing.status as 'draft' | 'published' | 'archived') ?? 'published', // Default to published for legacy
       expiresAt: listing.expires_at ? new Date(listing.expires_at).toISOString().slice(0, 16) : '',
       logoUrl: listing.logo_url ?? '',
+      imageUrl: listing.image_url ?? '',
     });
     setDialogOpen(true);
   };
@@ -219,6 +222,7 @@ export function AdminListingsManager() {
         status: formState.status,
         expires_at: formState.expiresAt || undefined,
         logo_url: formState.logoUrl,
+        image_url: formState.imageUrl,
       };
 
       if (isEditing && currentListingId) {
@@ -567,6 +571,21 @@ export function AdminListingsManager() {
                     />
                     {formState.logoUrl && (
                       <img src={formState.logoUrl} alt="Logo" className="h-10 w-10 object-contain rounded border bg-white" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="listing-image">Listing Image / Flyer URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="listing-image"
+                      value={formState.imageUrl}
+                      onChange={(e) => setFormState(prev => ({ ...prev, imageUrl: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                    {formState.imageUrl && (
+                      <img src={formState.imageUrl} alt="Listing Flyer" className="h-10 w-10 object-cover rounded border bg-white" />
                     )}
                   </div>
                 </div>

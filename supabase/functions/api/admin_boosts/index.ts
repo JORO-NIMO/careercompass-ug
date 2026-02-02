@@ -1,6 +1,13 @@
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
 import { verifyAuth, unauthorizedResponse, handleCors } from '../_shared/auth.ts';
-import { jsonError, jsonSuccess } from '../_shared/responses.ts';
+import { jsonError, jsonSuccess, withRateLimitHeaders, withRequestIdHeaders, jsonErrorWithId } from '../_shared/responses.ts';
+import { getRequestId } from '../../_shared/request.ts';
+import {
+  checkRateLimitUnified as checkRateLimit,
+  getClientIdentifier,
+  rateLimitExceededResponse,
+  RATE_LIMITS,
+} from '../../_shared/rateLimit.ts';
 
 function getSegments(url: URL): string[] {
   const parts = url.pathname.split('/').filter(Boolean);
@@ -33,9 +40,10 @@ export default async function (req: Request) {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  const reqId = getRequestId(req);
   const { user, error } = await verifyAuth(req);
   if (error || !user) {
-    return unauthorizedResponse(error || 'Authentication required');
+    return jsonErrorWithId(error || 'Authentication required', 401, {}, {}, reqId);
   }
 
   const supabase = createSupabaseServiceClient();
@@ -47,8 +55,16 @@ export default async function (req: Request) {
     .maybeSingle();
 
   if (!roleData) {
-    return jsonError('Admin role required', 403);
+    return jsonErrorWithId('Admin role required', 403, {}, {}, reqId);
   }
+
+  // Rate limit admin operations per user/IP
+  const clientId = getClientIdentifier(req, user.id);
+  const limit = await checkRateLimit(clientId, RATE_LIMITS.admin);
+  if (!limit.allowed) {
+    return rateLimitExceededResponse(limit.resetAt, reqId);
+  }
+  const rateHeaders = withRequestIdHeaders(withRateLimitHeaders({}, limit.remaining, limit.resetAt), reqId);
 
   const url = new URL(req.url);
   const segments = getSegments(url);
@@ -63,10 +79,10 @@ export default async function (req: Request) {
 
       if (fetchError) {
         console.error('admin boosts fetch error', fetchError);
-        return jsonError(`Failed to load boosts: ${fetchError.message}`, 500, fetchError);
+        return jsonErrorWithId(`Failed to load boosts: ${fetchError.message}`, 500, fetchError, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ items: data ?? [] });
+      return jsonSuccess({ items: data ?? [] }, 200, rateHeaders);
     }
 
     if (req.method === 'POST' && !resourceId) {
@@ -78,15 +94,15 @@ export default async function (req: Request) {
       const isActive = payload.is_active === false ? false : true;
 
       if (!entityId) {
-        return jsonError('entity_id is required', 400);
+        return jsonErrorWithId('entity_id is required', 400, {}, rateHeaders, reqId);
       }
 
       if (!endsAtIso) {
-        return jsonError('ends_at must be a valid timestamp', 400);
+        return jsonErrorWithId('ends_at must be a valid timestamp', 400, {}, rateHeaders, reqId);
       }
 
       if (new Date(endsAtIso).getTime() <= new Date(startsAtIso).getTime()) {
-        return jsonError('ends_at must be after starts_at', 400);
+        return jsonErrorWithId('ends_at must be after starts_at', 400, {}, rateHeaders, reqId);
       }
 
       const { data, error: insertError } = await supabase
@@ -103,10 +119,10 @@ export default async function (req: Request) {
 
       if (insertError) {
         console.error('admin boosts create error', insertError);
-        return jsonError('Failed to create boost', 500);
+        return jsonErrorWithId('Failed to create boost', 500, {}, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ item: data }, 201);
+      return jsonSuccess({ item: data }, 201, rateHeaders);
     }
 
     if (req.method === 'PATCH' && resourceId) {
@@ -120,7 +136,7 @@ export default async function (req: Request) {
       if (payload.starts_at !== undefined) {
         const startsAtIso = normalizeIso(payload.starts_at);
         if (!startsAtIso) {
-          return jsonError('starts_at must be a valid timestamp', 400);
+          return jsonErrorWithId('starts_at must be a valid timestamp', 400, {}, rateHeaders, reqId);
         }
         updates.starts_at = startsAtIso;
       }
@@ -128,18 +144,18 @@ export default async function (req: Request) {
       if (payload.ends_at !== undefined) {
         const endsAtIso = normalizeIso(payload.ends_at);
         if (!endsAtIso) {
-          return jsonError('ends_at must be a valid timestamp', 400);
+          return jsonErrorWithId('ends_at must be a valid timestamp', 400, {}, rateHeaders, reqId);
         }
         updates.ends_at = endsAtIso;
       }
 
       if (Object.keys(updates).length === 0) {
-        return jsonError('No updates provided', 400);
+        return jsonErrorWithId('No updates provided', 400, {}, rateHeaders, reqId);
       }
 
       if (updates.starts_at && updates.ends_at) {
         if (new Date(updates.ends_at as string).getTime() <= new Date(updates.starts_at as string).getTime()) {
-          return jsonError('ends_at must be after starts_at', 400);
+          return jsonErrorWithId('ends_at must be after starts_at', 400, {}, rateHeaders, reqId);
         }
       }
 
@@ -152,10 +168,10 @@ export default async function (req: Request) {
 
       if (updateError) {
         console.error('admin boosts update error', updateError);
-        return jsonError('Failed to update boost', 500);
+        return jsonErrorWithId('Failed to update boost', 500, {}, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ item: data });
+      return jsonSuccess({ item: data }, 200, rateHeaders);
     }
 
     if (req.method === 'DELETE' && resourceId) {
@@ -168,17 +184,17 @@ export default async function (req: Request) {
 
       if (updateError) {
         console.error('admin boosts revoke error', updateError);
-        return jsonError('Failed to revoke boost', 500);
+        return jsonErrorWithId('Failed to revoke boost', 500, {}, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ item: data });
+      return jsonSuccess({ item: data }, 200, rateHeaders);
     }
 
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
     console.error('admin boosts handler error', error);
-    return jsonError(error.message, 500, {
+    return jsonErrorWithId(error.message, 500, {
       stack: error.stack?.split('\n').slice(0, 5)
-    });
+    }, rateHeaders, reqId);
   }
 }

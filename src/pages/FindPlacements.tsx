@@ -11,28 +11,29 @@ const FindPlacements = () => {
   const handleSearch = (filters: PlacementFilters) => {
     // Current search updates filtered listings directly or triggers a navigation
     // The previous automated query bot logic is removed.
-    console.log("Search filters updated:", filters);
+    // Search filters are applied through the FeaturedPlacements component
   };
 
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Find Internships and Graduate Placements in Uganda | PlacementBridge"
-        description="Search internships, apprenticeships, and early-career placements across Uganda. Filter by sector, region, study field, and programme type to uncover roles tailored to you."
+        title="Find Internships and Graduate Placements Worldwide | PlacementBridge"
+        description="Search internships, apprenticeships, and early-career placements across the globe. Filter by sector, location, study field, and programme type to uncover roles tailored to you."
         keywords={[
-          "Uganda internships search",
-          "graduate job placements Uganda",
-          "student apprenticeships Kampala",
-          "entry level jobs Uganda",
+          "internships search",
+          "graduate job placements",
+          "student apprenticeships",
+          "entry level jobs",
         ]}
-        canonical="/find-placements"
+        canonical="https://www.placementbridge.org/find-placements"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",
           name: "Find Placements",
           url: `${baseUrl}/find-placements`,
-          description: "Discover curated internships, fellowships, and placements across Uganda.",
+          description: "Discover curated internships, fellowships, and placements worldwide.",
         }}
+        siteName="All jobs in one place"
       />
       <main>
         <div className="bg-gradient-to-br from-primary via-primary-glow to-primary-dark text-primary-foreground">
@@ -42,7 +43,7 @@ const FindPlacements = () => {
                 Discover Your Next Opportunity
               </h1>
               <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-                Search curated internships, projects, fellowships, and roles across Uganda
+                Search curated internships, projects, fellowships, and roles worldwide
               </p>
             </div>
           </div>

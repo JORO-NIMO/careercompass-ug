@@ -32,6 +32,10 @@ jobs:
         run: npm run type-check
         continue-on-error: false
 
+      - name: Run Unit Tests (Vitest vmThreads)
+        run: npm run test
+        continue-on-error: false
+
   build:
     name: Build Application
     runs-on: ubuntu-latest

@@ -17,6 +17,7 @@ export const DynamicDataExplorer = ({ collectionId }: DynamicDataExplorerProps) 
     const [definition, setDefinition] = useState<DataDefinition | null>(null);
     const [entries, setEntries] = useState<DataEntry[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [page, setPage] = useState(0);
     const pageSize = 50;
@@ -24,6 +25,7 @@ export const DynamicDataExplorer = ({ collectionId }: DynamicDataExplorerProps) 
     const fetchData = async () => {
         try {
             setLoading(true);
+            setError(null);
 
             // 1. Get Collection & Active Definition
             const { data: colData } = await (supabase
@@ -51,8 +53,9 @@ export const DynamicDataExplorer = ({ collectionId }: DynamicDataExplorerProps) 
                 .range(page * pageSize, (page + 1) * pageSize - 1);
 
             setEntries(entData || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to load generic data", error);
+            setError(error.message || "Failed to load data");
         } finally {
             setLoading(false);
         }
@@ -103,6 +106,18 @@ export const DynamicDataExplorer = ({ collectionId }: DynamicDataExplorerProps) 
             <div className="flex h-64 items-center justify-center gap-2 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <span>Navigating the data layer...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center text-destructive bg-destructive/10 rounded-xl border border-destructive/20">
+                <h3 className="font-bold mb-2">Error Loading Data</h3>
+                <p>{error}</p>
+                <Button variant="outline" size="sm" onClick={fetchData} className="mt-4">
+                    Try Again
+                </Button>
             </div>
         );
     }

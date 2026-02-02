@@ -24,7 +24,7 @@ const INDUSTRY_DATA: Record<string, IndustryData> = {
   technology: {
     title: "Technology & Software Development",
     description:
-      "Fast-growing Ugandan and Pan-African startups recruit engineers who can ship features quickly, analyse data, and explain insights to business teams.",
+      "Fast-growing startups and scale-ups recruit engineers who can ship features quickly, analyse data, and explain insights to business teams.",
     highlights: [
       {
         organisation: "Andela Kampala",
@@ -34,8 +34,8 @@ const INDUSTRY_DATA: Record<string, IndustryData> = {
       },
       {
         organisation: "Hamwe East Africa",
-        location: "Kampala, Uganda",
-        program: "Product analytics internship supporting agritech dashboards for SACCO partners.",
+        location: "Remote across Africa",
+        program: "Product analytics internship supporting agritech dashboards for partner organisations.",
       },
       {
         organisation: "Innovation Village",
@@ -45,10 +45,10 @@ const INDUSTRY_DATA: Record<string, IndustryData> = {
     ],
     skills: ["JavaScript/TypeScript", "SQL & data visualisation", "Product thinking", "Agile collaboration"],
     keywords: [
-      "top technology internships uganda",
-      "software engineering placements kampala",
-      "ugandan startups hiring interns",
-      "product design apprenticeship uganda",
+      "top technology internships",
+      "software engineering placements",
+      "startups hiring interns",
+      "product design apprenticeship",
     ],
   },
   healthcare: {
@@ -57,27 +57,27 @@ const INDUSTRY_DATA: Record<string, IndustryData> = {
       "Hospitals and healthtech NGOs need interns who combine clinical knowledge with patient empathy and digital record skills.",
     highlights: [
       {
-        organisation: "Mulago National Referral Hospital",
-        location: "Kampala, Uganda",
+        organisation: "Regional Teaching Hospital",
+        location: "Multiple locations worldwide",
         program: "Clinical rotations for nursing, pharmacy, and biomedical students with mentorship from senior consultants.",
       },
       {
-        organisation: "Rocket Health",
-        location: "Kampala, Uganda",
+        organisation: "Telehealth Provider",
+        location: "Remote",
         program: "Telemedicine coordination internship supporting remote consultations and laboratory logistics.",
       },
       {
-        organisation: "Living Goods",
-        location: "Wakiso & Mukono",
+        organisation: "Community Health NGO",
+        location: "Global field sites",
         program: "Community health internship focused on data quality, digital tools, and field research.",
       },
     ],
     skills: ["Patient communication", "EMR systems", "Public health analytics", "Community outreach"],
     keywords: [
-      "healthcare internships uganda",
-      "nursing student placements kampala",
-      "telemedicine internships east africa",
-      "public health attachments uganda",
+      "healthcare internships",
+      "nursing student placements",
+      "telemedicine internships",
+      "public health attachments",
     ],
   },
   finance: {
@@ -86,8 +86,8 @@ const INDUSTRY_DATA: Record<string, IndustryData> = {
       "Banks, fintechs, and consultancies offer rotational internships that strengthen quantitative analysis, compliance, and customer engagement.",
     highlights: [
       {
-        organisation: "Stanbic Bank Uganda",
-        location: "Kampala & regional branches",
+        organisation: "International Bank",
+        location: "Multiple regions",
         program: "Graduate trainee stream covering corporate banking, risk, and digital innovation.",
       },
       {
@@ -96,17 +96,17 @@ const INDUSTRY_DATA: Record<string, IndustryData> = {
         program: "Fintech operations internship focusing on compliance reviews and customer success operations.",
       },
       {
-        organisation: "Deloitte Uganda",
-        location: "Kampala, Uganda",
-        program: "Audit and financial advisory internship with exposure to blue-chip clients in East Africa.",
+        organisation: "Global Consulting Firm",
+        location: "Worldwide offices",
+        program: "Audit and financial advisory internship with exposure to blue-chip clients.",
       },
     ],
     skills: ["Financial modelling", "Excel & Power BI", "Regulatory compliance", "Customer success"],
     keywords: [
-      "finance internships uganda",
-      "bank graduate trainee programmes uganda",
-      "fintech placements east africa",
-      "audit internship kampala",
+      "finance internships",
+      "bank graduate trainee programmes",
+      "fintech placements",
+      "audit internship",
     ],
   },
 };
@@ -118,15 +118,15 @@ const fallbackIndustry: IndustryData = {
   highlights: [
     {
       organisation: "PlacementBridge Community",
-      location: "Nationwide",
-      program: "Subscribe to our job alerts for curated internships, fellowships, and apprenticeships across Uganda.",
+      location: "Worldwide",
+      program: "Subscribe to our job alerts for curated internships, fellowships, and apprenticeships worldwide.",
     },
   ],
   skills: ["Career exploration", "Networking", "Professional branding"],
   keywords: [
-    "internships uganda",
-    "graduate trainee opportunities uganda",
-    "placements in uganda",
+    "internships",
+    "graduate trainee opportunities",
+    "placements",
   ],
 };
 
@@ -136,7 +136,7 @@ const formatIndustryParam = (param?: string) => {
 };
 
 const NormalisedIndustryTitle = (param?: string) => {
-  if (!param) return "Uganda";
+  if (!param) return "Worldwide";
   return param
     .split("-")
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
@@ -154,7 +154,7 @@ const TopInternships = () => {
 
   const locationName = NormalisedIndustryTitle(industry);
   const pageTitle = `Top internships in ${locationName} | PlacementBridge`;
-  const pageDescription = `${data.title} internships you can apply to in Uganda. Discover programmes offering mentorship, real projects, and pathways to full-time roles.`;
+  const pageDescription = `${data.title} internships you can apply to globally. Discover programmes offering mentorship, real projects, and pathways to full-time roles.`;
 
   return (
     <>
@@ -162,7 +162,7 @@ const TopInternships = () => {
         title={pageTitle}
         description={pageDescription}
         keywords={[`top internships in ${locationName}`, ...data.keywords]}
-        canonical={`/insights/top-internships/${industry ?? ""}`}
+        canonical={`https://www.placementbridge.org/insights/top-internships/${industry ?? ""}`}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "ItemList",
@@ -180,6 +180,7 @@ const TopInternships = () => {
             },
           })),
         }}
+        siteName="All jobs in one place"
       />
       <main className="py-16">
         <div className="container mx-auto px-4">
@@ -233,7 +234,7 @@ const TopInternships = () => {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  Subscribe to PlacementBridge alerts, monitor LinkedIn job posts, and follow sector associations. Attend career fairs hosted by innovation hubs such as Refactory, Design Hub Kampala, or Industry-specific accelerators.
+                  Subscribe to PlacementBridge alerts, monitor LinkedIn job posts, and follow sector associations. Attend career fairs hosted by innovation hubs and industry accelerators in your region.
                 </p>
                 <Separator />
                 <p>

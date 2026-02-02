@@ -15,6 +15,7 @@ export default async function (req: Request) {
     const { data, error } = await supabase
       .from('listings')
       .select('*, companies:companies(id, name)')
+      .eq('status', 'published')
       .order('is_featured', { ascending: false })
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });

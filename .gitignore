@@ -1,3 +1,29 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node artifacts
+node_modules/
+dist/
+.bun/
+bun.lockb
+
+# Vite cache
+.vite/
+
+# Supabase
+supabase/.temp/
+supabase/.cache/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
 node_modules/
 .env
 .env.local

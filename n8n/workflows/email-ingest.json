@@ -1,0 +1,418 @@
+{
+  "name": "Email Newsletter Ingestion",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "id": "schedule",
+      "name": "Every 2 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "mailbox": "INBOX",
+        "returnAll": false,
+        "limit": 50,
+        "options": {
+          "markAsRead": true,
+          "searchText": "job OR vacancy OR hiring OR internship OR opportunity"
+        }
+      },
+      "id": "imap-fetch",
+      "name": "Fetch Job Emails (IMAP)",
+      "type": "n8n-nodes-base.imap",
+      "typeVersion": 1,
+      "position": [450, 200],
+      "credentials": {
+        "imap": {
+          "id": "{{$env.IMAP_CREDENTIAL_ID}}",
+          "name": "Job Inbox IMAP"
+        }
+      },
+      "notes": "Configure IMAP credentials in n8n. Use a dedicated email like jobs@yourdomain.com"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": false,
+        "limit": 50,
+        "filters": {
+          "labelIds": ["INBOX"],
+          "q": "is:unread (job OR vacancy OR hiring OR internship)"
+        },
+        "options": {
+          "format": "full"
+        }
+      },
+      "id": "gmail-fetch",
+      "name": "Fetch Job Emails (Gmail)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [450, 400],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "{{$env.GMAIL_CREDENTIAL_ID}}",
+          "name": "CareerCompass Gmail"
+        }
+      },
+      "notes": "Alternative: Use Gmail API with OAuth. Enable Gmail API in GCP console."
+    },
+    {
+      "parameters": {},
+      "id": "merge-emails",
+      "name": "Merge Email Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [650, 300],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize email data from different sources\nconst items = $input.all();\nconst normalized = [];\n\nfor (const item of items) {\n  const email = item.json;\n  \n  // Handle IMAP format\n  if (email.from && email.subject) {\n    normalized.push({\n      json: {\n        messageId: email.messageId || email.id || `${Date.now()}-${Math.random()}`,\n        from: typeof email.from === 'object' ? email.from.text : email.from,\n        to: typeof email.to === 'object' ? email.to.text : email.to,\n        subject: email.subject,\n        textContent: email.text || email.textPlain || '',\n        htmlContent: email.html || email.textHtml || '',\n        receivedAt: email.date || new Date().toISOString(),\n        source: 'imap'\n      }\n    });\n  }\n  \n  // Handle Gmail format\n  if (email.payload && email.payload.headers) {\n    const headers = email.payload.headers;\n    const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';\n    \n    let textContent = '';\n    let htmlContent = '';\n    \n    // Extract body from parts\n    const extractBody = (parts) => {\n      for (const part of parts || []) {\n        if (part.mimeType === 'text/plain' && part.body?.data) {\n          textContent = Buffer.from(part.body.data, 'base64').toString('utf-8');\n        }\n        if (part.mimeType === 'text/html' && part.body?.data) {\n          htmlContent = Buffer.from(part.body.data, 'base64').toString('utf-8');\n        }\n        if (part.parts) {\n          extractBody(part.parts);\n        }\n      }\n    };\n    \n    if (email.payload.parts) {\n      extractBody(email.payload.parts);\n    } else if (email.payload.body?.data) {\n      textContent = Buffer.from(email.payload.body.data, 'base64').toString('utf-8');\n    }\n    \n    normalized.push({\n      json: {\n        messageId: email.id,\n        from: getHeader('From'),\n        to: getHeader('To'),\n        subject: getHeader('Subject'),\n        textContent,\n        htmlContent,\n        receivedAt: getHeader('Date') || new Date().toISOString(),\n        source: 'gmail'\n      }\n    });\n  }\n}\n\nreturn normalized;"
+      },
+      "id": "normalize-emails",
+      "name": "Normalize Email Format",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out emails we've already processed\nconst items = $input.all();\nconst filtered = [];\n\n// In production, check against database\n// For now, filter based on message ID format\nfor (const item of items) {\n  const email = item.json;\n  \n  // Skip if no meaningful content\n  if (!email.subject || (!email.textContent && !email.htmlContent)) {\n    continue;\n  }\n  \n  // Skip obvious non-job emails\n  const skipPatterns = [\n    /unsubscribe/i,\n    /password reset/i,\n    /verify your email/i,\n    /order confirmation/i,\n    /receipt/i,\n    /shipping/i\n  ];\n  \n  const subject = email.subject.toLowerCase();\n  let skip = false;\n  \n  for (const pattern of skipPatterns) {\n    if (pattern.test(subject)) {\n      skip = true;\n      break;\n    }\n  }\n  \n  if (!skip) {\n    filtered.push(item);\n  }\n}\n\nreturn filtered;"
+      },
+      "id": "filter-duplicates",
+      "name": "Filter Duplicates & Noise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "id": "batch",
+      "name": "Process in Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/functions/v1/parse-email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_ANON_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "messageId",
+              "value": "={{ $json.messageId }}"
+            },
+            {
+              "name": "from",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "to",
+              "value": "={{ $json.to }}"
+            },
+            {
+              "name": "subject",
+              "value": "={{ $json.subject }}"
+            },
+            {
+              "name": "textContent",
+              "value": "={{ $json.textContent }}"
+            },
+            {
+              "name": "htmlContent",
+              "value": "={{ $json.htmlContent }}"
+            },
+            {
+              "name": "receivedAt",
+              "value": "={{ $json.receivedAt }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "call-parse-email",
+      "name": "Call parse-email Edge Function",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1450, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect results for summary\nconst items = $input.all();\nlet totalExtracted = 0;\nlet totalInserted = 0;\nlet errors = 0;\n\nfor (const item of items) {\n  const result = item.json;\n  if (result.error) {\n    errors++;\n  } else {\n    totalExtracted += result.jobs_extracted || 0;\n    totalInserted += result.jobs_inserted || 0;\n  }\n}\n\nreturn [{\n  json: {\n    emails_processed: items.length,\n    jobs_extracted: totalExtracted,\n    jobs_inserted: totalInserted,\n    errors,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "aggregate-results",
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.jobs_inserted }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "id": "check-new-jobs",
+      "name": "New Jobs Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.SUPABASE_URL}}/functions/v1/match-notify",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "apikey",
+              "value": "={{$env.SUPABASE_ANON_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"trigger\": \"email_ingestion\",\n  \"jobs_inserted\": {{ $json.jobs_inserted }}\n}"
+      },
+      "id": "trigger-matching",
+      "name": "Trigger Matching Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2050, 200]
+    },
+    {
+      "parameters": {
+        "channel": "#jobs-ingestion",
+        "text": "📧 Email Ingestion Complete\n• Emails processed: {{ $json.emails_processed }}\n• Jobs extracted: {{ $json.jobs_extracted }}\n• Jobs inserted: {{ $json.jobs_inserted }}\n• Errors: {{ $json.errors }}",
+        "otherOptions": {}
+      },
+      "id": "notify-slack",
+      "name": "Notify Slack (Optional)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [2050, 400],
+      "credentials": {
+        "slackApi": {
+          "id": "{{$env.SLACK_CREDENTIAL_ID}}",
+          "name": "CareerCompass Slack"
+        }
+      },
+      "disabled": true,
+      "notes": "Enable and configure Slack credentials for notifications"
+    },
+    {
+      "parameters": {},
+      "id": "end",
+      "name": "No New Jobs",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [2050, 350]
+    }
+  ],
+  "connections": {
+    "Every 2 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch Job Emails (IMAP)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Job Emails (Gmail)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Job Emails (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Merge Email Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Job Emails (Gmail)": {
+      "main": [
+        [
+          {
+            "node": "Merge Email Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Email Sources": {
+      "main": [
+        [
+          {
+            "node": "Normalize Email Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Email Format": {
+      "main": [
+        [
+          {
+            "node": "Filter Duplicates & Noise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Duplicates & Noise": {
+      "main": [
+        [
+          {
+            "node": "Process in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process in Batches": {
+      "main": [
+        [
+          {
+            "node": "Call parse-email Edge Function",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aggregate Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call parse-email Edge Function": {
+      "main": [
+        [
+          {
+            "node": "Process in Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "node": "New Jobs Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Jobs Found?": {
+      "main": [
+        [
+          {
+            "node": "Trigger Matching Workflow",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Slack (Optional)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No New Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "ingestion"
+    },
+    {
+      "name": "email"
+    }
+  ]
+}

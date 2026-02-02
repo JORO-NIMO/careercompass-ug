@@ -139,6 +139,49 @@ export async function fetchAdminListings(): Promise<AdminListing[]> {
   return (data || []) as AdminListing[];
 }
 
+export async function fetchDraftListings(): Promise<AdminListing[]> {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*, companies:companies(id, name)')
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('fetchDraftListings error:', error);
+    throw new Error(error.message || 'Failed to load draft listings');
+  }
+
+  return (data || []) as AdminListing[];
+}
+
+export async function bulkPublishListings(ids: string[], opts?: { autoFeatureByType?: boolean; featureTypes?: string[] }): Promise<void> {
+  // Delegate to server-side endpoint to avoid client-side schema typing issues
+  await bulkPublishListingsViaApi(ids, { autoFeatureByType: opts?.autoFeatureByType, featureTypes: opts?.featureTypes });
+}
+
+/** Server-side bulk publish via admin API with audit logging. */
+export async function bulkPublishListingsViaApi(ids: string[], opts?: { autoFeatureByType?: boolean; featureTypes?: string[], companyAssignments?: Record<string, string | null> }): Promise<{ publishedCount: number; featuredCount: number } | void> {
+  if (!Array.isArray(ids) || ids.length === 0) return;
+  const payload = {
+    ids,
+    autoFeatureByType: opts?.autoFeatureByType ?? false,
+    featureTypes: (opts?.featureTypes && opts.featureTypes.length > 0) ? opts!.featureTypes : undefined,
+    companyAssignments: opts?.companyAssignments,
+  };
+
+  const response = await authorizedFetch('/api/admin/listings/bulk-publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const { success, data, error } = await parseJsonResponse<{ publishedCount: number; featuredCount: number }>(response);
+  if (!success) {
+    throw new Error(error || 'Bulk publish failed');
+  }
+  return data;
+}
+
 export async function createListing(payload: {
   title: string;
   description: string;
@@ -155,6 +198,7 @@ export async function createListing(payload: {
   status?: 'draft' | 'published' | 'archived';
   expires_at?: string;
   logo_url?: string;
+  image_url?: string;
   banner_urls?: string[];
 }): Promise<Listing> {
   const { data, error } = await supabase
@@ -175,6 +219,7 @@ export async function createListing(payload: {
       status: payload.status ?? 'published',
       expires_at: payload.expires_at,
       logo_url: payload.logo_url,
+      image_url: payload.image_url,
       banner_urls: payload.banner_urls,
     })
     .select('*')
@@ -211,6 +256,7 @@ export async function updateListing(id: string, payload: {
   status?: 'draft' | 'published' | 'archived';
   expires_at?: string;
   logo_url?: string;
+  image_url?: string;
   banner_urls?: string[];
 }): Promise<Listing> {
   const { data, error } = await supabase
@@ -231,6 +277,7 @@ export async function updateListing(id: string, payload: {
       status: payload.status,
       expires_at: payload.expires_at,
       logo_url: payload.logo_url,
+      image_url: payload.image_url,
       banner_urls: payload.banner_urls,
     })
     .eq('id', id)

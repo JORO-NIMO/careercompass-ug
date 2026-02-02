@@ -13,7 +13,7 @@ import { PlatformNews } from "@/components/PlatformNews";
 const AUDIENCE_SEGMENTS = [
   {
     title: "I'm building my career",
-    description: "Explore internships, fellowships, and learning paths curated for students and graduates across Uganda.",
+    description: "Explore internships, fellowships, and learning paths curated for students and graduates across the world.",
     cta: "Browse opportunities",
     href: "/find-placements",
   },
@@ -37,28 +37,35 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="PlacementBridge Uganda | Discover Placements, Internships, and Career Growth"
-        description="PlacementBridge connects students, graduates, and employers to verified placements, CV guides, interview tips, and industry learning resources tailored to the local hiring landscape."
+        title="PlacementBridge | Discover a million Placements, Internships, and Career Growth"
+        description="PlacementBridge connects skilled students, graduates, and employers to verified placements, CV guides, interview tips, and industry learning resources tailored to the local hiring landscape."
         keywords={[
-          "Uganda internships platform",
-          "graduate placements Uganda",
-          "hire interns Uganda",
-          "career resources Uganda",
-          "Uganda CV writing guide",
-          "Uganda interview tips",
-          "learning hub Uganda",
-          "career trends Uganda",
-          "talent marketplace Uganda",
-          "student mentorship Uganda",
+          "internships platform",
+          "graduate placements around me",
+          "hire interns",
+          "career resources",
+          "CV writing guide",
+          "interview tips",
+          "learning hub",
+          "career trends",
+          "talent marketplace",
+          "student mentorship",
+          "hire employees",
+          "jobs around",
+          "new job posts",
+          "AI powered opportunity engine",
+          "Interns",
+          "talent",
+
         ]}
-        canonical="/"
+        canonical="https://www.placementbridge.org/"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "PlacementBridge",
           url: `${baseUrl}/`,
           description:
-            "PlacementBridge connects students, graduates, and employers to placements, talent, and tailored career resources across the country.",
+            "PlacementBridge connects students, graduates, and employers to placements, talent, and tailored career resources across the globe.",
           publisher: {
             "@type": "Organization",
             name: "PlacementBridge",
@@ -69,7 +76,22 @@ const Index = () => {
             target: `${baseUrl}/find-placements?keywords={search_term_string}`,
             "query-input": "required name=search_term_string",
           },
+          // Strengthen brand entity with Organization markup
+          organization: {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "PlacementBridge",
+            url: baseUrl,
+            logo: `${baseUrl}/assets/og-image.png`,
+            sameAs: [
+              "https://twitter.com/PlacementBridge",
+              "https://www.linkedin.com/company/placementbridge",
+              "https://www.facebook.com/PlacementBridge",
+              // Add authoritative profiles if available (Crunchbase/Wikipedia)
+            ],
+          },
         }}
+        siteName="All jobs in one place"
       />
       <main className="flex-grow">
         <HeroSection />

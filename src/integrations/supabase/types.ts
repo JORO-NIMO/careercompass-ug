@@ -273,6 +273,7 @@ export type Database = {
           application_email: string | null
           application_url: string | null
           region: string | null
+          image_url: string | null
           created_at: string
           updated_at: string
         }
@@ -290,6 +291,7 @@ export type Database = {
           application_email?: string | null
           application_url?: string | null
           region?: string | null
+          image_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -307,6 +309,7 @@ export type Database = {
           application_email?: string | null
           application_url?: string | null
           region?: string | null
+          image_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -488,6 +491,45 @@ export type Database = {
           created_at?: string | null
           target_role?: string | null
           created_by?: string | null
+        }
+        Relationships: []
+      }
+      learning_resources: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          type: string
+          url: string | null
+          image_url: string | null
+          is_active: boolean
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          type: string
+          url?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          type?: string
+          url?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          display_order?: number
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -15,7 +15,7 @@ const PrivacyPolicy = () => {
               Privacy Policy & Data Protection
             </h1>
             <p className="text-xl text-muted-foreground">
-              Compliance with the Data Protection and Privacy Act (2019)
+              Our privacy practices align with global data protection principles
             </p>
             <p className="text-sm text-muted-foreground/80">
               Part of the PlacementBridge Legal Framework | Schedule B
@@ -59,37 +59,30 @@ const PrivacyPolicy = () => {
                 <h2 className="text-3xl font-bold border-b pb-2">Schedule B: Privacy Policy & Data Agreement</h2>
 
                 <div id="controller" className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                  <h3 className="font-semibold text-lg mb-2">Data Controller Registration</h3>
+                  <h3 className="font-semibold text-lg mb-2">Data Controller Status</h3>
                   <p className="text-sm">
-                    "PlacementBridge is registered with the <strong>Personal Data Protection Office (PDPO)</strong> under NITA-U.
-                    Our registration number <strong>[PDPO-PB-2025-X09]</strong> confirms our commitment to the
-                    <strong>Data Protection and Privacy Act (2019)</strong>."
+                    PlacementBridge acts as a data controller for account information and a data processor for application content. We follow recognized international frameworks and assess applicable local legal requirements in regions where we operate.
                   </p>
                 </div>
 
                 <div id="legal-basis" className="space-y-2">
                   <h3 className="text-xl font-semibold">Legal Basis for Processing</h3>
                   <p className="text-muted-foreground">
-                    We process data based on <strong>Consent (Section 7)</strong> and <strong>Contractual Necessity (Section 8)</strong> for
-                    the purpose of facilitating internships. When you apply for a job, processing is necessary to fulfill the pre-contractual
-                    measures requested by you.
+                    We process data primarily on the basis of consent and contractual necessity to facilitate applications and platform features. When you apply for a role, processing is necessary to fulfill pre-contractual measures requested by you.
                   </p>
                 </div>
 
                 <div id="sensitive-data" className="space-y-2">
                   <h3 className="text-xl font-semibold">Sensitive Personal Data</h3>
                   <p className="text-muted-foreground italic">
-                    "We do not collect 'Special Personal Data' (as defined in Section 9 of the DPPA) such as political opinion or
-                    religious belief unless strictly required for specific affirmative action placements, in which case explicit written consent is obtained."
+                    We do not collect special categories of personal data (such as political opinion or religious belief) unless strictly required for a specific programme, in which case explicit consent will be obtained.
                   </p>
                 </div>
 
                 <div id="localization" className="space-y-2">
-                  <h3 className="text-xl font-semibold">Data Localization & Transfer</h3>
+                  <h3 className="text-xl font-semibold">Data Storage & Transfer</h3>
                   <p className="text-muted-foreground">
-                    "In compliance with <strong>Regulation 30 of the Data Protection and Privacy Regulations (2021)</strong>, all personal data is
-                    stored on secure servers. Any cross-border transfer is only to jurisdictions with 'adequate' protection or via
-                    Standard Contractual Clauses."
+                    Personal data is stored on secure servers. Any cross-border transfer is carried out with appropriate safeguards and only to jurisdictions offering adequate protection or under standard contractual mechanisms.
                   </p>
                 </div>
               </section>
@@ -98,7 +91,7 @@ const PrivacyPolicy = () => {
               <section id="schedule-h" className="space-y-4 scroll-mt-24">
                 <h2 className="text-3xl font-bold border-b pb-2">Schedule H: Data Subject Rights Manual</h2>
                 <p>
-                  You have the following rights under Ugandan Law:
+                  You have the following rights under applicable data protection laws in your jurisdiction:
                 </p>
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card>
@@ -193,7 +186,7 @@ const PrivacyPolicy = () => {
                   <p className="font-semibold">Data Protection Officer</p>
                   <p>PlacementBridge Legal Team</p>
                   <p>Email: <a href="mailto:admin@placementbridge.org" className="text-primary underline">admin@placementbridge.org</a></p>
-                  <p>Address: Kampala, Uganda</p>
+                  <p>Address: Global operations</p>
                 </div>
               </section>
 

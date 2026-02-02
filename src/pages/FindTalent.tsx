@@ -22,7 +22,7 @@ const BASE_FIELD_OPTIONS = [
   "Hospitality",
 ];
 
-const BASE_LOCATION_OPTIONS = ["Kampala", "Entebbe", "Mbarara", "Jinja", "Gulu", "Mbale", "Fort Portal", "Arua"];
+const BASE_LOCATION_OPTIONS = ["Remote", "New York", "London", "Nairobi", "Lagos", "Bangalore", "São Paulo", "Berlin"];
 
 const BASE_EXPERIENCE_OPTIONS = [
   "Emerging Talent",
@@ -158,7 +158,7 @@ const FindTalent = () => {
           <Badge className="mb-4" variant="secondary">For Organizations</Badge>
           <h1 className="text-4xl font-bold mb-4">Find Talent</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Search for qualified candidates across Uganda. Connect with skilled professionals ready for their next opportunity.
+            Search for qualified candidates around the world. Connect with skilled professionals ready for their next opportunity.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
             <Button variant="outline" asChild>
@@ -245,7 +245,7 @@ const FindTalent = () => {
               </Select>
               <Select value={selectedLocation} onValueChange={setSelectedLocation}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Location" />
+                  <SelectValue placeholder="Town / City" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Locations</SelectItem>

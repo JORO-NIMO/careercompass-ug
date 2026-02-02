@@ -68,7 +68,8 @@ const Updates = () => {
             <SEO
                 title="Latest Platform Updates & Announcements | PlacementBridge"
                 description="Stay updated with the latest news, placement opportunities, and platform announcements from PlacementBridge."
-                canonical="/updates"
+                canonical="https://www.placementbridge.org/updates"
+                siteName="All jobs in one place"
             />
 
             <section className="bg-gradient-to-br from-primary via-primary-glow to-primary-dark text-primary-foreground py-16">

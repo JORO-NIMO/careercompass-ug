@@ -16,7 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } from 'lucide-react';
 import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
 import { createPlacement } from '@/services/placementsService';
-import { companyRegistrationSchema } from '@/lib/validations';
+import { companyRegistrationSchema, type CompanyRegistrationInput } from '@/lib/validations';
 import { resolveApiUrl } from '@/lib/api-client';
 import { LocationPicker } from '@/components/ui/LocationPicker';
 
@@ -236,12 +236,13 @@ const ForCompanies = () => {
     if (registeringCompany) {
       return;
     }
-    const parsed = companyRegistrationSchema.safeParse({
+    const toValidate = {
       name: companyForm.name.trim(),
       location: companyForm.location.trim(),
       website_url: companyForm.website_url.trim() || undefined,
       contact_email: companyForm.contact_email.trim() ? companyForm.contact_email.trim() : undefined,
-    });
+    };
+    const parsed = companyRegistrationSchema.safeParse(toValidate);
 
     if (!parsed.success) {
       const firstError = parsed.error.errors[0]?.message ?? 'Please review the form inputs.';
@@ -253,9 +254,15 @@ const ForCompanies = () => {
       return;
     }
 
+    const input: CompanyRegistrationInput = parsed.data;
     try {
       setRegisteringCompany(true);
-      const { company: savedCompany, verification } = await registerCompany(parsed.data);
+      const { company: savedCompany, verification } = await registerCompany({
+        name: companyForm.name.trim(),
+        location: companyForm.location.trim(),
+        website_url: parsed.data.website_url,
+        contact_email: parsed.data.contact_email,
+      });
       setCompany(savedCompany);
       setVerificationMeta(verification);
       setCompanyForm({
@@ -349,7 +356,6 @@ const ForCompanies = () => {
         application_email: applicationMethod === 'email' ? applicationEmail.trim() : undefined,
         application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
         region: region === 'other' ? customRegion.trim() : region,
-        industry: industry,
         logo_url: listingLogoUrl || undefined,
       });
 
@@ -444,10 +450,13 @@ const ForCompanies = () => {
   // Geolocation logic is now handled by LocationPicker component
 
   const regionOptions = [
-    { value: 'central', label: 'Central Region' },
-    { value: 'eastern', label: 'Eastern Region' },
-    { value: 'northern', label: 'Northern Region' },
-    { value: 'western', label: 'Western Region' },
+    { value: 'global', label: 'Global' },
+    { value: 'africa', label: 'Africa' },
+    { value: 'americas', label: 'Americas' },
+    { value: 'asia', label: 'Asia' },
+    { value: 'europe', label: 'Europe' },
+    { value: 'oceania', label: 'Oceania' },
+    { value: 'middle_east', label: 'Middle East' },
   ];
 
   const industryOptions = [
@@ -462,23 +471,23 @@ const ForCompanies = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Hire Interns and Early Talent in Uganda | PlacementBridge for Companies"
-        description="Publish internships and early-career roles across Uganda with instant moderation, verified companies, and built-in talent sourcing tools."
+        title="Hire Interns and Early Talent Worldwide | PlacementBridge for Companies"
+        description="Publish internships and early-career roles globally with instant moderation, verified companies, and built-in talent sourcing tools."
         keywords={[
-          'post internships Uganda',
-          'hire graduates Kampala',
-          'Uganda early talent marketplace',
+          'post internships',
+          'hire graduates',
+          'early talent marketplace',
           'student placements employers',
         ]}
-        canonical="/for-companies"
+        canonical="https://www.placementbridge.org/for-companies"
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'Service',
           name: 'PlacementBridge Employer Portal',
           url: `${baseUrl}/for-companies`,
           areaServed: {
-            '@type': 'Country',
-            name: 'Uganda',
+            '@type': 'Place',
+            name: 'Worldwide',
           },
           provider: {
             '@type': 'Organization',
@@ -487,6 +496,7 @@ const ForCompanies = () => {
           },
           serviceType: 'Internship and early-career recruitment',
         }}
+        siteName="All jobs in one place"
       />
       {/* Header and Footer are now global in App.tsx */}
       <main className="py-16">
@@ -494,7 +504,7 @@ const ForCompanies = () => {
           <section className="max-w-3xl mx-auto text-center space-y-6">
             <h1 className="text-4xl md:text-5xl font-bold">Post an Opportunity</h1>
             <p className="text-lg text-muted-foreground">
-              Share your internships, fellowships, apprenticeships, and roles with thousands of motivated learners and professionals across Uganda. Provide the details below and your opportunity will go live instantly while our team monitors for anything suspicious.
+              Share your internships, fellowships, apprenticeships, and roles with thousands of motivated learners and professionals across the globe. Provide the details below and your opportunity will go live instantly while our team monitors for anything suspicious.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button size="lg" onClick={scrollToForm} disabled={submitting}>
@@ -582,7 +592,7 @@ const ForCompanies = () => {
                             id="company-name"
                             value={companyForm.name}
                             onChange={(event) => setCompanyForm((prev) => ({ ...prev, name: event.target.value }))}
-                            placeholder="e.g. Kampala Tech Hub"
+                            placeholder="e.g. Acme Innovations"
                             required
                             disabled={registeringCompany}
                           />
@@ -820,7 +830,7 @@ const ForCompanies = () => {
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-2">
                     {['Organization', 'Opportunity', 'Application'].map((step, index) => (
-                      <div kely={step} className={`flex flex-col items-center ${index + 1 <= currentStep ? 'text-primary' : 'text-muted-foreground'}`}>
+                      <div key={step} className={`flex flex-col items-center ${index + 1 <= currentStep ? 'text-primary' : 'text-muted-foreground'}`}>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 mb-1 ${index + 1 <= currentStep ? 'border-primary bg-primary/10 font-bold' : 'border-muted bg-muted/20'}`}>
                           {index + 1}
                         </div>
@@ -862,8 +872,9 @@ const ForCompanies = () => {
                                 const url = await uploadListingLogo(file);
                                 setListingLogoUrl(url);
                                 toast({ title: "Logo Uploaded", description: "Logo ready for publication." });
-                              } catch (err: any) {
-                                toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
+                              } catch (err: unknown) {
+                                const message = err instanceof Error ? err.message : 'Unknown error';
+                                toast({ title: "Upload Failed", description: message, variant: "destructive" });
                               } finally {
                                 setSubmitting(false);
                               }
@@ -933,10 +944,10 @@ const ForCompanies = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Region</Label>
+                          <Label>Region or Delivery Mode</Label>
                           <Select value={region || undefined} onValueChange={setRegion}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select region" />
+                              <SelectValue placeholder="Select region or mode" />
                             </SelectTrigger>
                             <SelectContent>
                               {regionOptions.map((option) => (
@@ -973,7 +984,7 @@ const ForCompanies = () => {
                         <Label htmlFor="stipend">Salary / Stipend Range</Label>
                         <Input
                           id="stipend"
-                          placeholder="e.g. 500,000 - 800,000 UGX/month"
+                          placeholder="e.g. 1000 - 1500 USD/month or Competitive"
                           value={stipend}
                           onChange={(e) => setStipend(e.target.value)}
                         />

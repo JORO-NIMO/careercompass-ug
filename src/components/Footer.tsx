@@ -62,7 +62,7 @@ const Footer = () => {
               <span className="text-lg font-bold text-foreground">PlacementBridge</span>
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
-              Connecting Uganda's learners, professionals, and organizations with opportunities.
+              One tap, a million opportunities
             </p>
             <div className="space-y-2">
               <p className="text-xs font-medium text-foreground">Subscribe for updates</p>
@@ -129,22 +129,22 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-3 h-3 text-primary" />
-                <span>Anywhere in Uganda</span>
+                <span>Around the World</span>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <a href="https://wa.me/256726128513" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#25D366] transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
                   <MessageCircle className="w-4 h-4" />
                   <span className="sr-only">WhatsApp Us</span>
                 </a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#0077b5] transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
+                <a href="https://linkedin.com/company/placementbridge" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#0077b5] transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
                   <Linkedin className="w-4 h-4" />
                   <span className="sr-only">LinkedIn</span>
                 </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
+                <a href="https://x.com/placementbridge" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
                   <Twitter className="w-4 h-4" />
-                  <span className="sr-only">X (Twitter)</span>
+                  <span className="sr-only">X</span>
                 </a>
-                <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#ff0050] transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
+                <a href="https://tiktok.com/placementbridge" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-[#ff0050] transition-colors p-1.5 bg-muted rounded-full hover:bg-muted/80">
                   <Video className="w-4 h-4" />
                   <span className="sr-only">TikTok</span>
                 </a>

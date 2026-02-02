@@ -6,12 +6,19 @@ export type AnalyticsActionName =
   | 'mentorship.booked'
   | 'resume.download'
   | 'search.query'
-  | 'listing.boosted';
+  | 'listing.boosted'
+  | 'listing.flagged'
+  | 'listing.cleared'
+  | 'listing.deleted';
 
 export type AnalyticsEventName =
   | 'user.login'
   | 'page.view'
-  | `action.${AnalyticsActionName}`;
+  | `action.${AnalyticsActionName}`
+  | 'assistant.open'
+  | 'assistant.ask'
+  | 'assistant.response'
+  | 'assistant.error';
 
 type SerializableContext = Record<string, JsonValue>;
 
@@ -43,6 +50,31 @@ type AnalyticsEventPropsMap = {
     boost_id: string;
     poster_id: string;
   };
+  'action.listing.flagged': {
+    listing_id: string;
+    reason?: string;
+    user_id?: string;
+  };
+  'action.listing.cleared': {
+    listing_id: string;
+    user_id?: string;
+  };
+  'action.listing.deleted': {
+    listing_id: string;
+    user_id?: string;
+  };
+  'assistant.open': { page: string; suggestions_count?: number };
+  'assistant.ask': { page: string; question: string; source?: 'manual' | 'suggestion' };
+  'assistant.response': {
+    page: string;
+    provider?: string;
+    model?: string;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+    elapsed_ms?: number;
+  };
+  'assistant.error': { page: string; error?: string };
 };
 
 export type AnalyticsEventPayload<Name extends AnalyticsEventName> = AnalyticsEventPropsMap[Name];

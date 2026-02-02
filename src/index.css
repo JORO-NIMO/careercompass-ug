@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* PlacementBridge Design System - Green theme for Uganda opportunity platform */
+/* PlacementBridge Design System - Green theme for the global opportunity platform */
 
 @layer base {
   :root {
@@ -117,7 +117,8 @@
   }
 
   html {
-     font-size: 112.5%; /* Scales 1rem to 18px (default is usually 16px) */
+      font-size: 112.5%; /* Scales 1rem to 18px (default is usually 16px) */
+      scroll-behavior: smooth; /* Smooth scrolling for in-page anchors */
   }
 
   body {
@@ -128,3 +129,4 @@
       linear-gradient(180deg, hsla(146, 45%, 97%, 0.85), hsla(120, 33%, 98%, 0.9));
   }
 }
+

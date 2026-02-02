@@ -105,7 +105,7 @@ describe('placementSchema', () => {
             position_title: 'Software Developer Intern',
             company_name: 'Tech Corp',
             description: 'This is a description of the internship position.',
-            region: 'Kampala',
+            region: 'Remote',
             industry: 'Technology',
             available_slots: 5,
         });
@@ -117,7 +117,7 @@ describe('placementSchema', () => {
             position_title: 'Software Developer Intern',
             company_name: 'Tech Corp',
             description: 'This is a description of the internship position.',
-            region: 'Kampala',
+            region: 'Remote',
             industry: 'Technology',
             available_slots: -1,
         });
@@ -129,7 +129,7 @@ describe('paymentIntentSchema', () => {
     it('should validate correct payment data', () => {
         const result = paymentIntentSchema.safeParse({
             amount_cents: 5000,
-            currency: 'UGX',
+            currency: 'USD',
             entity_id: '123e4567-e89b-12d3-a456-426614174000',
             entity_type: 'listing',
             boost_duration_days: 7,
@@ -150,7 +150,7 @@ describe('paymentIntentSchema', () => {
     it('should reject boost duration over 90 days', () => {
         const result = paymentIntentSchema.safeParse({
             amount_cents: 5000,
-            currency: 'UGX',
+            currency: 'USD',
             entity_id: '123e4567-e89b-12d3-a456-426614174000',
             boost_duration_days: 91,
         });
@@ -162,7 +162,7 @@ describe('companyRegistrationSchema', () => {
     it('should validate correct company data', () => {
         const result = companyRegistrationSchema.safeParse({
             name: 'Acme Corp',
-            location: '123 Main Street, Kampala',
+            location: '123 Main Street, Global City',
             website_url: 'https://acme.com',
             contact_email: 'info@acme.com',
         });

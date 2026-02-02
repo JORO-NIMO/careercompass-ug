@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { searchBooks } from '@/services/openLibraryService';
 import { getCourseraCourses } from '@/services/courseraService';
+import { fetchLearningResources, type LearningResource } from '@/services/learningResourcesService';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ExternalLink, Image as ImageIcon, Video, FileText } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Book {
   key: string;
@@ -28,7 +32,20 @@ const LearningHub: React.FC = () => {
   const [query, setQuery] = useState('software engineering');
   const [books, setBooks] = useState<Book[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [adminResources, setAdminResources] = useState<LearningResource[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadAdminResources = async () => {
+      try {
+        const resources = await fetchLearningResources();
+        setAdminResources(resources);
+      } catch (error) {
+        console.error('Failed to load admin resources:', error);
+      }
+    };
+    loadAdminResources();
+  }, []);
 
   const runSearch = async () => {
     setLoading(true);
@@ -70,6 +87,59 @@ const LearningHub: React.FC = () => {
         </div>
       </header>
 
+      {adminResources.length > 0 && (
+        <section className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold tracking-tight">Curated Resources</h2>
+            <p className="text-muted-foreground">Handpicked toolkits, guides, and inspiration from our team.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {adminResources.map((resource) => (
+              <Card key={resource.id} className="overflow-hidden border-none bg-secondary/30 transition-all hover:bg-secondary/50">
+                {resource.image_url && (
+                  <div className="aspect-video w-full overflow-hidden">
+                    <img
+                      src={resource.image_url}
+                      alt={resource.title}
+                      className="h-full w-full object-cover transition-transform hover:scale-105"
+                    />
+                  </div>
+                )}
+                <CardHeader className="p-4 pb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      {resource.type === 'photo' && <ImageIcon className="h-4 w-4 text-primary" />}
+                      {resource.type === 'video' && <Video className="h-4 w-4 text-primary" />}
+                      {resource.type === 'link' && <ExternalLink className="h-4 w-4 text-primary" />}
+                      {resource.type === 'text' && <FileText className="h-4 w-4 text-primary" />}
+                      <CardTitle className="text-lg">{resource.title}</CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  {resource.description && (
+                    <p className="mb-4 text-sm text-muted-foreground line-clamp-2">
+                      {resource.description}
+                    </p>
+                  )}
+                  {resource.url && (
+                    <a
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                    >
+                      {resource.type === 'link' ? 'Visit Link' : 'View Details'}
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {loading && <div className="rounded border border-dashed p-6 text-center text-muted-foreground">Searching resources…</div>}
 
       <section className="space-y-4">
@@ -83,7 +153,7 @@ const LearningHub: React.FC = () => {
           <article className="h-full rounded border bg-card p-4 shadow-sm">
             <h3 className="font-semibold">Explore cross-sector pathways</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Browse roles and programs across Uganda, filtered by region, industry, and preferred skill focus.
+              Browse roles and programs across the world, filtered by country, industry, and preferred skill focus.
             </p>
             <a href="/find-placements" className="mt-3 inline-flex text-sm font-medium text-primary hover:underline">
               Browse opportunities

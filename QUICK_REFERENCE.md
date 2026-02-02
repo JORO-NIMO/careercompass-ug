@@ -27,10 +27,12 @@ supabase functions serve # Test locally
 
 ### Testing
 ```bash
-npm test                 # Run tests (when added)
-npm run test:watch       # Watch mode
-npm run test:coverage    # Coverage report
+npm test                 # Run tests (vmThreads pool)
+npm run test:watch       # Watch mode (vmThreads pool)
+npm run test:coverage    # Coverage report (vmThreads pool)
 ```
+
+> Note: On Windows, Vitest may hang starting workers with default pools. This project uses the `vmThreads` pool by default in `vitest.config.ts` and npm scripts to ensure stable test execution.
 
 ## Project Structure
 
@@ -274,5 +276,5 @@ netlify deploy --prod
 
 ---
 
-**Last Updated**: December 23, 2025  
+**Last Updated**: January 30, 2026  
 **Version**: 1.0.0

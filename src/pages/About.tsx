@@ -13,7 +13,7 @@ const About = () => {
                 About PlacementBridge
               </h1>
               <p className="text-xl text-primary-foreground/90 max-w-3xl mx-auto">
-                Bridging Uganda's learners, professionals, and organizations with opportunities that shape the future of work
+                Bringing skilled learners, employees and  professionals, and organizations closer to opportunities that shape the future of work
               </p>
             </div>
           </div>
@@ -26,6 +26,7 @@ const About = () => {
               <h2 className="text-3xl font-bold">Our Mission</h2>
               <p className="text-lg text-muted-foreground">
                 PlacementBridge exists to close the gap between education, talent, and opportunity. We empower students, graduates, career switchers, and experienced professionals while giving institutions and employers a trusted channel to engage emerging and established talent.
+                Our platform is an AI powered Opportunity engine targetting all job placement sites across the globe.
               </p>
             </div>
           </div>
@@ -38,28 +39,28 @@ const About = () => {
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-foreground">1000+</div>
+                  <div className="text-3xl font-bold text-foreground">We aim to 5M+</div>
                   <p className="text-muted-foreground">Learners & Professionals</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Target className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-foreground">200+</div>
+                  <div className="text-3xl font-bold text-foreground">1M+</div>
                   <p className="text-muted-foreground">Hiring & Training Partners</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Globe className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-foreground">50+</div>
-                  <p className="text-muted-foreground">Institutions & Campuses</p>
+                  <div className="text-3xl font-bold text-foreground">50K+</div>
+                  <p className="text-muted-foreground">Institutions</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="pt-8 pb-6">
                   <Award className="w-12 h-12 text-primary mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-foreground">500+</div>
+                  <div className="text-3xl font-bold text-foreground">10K+</div>
                   <p className="text-muted-foreground">Career Transitions Supported</p>
                 </CardContent>
               </Card>
@@ -75,7 +76,7 @@ const About = () => {
               <div className="text-center space-y-4">
                 <h3 className="text-xl font-semibold">Accessibility</h3>
                 <p className="text-muted-foreground">
-                  Making education-to-employment pathways accessible to people from every background across Uganda
+                  Making education-to-employment pathways accessible to people from every background across the world
                 </p>
               </div>
               <div className="text-center space-y-4">

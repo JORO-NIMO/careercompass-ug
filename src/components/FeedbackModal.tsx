@@ -23,6 +23,8 @@ const CATEGORY_OPTIONS = [
   { value: "bug", label: "Bug report" },
   { value: "feature", label: "Feature request" },
   { value: "content", label: "Content update" },
+  { value: "Partnership", label: "Partnership Request" },
+  { value: "Other", label: "Other" },
 ];
 
 const FeedbackModal = () => {
@@ -67,7 +69,7 @@ const FeedbackModal = () => {
         throw error;
       }
 
-      toast({ title: "Thank you!", description: "Your feedback helps us improve PlacementBridge." });
+      toast({ title: "Thank you!", description: "Your feedback helps us improve our placement Engine." });
       setMessage("");
       setRating("5");
       setCategory("general");
@@ -75,7 +77,7 @@ const FeedbackModal = () => {
       setOpen(false);
     } catch (error) {
       console.error("Feedback submission failed", error);
-      toast({ title: "Submission failed", description: "Try again shortly.", variant: "destructive" });
+      toast({ title: "Submission failed", description: "Please Try again.", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }

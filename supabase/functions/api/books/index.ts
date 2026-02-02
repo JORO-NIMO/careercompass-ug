@@ -18,8 +18,15 @@ export default async function (req: Request) {
     }
 
     const apiUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=20`;
-    const res = await fetch(apiUrl);
-    const json = await res.json();
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 3000);
+    let json: unknown = null;
+    try {
+      const res = await fetch(apiUrl, { signal: controller.signal });
+      json = await res.json();
+    } finally {
+      clearTimeout(t);
+    }
 
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000).toISOString();
     await supabase.from('external_cache').upsert({ key, response: json, expires_at: expiresAt });

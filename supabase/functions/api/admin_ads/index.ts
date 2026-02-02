@@ -1,6 +1,16 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
 import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
-import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
+import { jsonError, jsonSuccess, withRateLimitHeaders, withRequestIdHeaders, jsonErrorWithId } from '../../_shared/responses.ts';
+import { getRequestId } from '../../_shared/request.ts';
+import {
+  checkRateLimitUnified as checkRateLimit,
+  getClientIdentifier,
+  rateLimitExceededResponse,
+  RATE_LIMITS,
+} from '../../_shared/rateLimit.ts';
+
+// Deno global is available in Supabase Edge Functions; declare for TS type checking.
+declare const Deno: { env: { get(key: string): string | undefined } };
 
 const ADS_BUCKET = Deno.env.get('ADS_BUCKET') ?? 'public';
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -72,17 +82,26 @@ export default async function (req: Request) {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  const reqId = getRequestId(req);
   const { user, error } = await verifyAuth(req);
   if (error || !user) {
-    return unauthorizedResponse(error || 'Authentication required');
+    return jsonErrorWithId(error || 'Authentication required', 401, {}, {}, reqId);
   }
 
   const supabase = createSupabaseServiceClient();
 
   const isAdmin = await ensureAdmin(user.id, supabase);
   if (!isAdmin) {
-    return jsonError('Admin role required', 403);
+    return jsonErrorWithId('Admin role required', 403, {}, {}, reqId);
   }
+
+  // Rate limit admin operations per user/IP
+  const clientId = getClientIdentifier(req, user.id);
+  const limit = await checkRateLimit(clientId, RATE_LIMITS.admin);
+  if (!limit.allowed) {
+    return rateLimitExceededResponse(limit.resetAt, reqId);
+  }
+  const rateHeaders = withRequestIdHeaders(withRateLimitHeaders({}, limit.remaining, limit.resetAt), reqId);
 
   const url = new URL(req.url);
   const segments = getResourceSegments(url);
@@ -91,17 +110,23 @@ export default async function (req: Request) {
 
   try {
     if (req.method === 'GET' && !resourceId) {
-      const { data, error: fetchError } = await supabase
+      const urlObj = new URL(req.url);
+      const limitParam = Number(urlObj.searchParams.get('limit') || '0');
+      const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : null;
+
+      let query = supabase
         .from('ads')
         .select('id, title, description, image_url, link, is_active, created_at')
         .order('created_at', { ascending: false });
+      if (limit) query = query.limit(limit);
+      const { data, error: fetchError } = await query;
 
       if (fetchError) {
         console.error('ads fetch error', fetchError);
-        return jsonError('Failed to load ads', 500);
+        return jsonErrorWithId('Failed to load ads', 500, {}, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ items: data ?? [] });
+      return jsonSuccess({ items: data ?? [] }, 200, rateHeaders);
     }
 
     if (req.method === 'POST' && !resourceId) {
@@ -113,20 +138,23 @@ export default async function (req: Request) {
       const image = formData.get('image');
 
       if (typeof titleRaw !== 'string' || titleRaw.trim().length === 0) {
-        return jsonError('Title is required', 400);
+        return jsonErrorWithId('Title is required', 400, {}, rateHeaders, reqId);
       }
 
       if (!(image instanceof File) || image.size === 0) {
-        return jsonError('Image upload is required', 400);
+        return jsonErrorWithId('Image upload is required', 400, {}, rateHeaders, reqId);
       }
 
       const uploadResult = await uploadImage(image, supabase);
       if ('error' in uploadResult) {
-        return jsonError(uploadResult.error, 400);
+        return jsonErrorWithId(uploadResult.error || 'Failed to upload image', 400, {}, rateHeaders, reqId);
       }
 
       const description = typeof descriptionRaw === 'string' ? descriptionRaw.trim() || null : null;
       const link = typeof linkRaw === 'string' ? linkRaw.trim() || null : null;
+      if (link && !/^https?:\/\//i.test(link)) {
+        return jsonErrorWithId('Link must start with http(s)://', 400, {}, rateHeaders, reqId);
+      }
       const isActive = typeof isActiveRaw === 'string' ? isActiveRaw === 'true' : true;
 
       const { data, error: insertError } = await supabase
@@ -143,10 +171,10 @@ export default async function (req: Request) {
 
       if (insertError) {
         console.error('ads insert error', insertError);
-        return jsonError('Failed to create ad', 500);
+        return jsonErrorWithId('Failed to create ad', 500, {}, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ item: data }, 201);
+      return jsonSuccess({ item: data }, 201, rateHeaders);
     }
 
     if (req.method === 'PUT' && resourceId) {
@@ -157,7 +185,7 @@ export default async function (req: Request) {
         .maybeSingle();
 
       if (fetchError || !existing) {
-        return jsonError('Ad not found', 404);
+        return jsonErrorWithId('Ad not found', 404, {}, rateHeaders, reqId);
       }
 
       const formData = await req.formData();
@@ -166,7 +194,7 @@ export default async function (req: Request) {
       const titleRaw = formData.get('title');
       if (typeof titleRaw === 'string') {
         if (titleRaw.trim().length === 0) {
-          return jsonError('Title cannot be empty', 400);
+          return jsonErrorWithId('Title cannot be empty', 400, {}, rateHeaders, reqId);
         }
         updates.title = titleRaw.trim();
       }
@@ -174,7 +202,7 @@ export default async function (req: Request) {
       const descriptionRaw = formData.get('description');
       if (descriptionRaw !== null) {
         if (typeof descriptionRaw !== 'string') {
-          return jsonError('Description must be a string', 400);
+          return jsonErrorWithId('Description must be a string', 400, {}, rateHeaders, reqId);
         }
         updates.description = descriptionRaw.trim() || null;
       }
@@ -182,9 +210,13 @@ export default async function (req: Request) {
       const linkRaw = formData.get('link');
       if (linkRaw !== null) {
         if (typeof linkRaw !== 'string') {
-          return jsonError('Link must be a string', 400);
+          return jsonErrorWithId('Link must be a string', 400, {}, rateHeaders, reqId);
         }
-        updates.link = linkRaw.trim() || null;
+        const linkVal = linkRaw.trim() || null;
+        if (linkVal && !/^https?:\/\//i.test(linkVal)) {
+          return jsonErrorWithId('Link must start with http(s)://', 400, {}, rateHeaders, reqId);
+        }
+        updates.link = linkVal;
       }
 
       const isActiveRaw = formData.get('is_active');
@@ -197,14 +229,14 @@ export default async function (req: Request) {
       if (image instanceof File && image.size > 0) {
         const uploadResult = await uploadImage(image, supabase);
         if ('error' in uploadResult) {
-          return jsonError(uploadResult.error, 400);
+          return jsonErrorWithId(uploadResult.error || 'Failed to upload image', 400, {}, rateHeaders, reqId);
         }
         updates.image_url = uploadResult.url;
         newImagePath = uploadResult.path;
       }
 
       if (Object.keys(updates).length === 0) {
-        return jsonError('No changes provided', 400);
+        return jsonErrorWithId('No changes provided', 400, {}, rateHeaders, reqId);
       }
 
       const { data, error: updateError } = await supabase
@@ -219,7 +251,7 @@ export default async function (req: Request) {
         if (newImagePath) {
           await supabase.storage.from(ADS_BUCKET).remove([newImagePath]).catch(() => undefined);
         }
-        return jsonError('Failed to update ad', 500);
+        return jsonErrorWithId('Failed to update ad', 500, {}, rateHeaders, reqId);
       }
 
       if (newImagePath && existing.image_url) {
@@ -229,7 +261,7 @@ export default async function (req: Request) {
         }
       }
 
-      return jsonSuccess({ item: data });
+      return jsonSuccess({ item: data }, 200, rateHeaders);
     }
 
     if (req.method === 'DELETE' && resourceId) {
@@ -240,7 +272,7 @@ export default async function (req: Request) {
         .maybeSingle();
 
       if (fetchError || !existing) {
-        return jsonError('Ad not found', 404);
+        return jsonErrorWithId('Ad not found', 404, {}, rateHeaders, reqId);
       }
 
       const { error: deleteError } = await supabase
@@ -250,7 +282,7 @@ export default async function (req: Request) {
 
       if (deleteError) {
         console.error('ads delete error', deleteError);
-        return jsonError('Failed to delete ad', 500);
+        return jsonErrorWithId('Failed to delete ad', 500, {}, rateHeaders, reqId);
       }
 
       if (existing.image_url) {
@@ -260,14 +292,14 @@ export default async function (req: Request) {
         }
       }
 
-      return jsonSuccess();
+      return jsonSuccess({}, 200, rateHeaders);
     }
 
     if (req.method === 'PATCH' && resourceId && action === 'toggle') {
       const payload = await req.json().catch(() => ({}));
       const isActive = payload?.is_active;
       if (typeof isActive !== 'boolean') {
-        return jsonError('is_active boolean is required', 400);
+        return jsonErrorWithId('is_active boolean is required', 400, {}, rateHeaders, reqId);
       }
 
       const { data, error: updateError } = await supabase
@@ -279,15 +311,15 @@ export default async function (req: Request) {
 
       if (updateError || !data) {
         console.error('ads toggle error', updateError);
-        return jsonError('Failed to update status', 500);
+        return jsonErrorWithId('Failed to update status', 500, {}, rateHeaders, reqId);
       }
 
-      return jsonSuccess({ item: data });
+      return jsonSuccess({ item: data }, 200, rateHeaders);
     }
 
-    return jsonError('Not found', 404);
+    return jsonErrorWithId('Not found', 404, {}, rateHeaders, reqId);
   } catch (err) {
     console.error('admin_ads handler error', err);
-    return jsonError('Internal server error', 500);
+    return jsonErrorWithId('Internal server error', 500, {}, rateHeaders, reqId);
   }
 }

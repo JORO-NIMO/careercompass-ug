@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { fetchListings, type ListingWithCompany } from '@/services/listingsService';
 import { CuratedListingCard } from '@/components/CuratedListingCard';
+import JobPostingJsonLd from '@/components/JobPostingJsonLd';
 
 interface PlacementData {
   id: string;
@@ -178,7 +179,7 @@ const FeaturedPlacements = () => {
             Featured Opportunities
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover curated opportunities from leading institutions and employers across Uganda
+            Discover opporunities accross the globe, from the worlds' top institutions and employers.
           </p>
         </div>
 
@@ -206,7 +207,7 @@ const FeaturedPlacements = () => {
               />
             ))
           ) : fallbackLoading ? (
-            <div className="col-span-full text-center py-12">Loading placements…</div>
+            <div className="col-span-full text-center py-12">Thinking and Loading placements…</div>
           ) : placements.length > 0 ? (
             placements.map((placement) => (
               <PlacementCard key={placement.id} {...placement} />

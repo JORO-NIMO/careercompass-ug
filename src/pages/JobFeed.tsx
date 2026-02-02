@@ -22,7 +22,7 @@ interface AdzunaResponse {
   results?: JobResult[];
 }
 
-const DEFAULT_QUERY = 'software engineer in uganda';
+const DEFAULT_QUERY = 'software engineer remote';
 const DEFAULT_PROVIDER: 'jsearch' | 'adzuna' = 'jsearch';
 
 const JobFeed: React.FC = () => {

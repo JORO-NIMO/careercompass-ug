@@ -1,6 +1,13 @@
 import { createSupabaseServiceClient } from '../../_shared/sbClient.ts';
 import { verifyAuth, unauthorizedResponse, handleCors } from '../../_shared/auth.ts';
-import { jsonError, jsonSuccess } from '../../_shared/responses.ts';
+import { jsonError, jsonSuccess, withRateLimitHeaders, withRequestIdHeaders, jsonErrorWithId } from '../../_shared/responses.ts';
+import { getRequestId } from '../../_shared/request.ts';
+import {
+  checkRateLimitUnified as checkRateLimit,
+  getClientIdentifier,
+  rateLimitExceededResponse,
+  RATE_LIMITS,
+} from '../../_shared/rateLimit.ts';
 
 async function ensureAdmin(userId: string, supabase: ReturnType<typeof createSupabaseServiceClient>) {
   const { data, error } = await supabase
@@ -17,16 +24,25 @@ export default async function (req: Request) {
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;
 
+  const reqId = getRequestId(req);
   const { user, error } = await verifyAuth(req);
   if (error || !user) {
-    return unauthorizedResponse(error || 'Authentication required');
+    return jsonErrorWithId(error || 'Authentication required', 401, {}, {}, reqId);
   }
 
   const supabase = createSupabaseServiceClient();
   const isAdmin = await ensureAdmin(user.id, supabase);
   if (!isAdmin) {
-    return jsonError('Admin role required', 403);
+    return jsonErrorWithId('Admin role required', 403, {}, {}, reqId);
   }
+
+  // Rate limit admin operations per user/IP
+  const clientId = getClientIdentifier(req, user.id);
+  const limit = await checkRateLimit(clientId, RATE_LIMITS.admin);
+  if (!limit.allowed) {
+    return rateLimitExceededResponse(limit.resetAt, reqId);
+  }
+  const rateHeaders = withRequestIdHeaders(withRateLimitHeaders({}, limit.remaining, limit.resetAt), reqId);
 
   if (req.method === 'GET') {
     const url = new URL(req.url);
@@ -41,7 +57,7 @@ export default async function (req: Request) {
 
       if (balanceError) {
         console.error('admin bullets fetch balance error', balanceError);
-        return jsonError('Failed to load bullet balance', 500);
+        return jsonErrorWithId('Failed to load bullet balance', 500, {}, rateHeaders, reqId);
       }
 
       const { data: transactions, error: txError } = await supabase
@@ -53,13 +69,13 @@ export default async function (req: Request) {
 
       if (txError) {
         console.error('admin bullets fetch transactions error', txError);
-        return jsonError('Failed to load bullet transactions', 500);
+        return jsonErrorWithId('Failed to load bullet transactions', 500, {}, rateHeaders, reqId);
       }
 
       return jsonSuccess({
         balance: balanceRow ?? { owner_id: ownerId, balance: 0, created_at: null, updated_at: null },
         transactions: transactions ?? [],
-      });
+      }, 200, rateHeaders);
     }
 
     const { data, error: listError } = await supabase
@@ -70,10 +86,10 @@ export default async function (req: Request) {
 
     if (listError) {
       console.error('admin bullets list error', listError);
-      return jsonError('Failed to load bullet balances', 500);
+      return jsonErrorWithId('Failed to load bullet balances', 500, {}, rateHeaders, reqId);
     }
 
-    return jsonSuccess({ items: data ?? [] });
+    return jsonSuccess({ items: data ?? [] }, 200, rateHeaders);
   }
 
   if (req.method === 'POST') {
@@ -88,7 +104,7 @@ export default async function (req: Request) {
     const reason = payload?.reason?.trim();
 
     if (!ownerId || typeof delta !== 'number' || !Number.isInteger(delta) || !reason) {
-      return jsonError('owner_id, integer delta, and reason are required', 400);
+      return jsonErrorWithId('owner_id, integer delta, and reason are required', 400, {}, rateHeaders, reqId);
     }
 
     try {
@@ -104,13 +120,13 @@ export default async function (req: Request) {
         throw rpcError;
       }
 
-      return jsonSuccess({ balance: data });
+      return jsonSuccess({ balance: data }, 200, rateHeaders);
     } catch (err: unknown) {
       console.error('admin bullets adjust error', err);
       const message = err instanceof Error ? err.message : 'Failed to adjust bullet balance';
-      return jsonError(message, 400);
+      return jsonErrorWithId(message, 400, {}, rateHeaders, reqId);
     }
   }
 
-  return jsonError('Method not allowed', 405);
+  return jsonErrorWithId('Method not allowed', 405, {}, rateHeaders, reqId);
 }

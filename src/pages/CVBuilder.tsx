@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Download, Plus, Trash2, Eye, EyeOff, Save, RotateCcw, Printer } from "lucide-react";
 import { toast } from "sonner";
+import PageAssistant from "@/components/PageAssistant";
 
 interface Experience {
   id: string;
@@ -28,6 +29,15 @@ interface Education {
   gpa: string;
 }
 
+interface Referee {
+  id: string;
+  name: string;
+  title: string;
+  company: string;
+  phone: string;
+  email: string;
+}
+
 interface CVData {
   personalInfo: {
     fullName: string;
@@ -42,6 +52,7 @@ interface CVData {
   education: Education[];
   skills: string[];
   languages: string[];
+  referees: Referee[];
 }
 
 const CVBuilder = () => {
@@ -58,11 +69,19 @@ const CVBuilder = () => {
     experience: [],
     education: [],
     skills: [],
-    languages: []
+    languages: [],
+    referees: []
   });
 
   const [currentSkill, setCurrentSkill] = useState("");
   const [currentLanguage, setCurrentLanguage] = useState("");
+  const [newReferee, setNewReferee] = useState<Omit<Referee, 'id'>>({
+    name: "",
+    title: "",
+    company: "",
+    phone: "",
+    email: ""
+  });
   const [showPreview, setShowPreview] = useState(true);
 
   // Auto-save to localStorage
@@ -169,6 +188,25 @@ const CVBuilder = () => {
       languages: cvData.languages.filter((_, i) => i !== index)
     });
   };
+  const addReferee = () => {
+    if (newReferee.name.trim()) {
+      setCvData({
+        ...cvData,
+        referees: [...cvData.referees, { ...newReferee, id: Date.now().toString() }]
+      });
+      setNewReferee({ name: "", title: "", company: "", phone: "", email: "" });
+      toast.success("Referee added");
+    } else {
+      toast.error("Referee name is required");
+    }
+  };
+
+  const removeReferee = (index: number) => {
+    setCvData({
+      ...cvData,
+      referees: cvData.referees.filter((_, i) => i !== index)
+    });
+  };
 
   const handleDownload = () => {
     if (!cvData.personalInfo.fullName || !cvData.personalInfo.email) {
@@ -199,7 +237,8 @@ const CVBuilder = () => {
         experience: [],
         education: [],
         skills: [],
-        languages: []
+        languages: [],
+        referees: []
       });
       localStorage.removeItem('cvBuilderData');
       toast.success("CV data cleared");
@@ -354,6 +393,22 @@ const CVBuilder = () => {
       });
     }
 
+    // REFEREES
+    if (cvData.referees && cvData.referees.length > 0) {
+      lines.push("REFEREES");
+      cvData.referees.forEach((ref) => {
+        lines.push(ref.name);
+        if (ref.title || ref.company) {
+          lines.push([ref.title, ref.company].filter(Boolean).join(", "));
+        }
+        const contacts = [ref.phone, ref.email].filter(Boolean);
+        if (contacts.length > 0) {
+          lines.push(contacts.join(" | "));
+        }
+        lines.push("");
+      });
+    }
+
     // ADDITIONAL SECTIONS
     if (languages.length > 0) {
       lines.push("LANGUAGES");
@@ -409,7 +464,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, fullName: e.target.value }
                       })}
-                      placeholder="Aine Conerald"
+                      placeholder="Alex Johnson"
                     />
                   </div>
                   <div>
@@ -422,7 +477,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, email: e.target.value }
                       })}
-                      placeholder="aine@example.domain"
+                      placeholder="alex@example.com"
                     />
                   </div>
                   <div>
@@ -434,11 +489,11 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, phone: e.target.value }
                       })}
-                      placeholder="+256 726000000"
+                      placeholder="+1 555 123 4567"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">Town / City</Label>
                     <Input
                       id="location"
                       value={cvData.personalInfo.location}
@@ -446,7 +501,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, location: e.target.value }
                       })}
-                      placeholder="Mbarara, Uganda"
+                      placeholder="e.g. Kampala, UG"
                     />
                   </div>
                   <div>
@@ -470,7 +525,7 @@ const CVBuilder = () => {
                         ...cvData,
                         personalInfo: { ...cvData.personalInfo, website: e.target.value }
                       })}
-                      placeholder="yourwebsite.domain"
+                      placeholder="yourportfolio.com"
                     />
                   </div>
                 </div>
@@ -696,6 +751,79 @@ const CVBuilder = () => {
                   </div>
                 </CardContent>
               </Card>
+              {/* Referees */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Referees</CardTitle>
+                  <CardDescription>Professional references for your CV</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Full Name</Label>
+                      <Input
+                        placeholder="Jane Doe"
+                        value={newReferee.name}
+                        onChange={(e) => setNewReferee({ ...newReferee, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Job Title</Label>
+                      <Input
+                        placeholder="Senior Manager"
+                        value={newReferee.title}
+                        onChange={(e) => setNewReferee({ ...newReferee, title: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Company</Label>
+                      <Input
+                        placeholder="Organization Ltd"
+                        value={newReferee.company}
+                        onChange={(e) => setNewReferee({ ...newReferee, company: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input
+                        placeholder="e.g., +1 555 000 0000"
+                        value={newReferee.phone}
+                        onChange={(e) => setNewReferee({ ...newReferee, phone: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input
+                        placeholder="jane@example.com"
+                        value={newReferee.email}
+                        onChange={(e) => setNewReferee({ ...newReferee, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <Button onClick={addReferee} className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Referee
+                  </Button>
+
+                  <div className="space-y-2 mt-4">
+                    {cvData.referees.map((ref, index) => (
+                      <div key={ref.id} className="flex items-center justify-between p-3 border rounded-md">
+                        <div>
+                          <p className="font-medium">{ref.name}</p>
+                          <p className="text-xs text-muted-foreground">{ref.title} at {ref.company}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeReferee(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
@@ -747,33 +875,41 @@ const CVBuilder = () => {
             }
             #cv-preview, #cv-preview * {
               visibility: visible;
+              color: black !important;
             }
             #cv-preview {
-              position: static;
-              width: 210mm;
-              min-height: auto;
-              padding: 20mm !important;
-              box-sizing: border-box;
-            }
-            .no-print {
-              display: none !important;
-            }
-            pre {
-              font-family: "Calibri", "Arial", sans-serif !important;
-              font-size: 11pt !important;
-              line-height: 1.4 !important;
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: auto;
+              overflow: visible !important;
+              padding: 0 !important;
               margin: 0 !important;
+            }
+            /* print-max-h-none helper removed to avoid escape issues */
+            pre {
               white-space: pre-wrap !important;
-              word-break: break-word;
+              word-wrap: break-word !important;
+              font-family: serif !important;
+              font-size: 11pt !important;
             }
           }
-
           @page {
-            size: A4;
-            margin: 15mm;
+            size: auto;
+            margin: 20mm;
           }
         `}</style>
       </div>
+      <PageAssistant
+        currentPage="cv-builder"
+        context={{ sectionCounts: { exp: cvData.experience.length, edu: cvData.education.length }, hasSummary: !!cvData.summary?.trim() }}
+        suggestions={[
+          'How can I improve my career summary?',
+          'Rewrite this bullet for impact',
+          'What sections should I add to match data analytics roles?'
+        ]}
+      />
     </div>
   );
 };

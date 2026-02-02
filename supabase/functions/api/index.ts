@@ -8,6 +8,7 @@ import adminAdsHandler from './admin_ads/index.ts';
 import adminBoostsHandler from './admin_boosts/index.ts';
 import adminBulletsHandler from './admin_bullets/index.ts';
 import adminListingsHandler from './admin_listings/index.ts';
+import adminPostsHandler from './admin_posts/index.ts';
 import adminNotificationsHandler from './admin_notifications/index.ts';
 import adsHandler from './ads/index.ts';
 import analyticsProxyHandler from './analytics_proxy/index.ts';
@@ -31,6 +32,7 @@ const routeHandlers: Record<string, any> = {
   'admin_boosts': adminBoostsHandler,
   'admin_bullets': adminBulletsHandler,
   'admin_listings': adminListingsHandler,
+  'admin_posts': adminPostsHandler,
   'admin_notifications': adminNotificationsHandler,
   'ads': adsHandler,
   'analytics_proxy': analyticsProxyHandler,

@@ -11,7 +11,7 @@ const TermsOfService = () => {
             <div className="flex flex-col md:flex-row justify-center items-center gap-2 text-xs text-muted-foreground">
               <span><strong>Last Updated:</strong> Jan 6, 2026</span>
               <span className="hidden md:inline">•</span>
-              <span><strong>Jurisdiction:</strong> Uganda</span>
+              <span><strong>Jurisdiction:</strong> Global</span>
               <span className="hidden md:inline">•</span>
               <span><strong>Admin:</strong> info@placementbridge.org</span>
             </div>
@@ -69,7 +69,7 @@ const TermsOfService = () => {
                     </p>
                     <ul className="list-disc pl-6 space-y-1">
                       <li>Require payment from applicants (scam protection).</li>
-                      <li>Violate the <em>Employment Act of Uganda</em> regarding discrimination or minimum wage.</li>
+                      <li>Violate applicable employment and anti-discrimination laws in the relevant jurisdiction.</li>
                       <li>Contain vague descriptions or misleading promises of "easy wealth".</li>
                     </ul>
                     <p>
@@ -94,7 +94,7 @@ const TermsOfService = () => {
                   <h2 className="text-2xl font-bold text-primary mb-4 border-b border-border pb-2">5. Data Privacy & Administrative Processing</h2>
                   <div className="space-y-3">
                     <p>
-                      <strong>5.1 Compliance:</strong> Our administrative data handling procedures are designed to comply with the <em>Data Protection and Privacy Act, 2019</em>. We act as Data Controllers for account info and Data Processors for CV contents.
+                      <strong>5.1 Compliance:</strong> Our administrative data handling procedures are designed to comply with widely recognized data protection principles. We act as Data Controllers for account info and Data Processors for CV contents.
                     </p>
                     <p>
                       <strong>5.2 Data Minimization:</strong> We administratively enforce data minimization. We do not sell user data to advertisers. Contact details are only revealed when a mutual interest is established (e.g., applying for a job or accepting a connection request).
@@ -130,7 +130,7 @@ const TermsOfService = () => {
                   <h2 className="text-2xl font-bold text-primary mb-4 border-b border-border pb-2">8. Governing Law</h2>
                   <div className="space-y-3">
                     <p>
-                      These Administrative Terms shall be governed, construed, and enforced in accordance with the laws of the <strong>Republic of Uganda</strong>. Any disputes that cannot be resolved through our internal administrative resolution channels shall be subject to the exclusive jurisdiction of the Ugandan courts.
+                      These Administrative Terms shall be governed, construed, and enforced in accordance with the laws applicable to our operating entity and the relevant jurisdiction of the user’s location. Any disputes that cannot be resolved through our internal administrative resolution channels shall be subject to competent courts in a mutually agreed jurisdiction.
                     </p>
                   </div>
                 </section>
@@ -147,7 +147,7 @@ const TermsOfService = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">Registered Location</h3>
-                      <p className="text-muted-foreground">Kampala, Uganda</p>
+                      <p className="text-muted-foreground">Global Operations</p>
                     </div>
                   </div>
                 </section>

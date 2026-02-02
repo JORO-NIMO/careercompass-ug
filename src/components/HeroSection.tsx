@@ -27,7 +27,7 @@ const HeroSection = () => {
       <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
-          alt="Uganda learners, professionals, and employers collaborating"
+          alt="Learners, professionals, and employers collaborating worldwide"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/40"></div>
@@ -44,7 +44,7 @@ const HeroSection = () => {
               </span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-gray-200 max-w-3xl mx-auto leading-relaxed">
-              Bridge Uganda's learners, professionals, and employers with opportunities that span education and careers. Discover internships, training, and roles curated by region, industry, and focus area.
+              Bridge World learners, professionals, and employers with opportunities that span education and careers. Discover internships, training, and roles curated by region, industry, and focus area.
             </p>
           </div>
 
