@@ -22,9 +22,6 @@ interface PlacementData {
   deadline?: string;
   application_link?: string;
 }
-          {curatedListings.length > 0 && (
-            <JobPostingJsonLd jobs={curatedListings} />
-          )}
 
 interface BoostData {
   entity_id: string;
@@ -185,6 +182,10 @@ const FeaturedPlacements = () => {
             Discover opporunities accross the globe, from the worlds' top institutions and employers.
           </p>
         </div>
+
+        {curatedListings.length > 0 && (
+          <JobPostingJsonLd jobs={curatedListings} />
+        )}
 
         {/* Placements Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
