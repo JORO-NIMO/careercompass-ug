@@ -49,7 +49,7 @@ const InterviewTipsUganda = () => {
               <Badge variant="secondary" className="mx-auto w-fit">Interview Coaching</Badge>
               <h1 className="text-4xl font-bold text-foreground">Interview tips</h1>
               <p className="text-lg text-muted-foreground">
-                Impress hiring managers with culturally-aware preparation. These tips are based on feedback fromn HR teams, innovation hubs, and graduate trainee coordinators.
+                Impress hiring managers with culturally-aware preparation. These tips are based on feedback from HR teams, innovation hubs, and graduate trainee coordinators.
               </p>
             </div>
 
