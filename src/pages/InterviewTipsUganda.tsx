@@ -115,7 +115,7 @@ const InterviewTipsUganda = () => {
               </AlertTitle>
               <AlertDescription className="space-y-2 text-sm text-muted-foreground">
                 <p>Showing up late without notification, reading directly from a script, or ignoring follow-up instructions can cost you the offer.</p>
-                <p>Carry printed copies of your CV, academic transcripts, and any recommendation letters—manyn employers still request physical documents.</p>
+                <p>Carry printed copies of your CV, academic transcripts, and any recommendation letters—many employers still request physical documents.</p>
               </AlertDescription>
             </Alert>
 
