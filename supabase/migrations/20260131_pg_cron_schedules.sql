@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS pg_cron;
 GRANT USAGE ON SCHEMA cron TO postgres;
 
 -- ============================================================================
--- CRON JOB: Job Ingestion (every 6 hours)
+-- CRON JOB: Job Ingestion (daily at 07:00 UTC)
 -- ============================================================================
 
 -- This calls your Edge Function to ingest jobs
@@ -25,7 +25,7 @@ SELECT cron.schedule(
 );
 
 -- ============================================================================
--- CRON JOB: Match & Notify (every 4 hours)
+-- CRON JOB: Match & Notify (daily at 07:30 UTC)
 -- ============================================================================
 
 SELECT cron.schedule(
