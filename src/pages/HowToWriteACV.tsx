@@ -6,7 +6,6 @@ import { CheckCircle2, FileText, Pencil, Sparkles } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import PageAssistant from "@/components/PageAssistant";
 
 const coreSections = [
   {
@@ -218,15 +217,6 @@ const HowToWriteACV = () => {
           </Card>
         </div>
       </main>
-      <PageAssistant
-        currentPage="guide-how-to-write-a-cv"
-        context={{ sections: coreSections.map((s) => s.title) }}
-        suggestions={[
-          'Can you critique my CV summary?',
-          'Turn this duty into an accomplishment bullet',
-          'What layout is best for internships?'
-        ]}
-      />
     </>
   );
 };

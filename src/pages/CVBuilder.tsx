@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Download, Plus, Trash2, Eye, EyeOff, Save, RotateCcw, Printer } from "lucide-react";
 import { toast } from "sonner";
-import PageAssistant from "@/components/PageAssistant";
 
 interface Experience {
   id: string;
@@ -901,15 +900,6 @@ const CVBuilder = () => {
           }
         `}</style>
       </div>
-      <PageAssistant
-        currentPage="cv-builder"
-        context={{ sectionCounts: { exp: cvData.experience.length, edu: cvData.education.length }, hasSummary: !!cvData.summary?.trim() }}
-        suggestions={[
-          'How can I improve my career summary?',
-          'Rewrite this bullet for impact',
-          'What sections should I add to match data analytics roles?'
-        ]}
-      />
     </div>
   );
 };
