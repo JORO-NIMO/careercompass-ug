@@ -10,7 +10,6 @@ import { usePageTracking } from "./hooks/usePageTracking";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import GlobalPageAssistant from "@/components/GlobalPageAssistant";
 import AccessBlocked from "./pages/AccessBlocked";
 import { checkAccess } from "./services/accessControl";
 
@@ -105,8 +104,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     return (
       <main>
         {children}
-        {/* Assistant on admin pages too */}
-        <GlobalPageAssistant />
       </main>
     );
   }
@@ -118,14 +115,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         {children}
       </main>
       <Footer />
-      {/* Context-aware AI Assistant with per-page suggestions */}
-      <GlobalPageAssistant />
-      {/* Global Chat Widget - Only for authenticated users */}
-      {user && (
-        <Suspense fallback={null}>
-          <ChatWidget />
-        </Suspense>
-      )}
     </div>
   );
 };

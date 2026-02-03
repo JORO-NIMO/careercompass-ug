@@ -66,7 +66,7 @@ export default function AdminSecurity() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold">Admin Security & AI Settings</h1>
-      {error && <div className="text-destructive">{error}</div>}
+      {error && <div className="text-destructive bg-destructive/10 p-3 rounded-md">{typeof error === 'string' ? error : 'An error occurred'}</div>}
 
       <Card className="p-4 space-y-4">
         <h2 className="font-semibold">AI Quota & Alerts</h2>
