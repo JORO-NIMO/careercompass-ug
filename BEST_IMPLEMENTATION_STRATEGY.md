@@ -41,7 +41,7 @@ Your project is **98% complete and well-architected**. The good news:
    - Analytics event tracking
    - Webhook payment processing
    - Notification scheduling
-   - LinkedIn scraper (standalone utility)
+   - Job ingestion via APIs and RSS feeds
 
 4. **Type Safety**
    - TypeScript strict mode enabled
@@ -226,11 +226,6 @@ console.error('Chat error:', error);
 
 // AFTER: Use Sentry (already configured)
 Sentry.captureException(error);
-```
-
-**Location 3**: `scripts/linkedin_scraper/index.ts` - Multiple console.logs
-```typescript
-// These are OK in scripts (CLI tool), but review usage
 ```
 
 ---

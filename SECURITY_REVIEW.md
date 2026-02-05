@@ -16,7 +16,7 @@ Recommendations
 - Tighten CORS: Replace `*` with your production domain for `Access-Control-Allow-Origin`.
 - Expand rate limiting: Apply per-user/IP limits to all mutating endpoints.
 - Validate inputs: Keep trimming/length checks; validate types and bounds on all API payloads.
-- Review RPC functions: Ensure `create_boost_from_payment` and `cleanup_old_linkedin_jobs` use parameterized queries.
+- Review RPC functions: Ensure `create_boost_from_payment` uses parameterized queries.
 - CSP: Add a production Content Security Policy to reduce XSS risk.
 
 Patched Files

@@ -5,44 +5,79 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, Bot, User, Briefcase, Clock, MapPin } from 'lucide-react';
+import { Send, Bot, User, Briefcase, Clock, MapPin, ExternalLink, GraduationCap, Trophy, Building2, Sparkles, Filter, Globe } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import type { OpportunityType } from '@/types/opportunities';
 
 interface Message {
     id: string;
     role: 'user' | 'assistant';
     content: string;
+    opportunities?: Opportunity[];
 }
 
-interface Listing {
+interface Opportunity {
     id: string;
     title: string;
-    description: string;
-    created_at: string;
+    description?: string;
+    url: string;
+    type?: OpportunityType;
+    field?: string;
+    country?: string;
+    organization?: string;
+    deadline?: string;
+    published_at?: string;
 }
+
+const TYPE_ICONS: Record<string, React.ElementType> = {
+    scholarship: GraduationCap,
+    internship: Briefcase,
+    job: Building2,
+    fellowship: Sparkles,
+    competition: Trophy,
+    default: Briefcase,
+};
+
+const TYPE_COLORS: Record<string, string> = {
+    scholarship: 'bg-purple-100 text-purple-700 border-purple-200',
+    internship: 'bg-blue-100 text-blue-700 border-blue-200',
+    job: 'bg-green-100 text-green-700 border-green-200',
+    fellowship: 'bg-amber-100 text-amber-700 border-amber-200',
+    competition: 'bg-red-100 text-red-700 border-red-200',
+    grant: 'bg-teal-100 text-teal-700 border-teal-200',
+    training: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    default: 'bg-gray-100 text-gray-700 border-gray-200',
+};
 
 const OpportunitiesChat = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
             role: 'assistant',
-            content: "Hi! I'm your career assistant. Ask me about available opportunities, application tips, or career advice. I have access to all our current listings!"
+            content: "Hi! I'm your career assistant. I can help you find scholarships, internships, jobs, fellowships, and more. Try asking:\n\n• \"Find scholarships in Germany\"\n• \"Show me tech internships in Uganda\"\n• \"What grants are available for research?\"\n• \"Find remote software jobs\""
         }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [activeFilter, setActiveFilter] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Fetch recent listings
-    const { data: listings } = useQuery({
-        queryKey: ['listings-chat'],
+    // Fetch recent opportunities
+    const { data: opportunities } = useQuery({
+        queryKey: ['opportunities-chat', activeFilter],
         queryFn: async () => {
-            const { data } = await supabase
-                .from('listings')
-                .select('id, title, description, created_at')
-                .order('created_at', { ascending: false })
-                .limit(10);
-            return data as Listing[] || [];
+            let query = supabase
+                .from('opportunities')
+                .select('id, title, description, url, type, field, country, organization, deadline, published_at')
+                .order('published_at', { ascending: false })
+                .limit(15);
+            
+            if (activeFilter) {
+                query = query.eq('type', activeFilter);
+            }
+            
+            const { data } = await query;
+            return data as Opportunity[] || [];
         },
     });
 
@@ -67,24 +102,39 @@ const OpportunitiesChat = () => {
         setIsLoading(true);
 
         try {
-            const conversationHistory = messages.map(m => ({
+            const conversationHistory = messages.slice(-6).map(m => ({
                 role: m.role,
                 content: m.content,
             }));
 
-            const { data, error } = await supabase.functions.invoke('chat-ai', {
+            // Use chat-agent Edge Function for semantic search
+            const { data, error } = await supabase.functions.invoke('chat-agent', {
                 body: {
                     message: userMessage.content,
-                    conversationHistory,
+                    context: {
+                        currentPage: 'opportunities-chat',
+                    },
                 },
             });
 
             if (error) throw error;
 
+            // Parse opportunities from the response if present
+            let parsedOpportunities: Opportunity[] = [];
+            if (data.toolResults) {
+                const oppResult = data.toolResults.find(
+                    (t: { tool: string }) => t.tool === 'searchOpportunitiesSemantic'
+                );
+                if (oppResult?.result && Array.isArray(oppResult.result)) {
+                    parsedOpportunities = oppResult.result;
+                }
+            }
+
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: data.response || "I couldn't process that request. Please try again.",
+                content: data.response || "I couldn't find any matching opportunities. Try a different search term.",
+                opportunities: parsedOpportunities.length > 0 ? parsedOpportunities : undefined,
             };
 
             setMessages(prev => [...prev, assistantMessage]);
@@ -110,52 +160,102 @@ const OpportunitiesChat = () => {
     return (
         <div className="container mx-auto py-8 px-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Listings Sidebar */}
-                <Card className="lg:col-span-1 h-[70vh]">
+                {/* Opportunities Sidebar */}
+                <Card className="lg:col-span-1 h-[75vh]">
                     <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-lg">
-                            <Briefcase className="h-5 w-5" />
+                            <Sparkles className="h-5 w-5 text-primary" />
                             Latest Opportunities
                         </CardTitle>
+                        {/* Type Filters */}
+                        <div className="flex flex-wrap gap-1.5 pt-2">
+                            <Button
+                                variant={activeFilter === null ? "default" : "outline"}
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setActiveFilter(null)}
+                            >
+                                All
+                            </Button>
+                            {['scholarship', 'internship', 'job', 'fellowship', 'grant'].map((type) => {
+                                const Icon = TYPE_ICONS[type] || TYPE_ICONS.default;
+                                return (
+                                    <Button
+                                        key={type}
+                                        variant={activeFilter === type ? "default" : "outline"}
+                                        size="sm"
+                                        className="h-7 text-xs capitalize"
+                                        onClick={() => setActiveFilter(type)}
+                                    >
+                                        <Icon className="h-3 w-3 mr-1" />
+                                        {type}
+                                    </Button>
+                                );
+                            })}
+                        </div>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <ScrollArea className="h-[calc(70vh-80px)] px-4">
-                            {listings?.length === 0 && (
+                        <ScrollArea className="h-[calc(75vh-140px)] px-4">
+                            {opportunities?.length === 0 && (
                                 <p className="text-muted-foreground text-center py-4">
                                     No opportunities available yet.
                                 </p>
                             )}
-                            {listings?.map((listing) => (
-                                <div
-                                    key={listing.id}
-                                    className="py-3 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2"
-                                    onClick={() => setInput(`Tell me more about: ${listing.title}`)}
-                                >
-                                    <h4 className="font-medium text-sm line-clamp-2">{listing.title}</h4>
-                                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                        {listing.description?.slice(0, 100)}...
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <Badge variant="secondary" className="text-xs">
-                                            <Clock className="h-3 w-3 mr-1" />
-                                            {new Date(listing.created_at).toLocaleDateString()}
-                                        </Badge>
+                            {opportunities?.map((opp) => {
+                                const Icon = TYPE_ICONS[opp.type || 'default'] || TYPE_ICONS.default;
+                                const colorClass = TYPE_COLORS[opp.type || 'default'] || TYPE_COLORS.default;
+                                return (
+                                    <div
+                                        key={opp.id}
+                                        className="py-3 border-b last:border-0 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+                                        onClick={() => setInput(`Tell me about: ${opp.title}`)}
+                                    >
+                                        <div className="flex items-start gap-2">
+                                            <div className={`p-1.5 rounded-md mt-0.5 ${colorClass}`}>
+                                                <Icon className="h-3.5 w-3.5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-medium text-sm line-clamp-2">{opp.title}</h4>
+                                                {opp.organization && (
+                                                    <p className="text-xs text-muted-foreground mt-0.5">{opp.organization}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                            {opp.type && (
+                                                <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-5 capitalize ${colorClass}`}>
+                                                    {opp.type}
+                                                </Badge>
+                                            )}
+                                            {opp.country && (
+                                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                                                    <Globe className="h-2.5 w-2.5 mr-0.5" />
+                                                    {opp.country}
+                                                </Badge>
+                                            )}
+                                            {opp.deadline && (
+                                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                                                    <Clock className="h-2.5 w-2.5 mr-0.5" />
+                                                    {new Date(opp.deadline).toLocaleDateString()}
+                                                </Badge>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </ScrollArea>
                     </CardContent>
                 </Card>
 
                 {/* Chat Area */}
-                <Card className="lg:col-span-2 h-[70vh] flex flex-col">
+                <Card className="lg:col-span-2 h-[75vh] flex flex-col">
                     <CardHeader className="pb-3 border-b">
                         <CardTitle className="flex items-center gap-2">
                             <Bot className="h-5 w-5 text-primary" />
-                            Career Assistant
+                            Opportunity Assistant
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
-                            Ask about opportunities, deadlines, skills needed, or career advice
+                            Search scholarships, jobs, internships, fellowships & more with AI
                         </p>
                     </CardHeader>
 
@@ -180,24 +280,80 @@ const OpportunitiesChat = () => {
                                     >
                                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
 
-                                        {message.role === 'assistant' && message.content.includes('Ref:') && (
-                                            <div className="mt-4 pt-3 border-t border-border/50 flex flex-wrap gap-2">
-                                                {/* Extract Ref ID if present and show a button */}
-                                                {message.content.match(/Ref: ([a-f0-9-]{36})/g)?.map((ref, idx) => {
-                                                    const id = ref.replace('Ref: ', '');
+                                        {/* Rich Opportunity Cards */}
+                                        {message.opportunities && message.opportunities.length > 0 && (
+                                            <div className="mt-4 pt-3 border-t border-border/50 space-y-3">
+                                                {message.opportunities.slice(0, 5).map((opp) => {
+                                                    const Icon = TYPE_ICONS[opp.type || 'default'] || TYPE_ICONS.default;
+                                                    const colorClass = TYPE_COLORS[opp.type || 'default'] || TYPE_COLORS.default;
                                                     return (
-                                                        <Button
-                                                            key={idx}
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="text-xs h-8"
-                                                            onClick={() => {
-                                                                const listing = listings?.find(l => l.id === id);
-                                                                if (listing) setInput(`Tell me more about the requirements for ${listing.title}`);
-                                                            }}
+                                                        <div
+                                                            key={opp.id}
+                                                            className="bg-background rounded-lg p-3 border shadow-sm hover:shadow-md transition-shadow"
                                                         >
-                                                            More about {id.slice(0, 8)}...
-                                                        </Button>
+                                                            <div className="flex items-start gap-3">
+                                                                <div className={`p-2 rounded-lg ${colorClass}`}>
+                                                                    <Icon className="h-4 w-4" />
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <h4 className="font-semibold text-sm line-clamp-2">{opp.title}</h4>
+                                                                    {opp.organization && (
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                                                            <Building2 className="h-3 w-3 inline mr-1" />
+                                                                            {opp.organization}
+                                                                        </p>
+                                                                    )}
+                                                                    <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                        {opp.type && (
+                                                                            <Badge variant="outline" className={`text-[10px] capitalize ${colorClass}`}>
+                                                                                {opp.type}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {opp.country && (
+                                                                            <Badge variant="secondary" className="text-[10px]">
+                                                                                <Globe className="h-2.5 w-2.5 mr-0.5" />
+                                                                                {opp.country}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {opp.field && (
+                                                                            <Badge variant="secondary" className="text-[10px]">
+                                                                                {opp.field}
+                                                                            </Badge>
+                                                                        )}
+                                                                        {opp.deadline && (
+                                                                            <Badge variant="secondary" className="text-[10px]">
+                                                                                <Clock className="h-2.5 w-2.5 mr-0.5" />
+                                                                                Due: {new Date(opp.deadline).toLocaleDateString()}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {opp.description && (
+                                                                <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                                                                    {opp.description}
+                                                                </p>
+                                                            )}
+                                                            <div className="flex gap-2 mt-3">
+                                                                <Button
+                                                                    variant="default"
+                                                                    size="sm"
+                                                                    className="h-7 text-xs"
+                                                                    onClick={() => window.open(opp.url, '_blank')}
+                                                                >
+                                                                    <ExternalLink className="h-3 w-3 mr-1" />
+                                                                    Apply Now
+                                                                </Button>
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="h-7 text-xs"
+                                                                    onClick={() => setInput(`Tell me more about ${opp.title}`)}
+                                                                >
+                                                                    Learn More
+                                                                </Button>
+                                                            </div>
+                                                        </div>
                                                     );
                                                 })}
                                             </div>
@@ -216,7 +372,8 @@ const OpportunitiesChat = () => {
                                         <Bot className="h-4 w-4 text-primary animate-pulse" />
                                     </div>
                                     <div className="bg-muted rounded-2xl rounded-tl-none px-4 py-3 border border-border/50 shadow-sm">
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 items-center">
+                                            <span className="text-xs text-muted-foreground mr-2">Searching opportunities</span>
                                             <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:-0.3s]" />
                                             <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce [animation-delay:-0.15s]" />
                                             <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" />
@@ -229,12 +386,51 @@ const OpportunitiesChat = () => {
 
                     {/* Input */}
                     <div className="p-4 border-t">
+                        {/* Quick Actions */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setInput('Find scholarships for African students')}
+                            >
+                                <GraduationCap className="h-3 w-3 mr-1" />
+                                Scholarships
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setInput('Show tech internships in Uganda')}
+                            >
+                                <Briefcase className="h-3 w-3 mr-1" />
+                                Internships
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setInput('Find remote software developer jobs')}
+                            >
+                                <Building2 className="h-3 w-3 mr-1" />
+                                Remote Jobs
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setInput('Show research fellowships and grants')}
+                            >
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                Fellowships
+                            </Button>
+                        </div>
                         <div className="flex gap-2">
                             <Input
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={handleKeyPress}
-                                placeholder="Ask about opportunities, deadlines, skills..."
+                                placeholder="Search scholarships, jobs, internships..."
                                 disabled={isLoading}
                                 className="flex-1"
                             />
@@ -243,7 +439,7 @@ const OpportunitiesChat = () => {
                             </Button>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 text-center">
-                            Click on a listing to ask about it, or type your own question
+                            Click an opportunity in the sidebar or use quick actions above
                         </p>
                     </div>
                 </Card>

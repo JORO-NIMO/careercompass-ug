@@ -1,0 +1,59 @@
+# Render Blueprint
+# Deploy with: render.com/deploy -> New Blueprint Instance -> Connect this repo
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # =============================================================================
+  # OPPORTUNITY BACKEND API
+  # =============================================================================
+  - type: web
+    name: opportunity-backend
+    runtime: node
+    region: frankfurt  # EU region, change to oregon for US
+    plan: free  # Use 'starter' for production ($7/mo)
+    rootDir: opportunity-backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: SUPABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: REDIS_URL
+        sync: false  # Optional: Set if using Redis
+      - key: CORS_ORIGINS
+        value: https://careercompass-ug.vercel.app,https://your-domain.com
+      - key: INGESTION_INTERVAL_HOURS
+        value: 6
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+    autoDeploy: true  # Auto-deploy on push to main branch
+
+  # =============================================================================
+  # CRON JOB FOR RSS INGESTION (Optional - uses Render Cron)
+  # =============================================================================
+  - type: cron
+    name: opportunity-ingest-cron
+    runtime: node
+    region: frankfurt
+    plan: free
+    rootDir: opportunity-backend
+    buildCommand: npm ci && npm run build
+    schedule: "0 */6 * * *"  # Every 6 hours
+    startCommand: npm run ingest
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
