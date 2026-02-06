@@ -2,7 +2,7 @@
  * Unit tests for Cache utility
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { generateCacheKey, CACHE_TTL } from '../utils/cache.js';
 
 // Note: Full redis tests would require mocking or integration tests

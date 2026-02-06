@@ -31,7 +31,6 @@ export function classifyType(
   title: string,
   description: string
 ): { type: OpportunityType | null; confidence: number } {
-  const text = `${title} ${description}`.toLowerCase();
   
   let bestMatch: OpportunityType | null = null;
   let bestScore = 0;
@@ -83,7 +82,6 @@ export function classifyField(
   title: string,
   description: string
 ): { field: OpportunityField | null; confidence: number } {
-  const text = `${title} ${description}`.toLowerCase();
   
   let bestMatch: OpportunityField | null = null;
   let bestScore = 0;

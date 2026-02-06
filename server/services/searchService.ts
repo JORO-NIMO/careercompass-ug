@@ -64,7 +64,6 @@ export function parseSearchIntent(query: string): {
   country?: string;
 } {
   const lowerQuery = query.toLowerCase();
-  let keywords = query;
   let type: OpportunityType | undefined;
   let field: string | undefined;
   let country: string | undefined;
@@ -137,7 +136,7 @@ export function parseSearchIntent(query: string): {
   }
   
   // Clean keywords by removing detected filters
-  keywords = query
+  const keywords = query
     .replace(/\b(find|show|search|get|looking\s+for|interested\s+in)\b/gi, '')
     .replace(/\b(me|please|can\s+you|i\s+want)\b/gi, '')
     .trim();

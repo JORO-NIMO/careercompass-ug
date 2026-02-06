@@ -11,8 +11,6 @@ import healthRouter from './routes/health.js';
 import { createModuleLogger } from '../utils/logger.js';
 import {
   defaultRateLimiter,
-  searchRateLimiter,
-  ingestionRateLimiter,
 } from '../utils/rateLimiter.js';
 import { initRedisCache } from '../utils/cache.js';
 
