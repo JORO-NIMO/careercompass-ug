@@ -11,9 +11,8 @@ services:
     runtime: node
     region: frankfurt  # EU region, change to oregon for US
     plan: free  # Use 'starter' for production ($7/mo)
-    rootDir: opportunity-backend
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    buildCommand: npm ci && npm run api:build
+    startCommand: npm run api:start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -44,10 +43,9 @@ services:
     runtime: node
     region: frankfurt
     plan: free
-    rootDir: opportunity-backend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci && npm run api:build
     schedule: "0 */6 * * *"  # Every 6 hours
-    startCommand: npm run ingest
+    startCommand: npm run api:ingest
     envVars:
       - key: NODE_ENV
         value: production
