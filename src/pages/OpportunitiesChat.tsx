@@ -121,19 +121,20 @@ const OpportunitiesChat = () => {
 
             // Parse opportunities from the response if present
             let parsedOpportunities: Opportunity[] = [];
-            if (data.toolResults) {
-                const oppResult = data.toolResults.find(
-                    (t: { tool: string }) => t.tool === 'searchOpportunitiesSemantic'
-                );
-                if (oppResult?.result && Array.isArray(oppResult.result)) {
-                    parsedOpportunities = oppResult.result;
+            if (data.toolResults && Array.isArray(data.toolResults)) {
+                // toolResults is an array of results, find any that looks like opportunities
+                for (const result of data.toolResults) {
+                    if (Array.isArray(result) && result.length > 0 && result[0]?.title && result[0]?.url) {
+                        parsedOpportunities = result;
+                        break;
+                    }
                 }
             }
 
             const assistantMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: data.response || "I couldn't find any matching opportunities. Try a different search term.",
+                content: data.message?.content || data.response || "I couldn't find any matching opportunities. Try a different search term.",
                 opportunities: parsedOpportunities.length > 0 ? parsedOpportunities : undefined,
             };
 
