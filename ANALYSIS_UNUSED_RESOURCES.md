@@ -170,27 +170,19 @@ const openaiKey = Deno.env.get('OPENAI_API_KEY')!;
 
 ---
 
-## 6. DEPRECATED SCRIPTS
+## 6. DEPRECATED SCRIPTS (REMOVED)
 
-### 📝 `scripts/linkedin_scraper/`
-**Status**: 🟡 **AVAILABLE BUT DISABLED**  
-**Purpose**: Scrape LinkedIn jobs  
-**Files**:
-- `index.ts` - Main scraper (lines: 136+)
-- `aiValidator.ts` - AI validation
-- `config.ts` - Configuration
-- `package.json` - Package config
+### 📝 `scripts/linkedin_scraper/` - **REMOVED**
+**Status**: ❌ **REMOVED**  
+**Reason**: Web scraping removed in favor of APIs and RSS feeds  
+**Replacement**: 
+- `supabase/functions/ingest-jobs/` - Uses free job APIs (arbeitnow, etc.)
+- RSS feeds from trusted sources
+- Manual uploads via AdminPlacementUpload
 
-**Current Status**:
-- ✅ Scripts exist and are complete
-- ✗ Not integrated into app (manual CLI tool)
-- ✗ Functionality moved to n8n (external workflow)
-
-**Recommendation**: Keep scripts if used for manual data import, otherwise remove:
-```bash
-# Can still be used manually:
-# npx ts-node scripts/linkedin_scraper/index.ts --dry-run
-```
+### 📝 `scripts/placement_bot.py` - **REMOVED**
+**Status**: ❌ **REMOVED**  
+**Reason**: Google search scraping is unreliable and potentially against ToS
 
 ---
 
@@ -219,7 +211,7 @@ console.log("Search filters updated:", filters);
 | **Chat-AI Page** | 🟡 Incomplete | Edge function incomplete, needs OpenAI integration |
 | **Public Data View** | 🟡 Incomplete | Route not registered in App.tsx |
 | **CV Builder** | ✅ Complete | 910 lines, fully functional with localStorage |
-| **LinkedIn Scraper** | ✅ Complete | Standalone utility, moved to n8n |
+| **Job Ingestion** | ✅ Complete | Uses APIs and RSS feeds (scraping removed) |
 | **Data Collections** | ✅ Complete | Database schema, RLS policies, migrations in place |
 | **Admin Analytics** | ✅ Complete | Full implementation |
 | **Notification System** | ✅ Complete | Working with edge function |

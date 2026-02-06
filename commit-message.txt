@@ -1,0 +1,32 @@
+﻿feat(assistant+analytics+ingestion+security): add chat-agent, AI usage dashboards/alerts, admin settings & IP access control
+
+Assistant:
+- Edge Function chat-agent with tool calling (search, match, subscribe) and multi-provider fallback (Groq/OpenAI/Gemini) with optional MODEL_OVERRIDE.
+- Server-side enforcement: restrict assistant on /admin for non-admins.
+- Client services/types + persisted assistant prefs (user_settings).
+
+Analytics & Alerts:
+- ai_usage_daily view + services/pages (Admin AI Usage) with sparkline.
+- ai-usage-alerts Edge Function reads admin settings and notifies admins when daily tokens near quota.
+- Workflow logs + delivery logs tables for observability.
+
+Ingestion & Workflows:
+- ingest-jobs (APIs + RSS with heuristics) inserts draft listings with dedupe.
+- match-notify matches new jobs to alerts and sends notifications.
+- parse-cv parses CVs and updates profile (skills/embedding).
+- parse-email extracts jobs from newsletters with trust + dedupe.
+- pg_cron schedules for ingestion/matching/digest.
+
+Access Control & Admin:
+- access-control Edge Function + client guard to block flagged IPs site-wide.
+- Admin settings store (quota/threshold) + services.
+- IP tracking table and admin management services.
+
+SEO & UI:
+- JobPosting JSON-LD components; new admin pages and charts.
+
+Shared & Misc:
+- Request ID helper; test-chat script; docs/workflows.
+
+Follow-ups:
+- Verify endpoints post-deploy; fix minor bug in admin_posts published_at; tune dashboards & IP UI.

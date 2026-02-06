@@ -1,2 +1,3 @@
-requests==2.31.0
-beautifulsoup4==4.12.2
+# Python dependencies (scraping libraries removed)
+# No Python dependencies required for the main application
+# The placement_bot.py scraper has been removed
