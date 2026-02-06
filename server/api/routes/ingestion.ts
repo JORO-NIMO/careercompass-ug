@@ -32,10 +32,7 @@ const authMiddleware = (req: Request, res: Response, next: Function) => {
   const expectedKey = process.env.ADMIN_API_KEY;
   
   if (!expectedKey) {
-    // If no key configured, allow in development
-    if (process.env.NODE_ENV === 'development') {
-      return next();
-    }
+    // Always require an admin API key to be configured, regardless of environment
     return res.status(500).json({
       success: false,
       error: 'Server not configured for admin access',

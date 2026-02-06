@@ -9,7 +9,7 @@ import type {
   IngestionResult,
   IngestionLog,
 } from '../types/index.js';
-import { fetchRssFeed, fetchMultipleFeeds } from './rssFetcher.js';
+import { fetchRssFeed } from './rssFetcher.js';
 import { cleanRssItem, isValidUrl, isLikelyExpired } from '../utils/cleaner.js';
 import { classifyOpportunity } from './classifier.js';
 import { generateOpportunityEmbeddings, isEmbeddingServiceAvailable } from './embeddingService.js';
@@ -17,14 +17,13 @@ import {
   getActiveRssSources,
   getExistingUrls,
   bulkInsertOpportunities,
-  bulkUpdateEmbeddings,
   updateRssSourceStatus,
   createIngestionLog,
   updateIngestionLog,
   searchOpportunities,
 } from './database.js';
 import { createModuleLogger } from '../utils/logger.js';
-import { config, DEFAULT_RSS_SOURCES } from '../config/index.js';
+import { DEFAULT_RSS_SOURCES } from '../config/index.js';
 import { notifyMatchingUsers } from './notificationService.js';
 import { invalidateSearchCache } from '../utils/cache.js';
 

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, Bot, User, Briefcase, Clock, MapPin, ExternalLink, GraduationCap, Trophy, Building2, Sparkles, Filter, Globe } from 'lucide-react';
+import { Send, Bot, User, Briefcase, Clock, ExternalLink, GraduationCap, Trophy, Building2, Sparkles, Globe } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import type { OpportunityType } from '@/types/opportunities';
 
@@ -102,11 +102,6 @@ const OpportunitiesChat = () => {
         setIsLoading(true);
 
         try {
-            const conversationHistory = messages.slice(-6).map(m => ({
-                role: m.role,
-                content: m.content,
-            }));
-
             // Use chat-agent Edge Function for semantic search
             const { data, error } = await supabase.functions.invoke('chat-agent', {
                 body: {
