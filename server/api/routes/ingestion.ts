@@ -18,9 +18,7 @@ import { validateRssFeed, getFeedMetadata } from '../../services/rssFetcher.js';
 import { createModuleLogger } from '../../utils/logger.js';
 import {
   ingestionRateLimiter,
-  embeddingRateLimiter,
 } from '../../utils/rateLimiter.js';
-
 const logger = createModuleLogger('ingestion-api');
 
 const router = Router();
