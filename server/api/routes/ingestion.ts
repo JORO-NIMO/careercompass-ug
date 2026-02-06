@@ -28,10 +28,6 @@ const router = Router();
 // Apply ingestion rate limiter to all routes in this router
 router.use(ingestionRateLimiter);
 
-const logger = createModuleLogger('ingestion-api');
-
-const router = Router();
-
 // Simple API key auth middleware (for admin endpoints)
 const authMiddleware = (req: Request, res: Response, next: Function) => {
   const apiKey = req.headers['x-api-key'] || req.query.apiKey;
