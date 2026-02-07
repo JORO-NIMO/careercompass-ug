@@ -27,10 +27,7 @@ const router = Router();
 router.use(ingestionRateLimiter);
 
 // Simple API key auth middleware (for admin endpoints)
-const authMiddleware = (req: Request, res: Response, next: Function) => {
-  const apiKey = req.headers['x-api-key'] || req.query.apiKey;
-  const expectedKey = process.env.ADMIN_API_KEY;
-  
+
   if (!expectedKey) {
     // Always require an admin API key to be configured, regardless of environment
     return res.status(500).json({
@@ -38,14 +35,13 @@ const authMiddleware = (req: Request, res: Response, next: Function) => {
       error: 'Server not configured for admin access',
     });
   }
-  
+
   if (apiKey !== expectedKey) {
     return res.status(401).json({
       success: false,
       error: 'Unauthorized',
     });
   }
-  
   next();
 };
 
