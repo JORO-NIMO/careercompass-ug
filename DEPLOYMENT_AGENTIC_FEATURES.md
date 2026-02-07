@@ -154,7 +154,7 @@ Sign up at https://n8n.io/cloud
 1. Open n8n (http://localhost:5678 or your cloud URL)
 2. Go to Workflows → Import from File
 3. Import these files:
-   - `n8n/workflows/job-ingest.json` - Job scraping pipeline (runs every 6 hours)
+   - `n8n/workflows/job-ingest.json` - Job ingestion via APIs (runs every 6 hours)
    - `n8n/workflows/match-notify.json` - User matching and notifications
    - `n8n/workflows/email-ingest.json` - Newsletter ingestion (runs every 2 hours)
 

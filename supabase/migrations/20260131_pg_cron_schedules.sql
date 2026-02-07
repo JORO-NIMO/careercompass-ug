@@ -5,26 +5,6 @@ CREATE EXTENSION IF NOT EXISTS pg_cron;
 GRANT USAGE ON SCHEMA cron TO postgres;
 
 -- ============================================================================
--- CRON JOB: Job Ingestion (daily at 07:00 UTC)
--- ============================================================================
-
--- This calls your Edge Function to ingest jobs
-SELECT cron.schedule(
-  'ingest-jobs',           -- job name
-  '0 7 * * *',             -- once per day at 07:00 UTC (Hobby limit)
-  $$
-  SELECT net.http_post(
-    url := 'https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/ingest-jobs',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key')
-    ),
-    body := '{}'::jsonb
-  );
-  $$
-);
-
--- ============================================================================
 -- CRON JOB: Match & Notify (daily at 07:30 UTC)
 -- ============================================================================
 
