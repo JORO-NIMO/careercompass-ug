@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
-import HeroSection from "@/components/HeroSection";
-import SearchFilters from "@/components/SearchFilters";
-import FeaturedPlacements from "@/components/FeaturedPlacements";
-import HowItWorks from "@/components/HowItWorks";
-import QuickNavigation from "@/components/QuickNavigation";
-import SEO from "@/components/SEO";
-import { HomepageAdsBanner } from "@/components/HomepageAdsBanner";
+import HeroSection from "@/components/layout/HeroSection";
+import SearchFilters from "@/components/common/SearchFilters";
+import FeaturedPlacements from "@/components/placements/FeaturedPlacements";
+import HowItWorks from "@/components/layout/HowItWorks";
+import QuickNavigation from "@/components/layout/QuickNavigation";
+import SEO from "@/components/seo/SEO";
+import { HomepageAdsBanner } from "@/components/layout/HomepageAdsBanner";
 
-import { PlatformNews } from "@/components/PlatformNews";
+import { PlatformNews } from "@/components/common/PlatformNews";
 
 
 const AUDIENCE_SEGMENTS = [

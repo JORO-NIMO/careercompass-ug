@@ -7,9 +7,9 @@ import { AuthProvider } from "./hooks/AuthProvider";
 import { LocaleProvider } from "./hooks/LocaleProvider";
 import { useAuth } from "./hooks/useAuth";
 import { usePageTracking } from "./hooks/usePageTracking";
-import ErrorBoundary from "./components/ErrorBoundary";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import AccessBlocked from "./pages/AccessBlocked";
 import { checkAccess } from "./services/accessControl";
 

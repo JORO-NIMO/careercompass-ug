@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Megaphone, Search, ArrowRight, Calendar, User, Share2, Loader2 } from "lucide-react";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Announcement {

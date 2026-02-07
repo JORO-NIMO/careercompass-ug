@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, Share2, Megaphone } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 
 interface Post {
     id: string;

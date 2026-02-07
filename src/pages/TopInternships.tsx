@@ -1,11 +1,11 @@
-import QuickNavigation from "@/components/QuickNavigation";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Building2, MapPin, Rocket } from "lucide-react";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 
 interface IndustryData {
   title: string;

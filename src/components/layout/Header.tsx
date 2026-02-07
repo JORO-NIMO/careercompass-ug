@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Menu, Briefcase, LogOut, Shield, Search } from "lucide-react";
-import NotificationBell from "@/components/NotificationBell";
+import NotificationBell from "@/components/common/NotificationBell";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import PageAssistant from '@/components/PageAssistant';
+import PageAssistant from '@/components/common/PageAssistant';
 import { isAssistantEnabledForPath, getSuggestionsForPath, getContextForPath } from '@/lib/assistantConfig';
 import { useAuth } from '@/hooks/useAuth';
 

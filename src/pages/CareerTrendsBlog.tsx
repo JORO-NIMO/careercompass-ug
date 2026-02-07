@@ -1,9 +1,9 @@
-import QuickNavigation from "@/components/QuickNavigation";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, BarChart3, Globe2, Users } from "lucide-react";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 
 const trendSections = [
   {

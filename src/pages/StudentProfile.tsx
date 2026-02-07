@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { Loader2, Plus, X, MapPin } from "lucide-react";
 import { getAllCountries, getCitiesOfCountry } from '@/lib/location-utils';
-import { CVUpload } from "@/components/CVUpload";
+import { CVUpload } from "@/components/common/CVUpload";
 // For reverse geocoding
 const REVERSE_GEOCODE_API = "https://nominatim.openstreetmap.org/reverse?format=jsonv2";
-import QuickNavigation from "@/components/QuickNavigation";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

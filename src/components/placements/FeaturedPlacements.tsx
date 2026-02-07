@@ -5,8 +5,8 @@ import { ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from '@/integrations/supabase/client';
 import { fetchListings, type ListingWithCompany } from '@/services/listingsService';
-import { CuratedListingCard } from '@/components/CuratedListingCard';
-import JobPostingJsonLd from '@/components/JobPostingJsonLd';
+import { CuratedListingCard } from '@/components/common/CuratedListingCard';
+import JobPostingJsonLd from '@/components/seo/JobPostingJsonLd';
 
 interface PlacementData {
   id: string;
