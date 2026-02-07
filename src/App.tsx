@@ -73,7 +73,7 @@ const PageLoader = () => (
 );
 
 // Lazy load ChatWidget
-const ChatWidget = lazy(() => import("./components/ChatWidget"));
+const ChatWidget = lazy(() => import("./components/common/ChatWidget"));
 
 // Layout component to handle Header/Footer visibility
 import { useState } from "react";
