@@ -6,8 +6,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { OpportunityType } from '@/types/opportunities';
 
-// API base URL - use Render API by default
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ugep-api.onrender.com';
+// API base URL - configure in .env
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface Opportunity {
   id: string;
