@@ -9,8 +9,8 @@ services:
   - type: web
     name: opportunity-backend
     runtime: node
-    region: frankfurt  # EU region, change to oregon for US
-    plan: free  # Use 'starter' for production ($7/mo)
+    region: frankfurt
+    plan: free
     buildCommand: npm ci && npm run api:build
     startCommand: npm run api:start
     healthCheckPath: /health
@@ -18,40 +18,19 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 3001
+        value: "3001"
       - key: SUPABASE_URL
-        sync: false  # Set manually in Render dashboard
+        value: ""
       - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false  # Set manually in Render dashboard
+        value: ""
       - key: OPENAI_API_KEY
-        sync: false  # Set manually in Render dashboard
+        value: ""
       - key: REDIS_URL
-        sync: false  # Optional: Set if using Redis
+        value: ""
       - key: CORS_ORIGINS
-        value: https://careercompass-ug.vercel.app,https://your-domain.com
+        value: https://careercompass-ug.vercel.app,https://placementbridge.org
       - key: INGESTION_INTERVAL_HOURS
-        value: 6
+        value: "6"
       - key: RATE_LIMIT_MAX_REQUESTS
-        value: 100
-    autoDeploy: true  # Auto-deploy on push to main branch
-
-  # =============================================================================
-  # CRON JOB FOR RSS INGESTION (Optional - uses Render Cron)
-  # =============================================================================
-  - type: cron
-    name: opportunity-ingest-cron
-    runtime: node
-    region: frankfurt
-    plan: free
-    buildCommand: npm ci && npm run api:build
-    schedule: "0 */6 * * *"  # Every 6 hours
-    startCommand: npm run api:ingest
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
+        value: "100"
+    autoDeploy: true
