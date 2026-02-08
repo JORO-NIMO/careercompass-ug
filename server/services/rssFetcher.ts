@@ -1,6 +1,7 @@
 /**
  * RSS Fetcher Service
  * Fetches and parses RSS feeds from various sources
+ * Includes retry logic with exponential backoff
  */
 
 import Parser from 'rss-parser';
@@ -26,49 +27,95 @@ const parser = new Parser({
 });
 
 /**
- * Fetch and parse a single RSS feed
+ * Retry configuration
+ */
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  maxDelayMs: 30000,
+};
+
+/**
+ * Calculate delay with exponential backoff and jitter
+ */
+function calculateBackoffDelay(attempt: number): number {
+  const exponentialDelay = RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt);
+  const jitter = Math.random() * 1000;
+  return Math.min(exponentialDelay + jitter, RETRY_CONFIG.maxDelayMs);
+}
+
+/**
+ * Sleep for a specified duration
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Fetch and parse a single RSS feed with retry logic
  */
 export async function fetchRssFeed(
   sourceUrl: string,
   sourceName?: string
 ): Promise<{ items: RssFeedItem[]; error?: string }> {
   const name = sourceName || sourceUrl;
+  let lastError: string | undefined;
   
-  try {
-    logger.info(`Fetching RSS feed: ${name}`, { url: sourceUrl });
-    
-    const feed = await parser.parseURL(sourceUrl);
-    
-    if (!feed.items || feed.items.length === 0) {
-      logger.warn(`No items found in feed: ${name}`);
-      return { items: [], error: 'No items found in feed' };
+  for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = calculateBackoffDelay(attempt - 1);
+        logger.info(`Retry ${attempt}/${RETRY_CONFIG.maxRetries} for feed: ${name}`, { 
+          delayMs: delay 
+        });
+        await sleep(delay);
+      }
+      
+      logger.info(`Fetching RSS feed: ${name}`, { url: sourceUrl, attempt });
+      
+      const feed = await parser.parseURL(sourceUrl);
+      
+      if (!feed.items || feed.items.length === 0) {
+        logger.warn(`No items found in feed: ${name}`);
+        return { items: [], error: 'No items found in feed' };
+      }
+      
+      const items: RssFeedItem[] = feed.items.map(item => ({
+        title: item.title || '',
+        link: item.link || '',
+        pubDate: item.pubDate,
+        content: item.content || item['content:encoded'] as string | undefined,
+        contentSnippet: item.contentSnippet,
+        summary: item.summary,
+        description: item.content || item.contentSnippet,
+        creator: item.creator || item['dc:creator'] as string | undefined,
+        categories: item.categories,
+        guid: item.guid,
+        isoDate: item.isoDate,
+      }));
+      
+      logger.info(`Fetched ${items.length} items from: ${name}`);
+      return { items };
+      
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : 'Unknown error';
+      logger.warn(`Fetch attempt ${attempt + 1} failed for: ${name}`, { 
+        url: sourceUrl, 
+        error: lastError 
+      });
+      
+      // Don't retry on certain errors
+      if (lastError.includes('404') || lastError.includes('403') || lastError.includes('Invalid XML')) {
+        break;
+      }
     }
-    
-    const items: RssFeedItem[] = feed.items.map(item => ({
-      title: item.title || '',
-      link: item.link || '',
-      pubDate: item.pubDate,
-      content: item.content || item['content:encoded'] as string | undefined,
-      contentSnippet: item.contentSnippet,
-      summary: item.summary,
-      description: item.content || item.contentSnippet,
-      creator: item.creator || item['dc:creator'] as string | undefined,
-      categories: item.categories,
-      guid: item.guid,
-      isoDate: item.isoDate,
-    }));
-    
-    logger.info(`Fetched ${items.length} items from: ${name}`);
-    return { items };
-    
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    logger.error(`Failed to fetch RSS feed: ${name}`, { 
-      url: sourceUrl, 
-      error: errorMessage 
-    });
-    return { items: [], error: errorMessage };
   }
+  
+  logger.error(`Failed to fetch RSS feed after ${RETRY_CONFIG.maxRetries + 1} attempts: ${name}`, { 
+    url: sourceUrl, 
+    error: lastError 
+  });
+  return { items: [], error: lastError };
 }
 
 /**

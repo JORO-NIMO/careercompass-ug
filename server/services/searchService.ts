@@ -1,6 +1,6 @@
 /**
  * Search Service
- * Provides semantic and text-based search for opportunities
+ * Provides hybrid, semantic, and text-based search for opportunities
  * Used by AI chat and API endpoints
  */
 
@@ -9,14 +9,20 @@ import type {
   OpportunitySearchResult,
   OpportunityType,
 } from '../types/index.js';
-import { searchOpportunities, semanticSearchOpportunities } from './database.js';
+import { 
+  searchOpportunities, 
+  semanticSearchOpportunities, 
+  hybridSearchOpportunities,
+  keywordSearchOpportunities,
+} from './database.js';
 import { generateQueryEmbedding, isEmbeddingServiceAvailable } from './embeddingService.js';
 import { createModuleLogger } from '../utils/logger.js';
 
 const logger = createModuleLogger('search');
 
 /**
- * Smart search - uses semantic search when available, falls back to text
+ * Smart search - uses hybrid search (vector + keyword) when available
+ * Combines semantic understanding with exact keyword matching for best results
  */
 export async function smartSearch(
   params: SearchParams
@@ -28,29 +34,55 @@ export async function smartSearch(
     return searchOpportunities(params);
   }
   
-  // Try semantic search first
+  // Try hybrid search first (best results)
   if (isEmbeddingServiceAvailable()) {
     try {
       const embedding = await generateQueryEmbedding(query);
       
       if (embedding) {
-        logger.debug('Using semantic search', { query });
-        const results = await semanticSearchOpportunities(embedding, params);
+        logger.debug('Using hybrid search (vector + keyword)', { query });
+        const results = await hybridSearchOpportunities(embedding, query, params);
         
         if (results.length > 0) {
+          // Log score breakdown for monitoring
+          const avgHybrid = results.reduce((sum, r) => sum + r.hybrid_score, 0) / results.length;
+          const avgVector = results.reduce((sum, r) => sum + r.vector_score, 0) / results.length;
+          const avgKeyword = results.reduce((sum, r) => sum + r.keyword_score, 0) / results.length;
+          logger.debug('Hybrid search scores', { 
+            query, 
+            count: results.length,
+            avgHybrid: avgHybrid.toFixed(3),
+            avgVector: avgVector.toFixed(3),
+            avgKeyword: avgKeyword.toFixed(3),
+          });
           return results;
         }
-        // Fall through to text search if no semantic results
+        
+        // Fall through to keyword-only search if hybrid returns nothing
+        logger.debug('Hybrid search returned no results, trying keyword-only', { query });
       }
     } catch (err) {
-      logger.warn('Semantic search failed, falling back to text', {
+      logger.warn('Hybrid search failed, falling back to keyword search', {
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     }
   }
   
-  // Fall back to text search
-  logger.debug('Using text search', { query });
+  // Try keyword-only search (tsvector)
+  try {
+    logger.debug('Using keyword search (tsvector)', { query });
+    const keywordResults = await keywordSearchOpportunities(query, params);
+    if (keywordResults.length > 0) {
+      return keywordResults;
+    }
+  } catch (err) {
+    logger.warn('Keyword search failed, falling back to basic text', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+    });
+  }
+  
+  // Final fallback to basic text search
+  logger.debug('Using basic text search (ILIKE)', { query });
   return searchOpportunities(params);
 }
 

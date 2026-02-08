@@ -332,6 +332,62 @@ export async function semanticSearchOpportunities(
 }
 
 /**
+ * Hybrid search combining vector similarity (60%) with keyword ranking (40%)
+ * Best of both worlds: semantic understanding + exact keyword matching
+ */
+export async function hybridSearchOpportunities(
+  embedding: number[],
+  queryText: string,
+  params: Omit<SearchParams, 'query'>
+): Promise<(OpportunitySearchResult & { vector_score: number; keyword_score: number; hybrid_score: number })[]> {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase.rpc('hybrid_search_opportunities', {
+    query_embedding: embedding,
+    query_text: queryText,
+    match_threshold: 0.3, // Lower threshold since we combine scores
+    match_count: params.limit || 10,
+    filter_type: params.type || null,
+    filter_field: params.field || null,
+    filter_country: params.country || null,
+    vector_weight: 0.6,
+    keyword_weight: 0.4,
+  });
+  
+  if (error) {
+    logger.error('Hybrid search failed', { error: error.message });
+    throw error;
+  }
+  
+  return data || [];
+}
+
+/**
+ * Keyword-only search using tsvector (fallback when no embedding available)
+ */
+export async function keywordSearchOpportunities(
+  queryText: string,
+  params: Omit<SearchParams, 'query'>
+): Promise<(OpportunitySearchResult & { keyword_score: number })[]> {
+  const supabase = getSupabaseClient();
+  
+  const { data, error } = await supabase.rpc('keyword_search_opportunities', {
+    query_text: queryText,
+    match_count: params.limit || 10,
+    filter_type: params.type || null,
+    filter_field: params.field || null,
+    filter_country: params.country || null,
+  });
+  
+  if (error) {
+    logger.error('Keyword search failed', { error: error.message });
+    throw error;
+  }
+  
+  return data || [];
+}
+
+/**
  * Create ingestion log entry
  */
 export async function createIngestionLog(

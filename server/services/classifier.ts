@@ -3,6 +3,7 @@
  * Classifies opportunities by type, field, and country using keyword matching
  */
 
+// @ts-expect-error - country-list has no type definitions
 import countryListModule from 'country-list';
 import { 
   TYPE_KEYWORDS, 

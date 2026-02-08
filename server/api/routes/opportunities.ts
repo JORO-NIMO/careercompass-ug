@@ -13,6 +13,7 @@ import { smartSearch, searchForChat, parseSearchIntent } from '../../services/se
 import type { OpportunityType } from '../../types/index.js';
 import { createModuleLogger } from '../../utils/logger.js';
 import { searchRateLimiter } from '../../utils/rateLimiter.js';
+import { aiRateLimiter } from '../../utils/aiRateLimiter.js';
 import { 
   withCache, 
   generateCacheKey, 
@@ -149,8 +150,9 @@ router.get('/search', searchRateLimiter, async (req: Request, res: Response) => 
 /**
  * POST /opportunities/chat-search
  * AI chat-oriented search endpoint
+ * Rate limited by user type (anonymous: 5/day, auth: 25/day, admin: unlimited)
  */
-router.post('/chat-search', async (req: Request, res: Response) => {
+router.post('/chat-search', aiRateLimiter, async (req: Request, res: Response) => {
   try {
     const { query, type, field, country, limit } = req.body;
     

@@ -1,5 +1,6 @@
 // Deno Edge Function: chat-agent
 // Handles LLM orchestration with tool calling for the career assistant
+// Includes conversation memory for contextual responses
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -9,9 +10,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface ChatRequest {
   sessionId?: string;
   message: string;
+  history?: ChatMessage[]; // Client can pass history, or we fetch from DB
   context?: {
     userId?: string;
     currentPage?: string;
@@ -230,6 +237,79 @@ function capitalizeFirst(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// ============================================================================
+// Conversation Memory Helpers
+// ============================================================================
+
+/**
+ * Fetch recent chat history from database
+ */
+async function fetchChatHistory(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  sessionId?: string,
+  limit = 10
+): Promise<ChatMessage[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_chat_history', {
+      p_user_id: userId,
+      p_session_id: sessionId || null,
+      p_limit: limit,
+    });
+
+    if (error) {
+      console.warn('Failed to fetch chat history:', error.message);
+      return [];
+    }
+
+    // Results come in DESC order, reverse for chronological
+    const messages = (data || []).reverse().map((row: { role: string; content: string }) => ({
+      role: row.role as 'user' | 'assistant',
+      content: row.content,
+    }));
+
+    return messages;
+  } catch (err) {
+    console.warn('Error fetching chat history:', err);
+    return [];
+  }
+}
+
+/**
+ * Save a chat message to database
+ */
+async function saveChatMessage(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  sessionId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  metadata: Record<string, unknown> = {}
+): Promise<void> {
+  try {
+    const { error } = await supabase.rpc('save_chat_message', {
+      p_user_id: userId,
+      p_session_id: sessionId,
+      p_role: role,
+      p_content: content,
+      p_metadata: metadata,
+    });
+
+    if (error) {
+      console.warn('Failed to save chat message:', error.message);
+    }
+  } catch (err) {
+    console.warn('Error saving chat message:', err);
+  }
+}
+
+/**
+ * Generate a session ID if not provided
+ */
+function generateSessionId(): string {
+  return crypto.randomUUID();
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -237,7 +317,10 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { message, context } = (await req.json()) as ChatRequest;
+    const { message, sessionId: providedSessionId, history: providedHistory, context } = (await req.json()) as ChatRequest;
+
+    // Generate or use provided session ID
+    const sessionId = providedSessionId || generateSessionId();
 
     // Get user from auth header
     const authHeader = req.headers.get('authorization');
@@ -293,6 +376,20 @@ serve(async (req: Request) => {
       const token = authHeader.replace('Bearer ', '');
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id || null;
+    }
+
+    // Fetch conversation history
+    let conversationHistory: ChatMessage[] = [];
+    if (userId) {
+      // If client provided history, use it; otherwise fetch from DB
+      if (providedHistory && providedHistory.length > 0) {
+        conversationHistory = providedHistory.slice(-10); // Last 10 messages
+      } else {
+        conversationHistory = await fetchChatHistory(supabase, userId, sessionId, 10);
+      }
+      
+      // Save the user message
+      await saveChatMessage(supabase, userId, sessionId, 'user', message);
     }
 
     // Server-side enforcement: restrict assistant on admin routes for non-admin users
@@ -387,12 +484,18 @@ serve(async (req: Request) => {
           : 'No placements found. Try different keywords.';
       }
 
+      // Save assistant response to conversation history (fallback mode)
+      if (userId) {
+        await saveChatMessage(supabase, userId, sessionId, 'assistant', response);
+      }
+
       return new Response(
         JSON.stringify({
           message: {
             role: 'assistant',
             content: response,
           },
+          sessionId, // Return session ID for conversation continuity
           toolResults,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -483,9 +586,15 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
       return { message: msg, usage: usage ? { ...usage, elapsed_ms } : { elapsed_ms } };
     };
 
-    // First LLM call
+    // First LLM call - include conversation history for context
+    const historyMessages = conversationHistory.map(m => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     const firstCall = await callLLM([
       { role: 'system', content: systemPrompt },
+      ...historyMessages, // Previous conversation context
       { role: 'user', content: message },
     ]);
     const assistantMessage = firstCall.message;
@@ -510,11 +619,21 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
       // Second LLM call with tool results
       const secondCall = await callLLM([
         { role: 'system', content: systemPrompt },
+        ...historyMessages,
         { role: 'user', content: message },
         { role: 'assistant', content: '', ...assistantMessage },
         ...toolResults.map(r => ({ role: 'tool' as const, content: r.content, tool_call_id: r.tool_call_id })),
       ], false);
       const finalMessage = secondCall.message;
+      const responseContent = finalMessage?.content || 'I found some results for you.';
+      
+      // Save assistant response to conversation history
+      if (userId) {
+        await saveChatMessage(supabase, userId, sessionId, 'assistant', responseContent, {
+          toolCalls: assistantMessage.tool_calls?.map((tc: { function: { name: string } }) => tc.function.name),
+        });
+      }
+
       const prompt_tokens = ((firstCall.usage?.prompt_tokens || 0) + (secondCall.usage?.prompt_tokens || 0)) || undefined;
       const completion_tokens = ((firstCall.usage?.completion_tokens || 0) + (secondCall.usage?.completion_tokens || 0)) || undefined;
       const total_tokens = ((firstCall.usage?.total_tokens || 0) + (secondCall.usage?.total_tokens || 0)) || undefined;
@@ -523,9 +642,10 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
         JSON.stringify({
           message: {
             role: 'assistant',
-            content: finalMessage?.content || 'I found some results for you.',
+            content: responseContent,
             toolCalls: assistantMessage.tool_calls,
           },
+          sessionId, // Return session ID for conversation continuity
           toolResults: toolResults.map((r) => JSON.parse(r.content)),
           usage: { provider: provider!.name, model: provider!.model, promptTokens: prompt_tokens, completionTokens: completion_tokens, totalTokens: total_tokens, elapsedMs: elapsed_ms },
         }),
@@ -534,12 +654,20 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
     }
 
     // No tool calls, return direct response
+    const directContent = assistantMessage.content || '';
+    
+    // Save assistant response to conversation history
+    if (userId) {
+      await saveChatMessage(supabase, userId, sessionId, 'assistant', directContent);
+    }
+
     return new Response(
       JSON.stringify({
         message: {
           role: 'assistant',
-          content: assistantMessage.message.content,
+          content: directContent,
         },
+        sessionId, // Return session ID for conversation continuity
         usage: { provider: provider!.name, model: provider!.model, promptTokens: firstCall.usage?.prompt_tokens, completionTokens: firstCall.usage?.completion_tokens, totalTokens: firstCall.usage?.total_tokens, elapsedMs: firstCall.usage?.elapsed_ms },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

@@ -3,7 +3,7 @@
  */
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 import { captureException, addBreadcrumb } from '@/lib/sentry';
 
 interface Props {

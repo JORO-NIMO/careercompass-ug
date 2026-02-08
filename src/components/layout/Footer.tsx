@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PageVisitCounter } from "./PageVisitCounter";
+import { PageVisitCounter } from "@/components/common/PageVisitCounter";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";

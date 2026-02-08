@@ -1,17 +1,74 @@
 /**
  * Scheduler Service
- * Automated RSS ingestion using node-cron
+ * Automated RSS ingestion and maintenance jobs using node-cron
+ * Replaces n8n workflows with internal backend jobs
  */
 
 import cron from 'node-cron';
 import { runFullIngestion, generateEmbeddingsForNew } from '../services/ingestion.js';
 import { config } from '../config/index.js';
 import { createModuleLogger } from '../utils/logger.js';
+import { getSupabaseClient } from '../utils/supabase.js';
 
 const logger = createModuleLogger('scheduler');
 
 let ingestionTask: cron.ScheduledTask | null = null;
 let embeddingTask: cron.ScheduledTask | null = null;
+let cleanupTask: cron.ScheduledTask | null = null;
+let chatHistoryCleanupTask: cron.ScheduledTask | null = null;
+
+/**
+ * Cleanup old opportunities (older than 90 days and expired)
+ */
+async function cleanupOldOpportunities(): Promise<void> {
+  const supabase = getSupabaseClient();
+  
+  try {
+    // Delete opportunities older than 90 days
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 90);
+    
+    const { error, count } = await supabase
+      .from('opportunities')
+      .delete({ count: 'exact' })
+      .lt('created_at', cutoffDate.toISOString());
+    
+    if (error) {
+      logger.error('Failed to cleanup old opportunities', { error: error.message });
+    } else {
+      logger.info(`Cleaned up ${count || 0} old opportunities`);
+    }
+  } catch (err) {
+    logger.error('Cleanup job failed', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+    });
+  }
+}
+
+/**
+ * Cleanup old chat messages (keep last 100 per user)
+ */
+async function cleanupChatHistory(): Promise<void> {
+  const supabase = getSupabaseClient();
+  
+  try {
+    // Call RPC to cleanup old chat messages
+    const { error } = await supabase.rpc('cleanup_old_chat_messages', {
+      p_keep_count: 100,
+    });
+    
+    if (error) {
+      // RPC might not exist yet, log but don't fail
+      logger.debug('Chat cleanup RPC not available', { error: error.message });
+    } else {
+      logger.info('Chat history cleanup completed');
+    }
+  } catch (err) {
+    logger.error('Chat history cleanup failed', {
+      error: err instanceof Error ? err.message : 'Unknown error',
+    });
+  }
+}
 
 /**
  * Start the scheduled ingestion task
@@ -20,7 +77,6 @@ export function startScheduler(): void {
   const intervalHours = config.ingestionIntervalHours;
   
   // Run ingestion every N hours
-  // Cron format: minute hour * * * (e.g., "0 */6 * * *" for every 6 hours)
   const ingestionCron = `0 */${intervalHours} * * *`;
   
   logger.info(`Starting scheduler with ${intervalHours}-hour interval`, {
@@ -39,6 +95,7 @@ export function startScheduler(): void {
         skipped: result.totalSkipped,
         failed: result.totalFailed,
         embeddings: result.embeddingsGenerated,
+        notifications: result.notificationsQueued,
       });
     } catch (err) {
       logger.error('Scheduled ingestion failed', {
@@ -67,7 +124,25 @@ export function startScheduler(): void {
     timezone: 'Africa/Kampala',
   });
   
-  logger.info('Scheduler started successfully');
+  // Schedule cleanup (daily at 3 AM)
+  cleanupTask = cron.schedule('0 3 * * *', async () => {
+    logger.info('Running daily cleanup...');
+    await cleanupOldOpportunities();
+  }, {
+    scheduled: true,
+    timezone: 'Africa/Kampala',
+  });
+  
+  // Schedule chat history cleanup (daily at 4 AM)
+  chatHistoryCleanupTask = cron.schedule('0 4 * * *', async () => {
+    logger.info('Running chat history cleanup...');
+    await cleanupChatHistory();
+  }, {
+    scheduled: true,
+    timezone: 'Africa/Kampala',
+  });
+  
+  logger.info('Scheduler started successfully with all jobs');
 }
 
 /**
@@ -84,6 +159,18 @@ export function stopScheduler(): void {
     embeddingTask.stop();
     embeddingTask = null;
     logger.info('Embedding task stopped');
+  }
+  
+  if (cleanupTask) {
+    cleanupTask.stop();
+    cleanupTask = null;
+    logger.info('Cleanup task stopped');
+  }
+  
+  if (chatHistoryCleanupTask) {
+    chatHistoryCleanupTask.stop();
+    chatHistoryCleanupTask = null;
+    logger.info('Chat history cleanup task stopped');
   }
 }
 

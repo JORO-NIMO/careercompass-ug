@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect } from "react";
 import { AuthProvider } from "./hooks/AuthProvider";
+import { OnboardingProvider } from "./hooks/OnboardingProvider";
 import { LocaleProvider } from "./hooks/LocaleProvider";
 import { useAuth } from "./hooks/useAuth";
 import { usePageTracking } from "./hooks/usePageTracking";
@@ -216,17 +217,18 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <LocaleProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-            <AppLayout>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/find-placements" element={<FindPlacements />} />
-                  <Route path="/for-companies" element={<ForCompanies />} />
-                  <Route path="/about" element={<About />} />
+        <OnboardingProvider>
+          <LocaleProvider>
+            <TooltipProvider>
+              <Toaster />
+              <BrowserRouter>
+              <AppLayout>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/find-placements" element={<FindPlacements />} />
+                    <Route path="/for-companies" element={<ForCompanies />} />
+                    <Route path="/about" element={<About />} />
                   <Route path="/signin" element={<SignIn />} />
                   <Route path="/profile" element={<StudentProfile />} />
                   <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
@@ -272,8 +274,9 @@ const App = () => (
               </Suspense>
             </AppLayout>
             </BrowserRouter>
-          </TooltipProvider>
-        </LocaleProvider>
+            </TooltipProvider>
+          </LocaleProvider>
+        </OnboardingProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
