@@ -73,6 +73,7 @@ export default function PlacementDetails() {
   const title = listing?.title || fallback?.position_title || 'Opportunity';
   const description = listing?.description || fallback?.description || '';
   const companyName = listing?.companies?.name || fallback?.company_name || null;
+  const companyWebsite = listing?.companies?.website_url || null;
   const region = listing?.region || fallback?.region || null;
   const updatedAt = listing?.updated_at || null;
   const createdAt = listing?.created_at || fallback?.created_at || null;
@@ -98,6 +99,7 @@ export default function PlacementDetails() {
           title={title}
           description={description}
           companyName={companyName}
+          companyWebsite={companyWebsite}
           updatedAt={updatedAt}
           createdAt={createdAt}
           applicationDeadline={deadline}
