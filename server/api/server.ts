@@ -9,9 +9,7 @@ import opportunitiesRouter from './routes/opportunities.js';
 import ingestionRouter from './routes/ingestion.js';
 import healthRouter from './routes/health.js';
 import { createModuleLogger } from '../utils/logger.js';
-import {
-  defaultRateLimiter,
-} from '../utils/rateLimiter.js';
+import { defaultRateLimiter } from '../utils/rateLimiter.js';
 import { initRedisCache } from '../utils/cache.js';
 
 const logger = createModuleLogger('api');
