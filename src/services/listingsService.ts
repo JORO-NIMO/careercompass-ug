@@ -127,7 +127,7 @@ export async function fetchListings(): Promise<ListingWithCompany[]> {
 export async function fetchAdminListings(): Promise<AdminListing[]> {
   const { data, error } = await supabase
     .from('listings')
-    .select('*, companies:companies(id, name)')
+    .select('*, companies:companies(id, name, website_url)')
     .order('display_order', { ascending: true })
     .order('created_at', { ascending: false });
 

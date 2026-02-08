@@ -1,6 +1,6 @@
 import type { Tables } from '@/integrations/supabase/types';
 
-export type AdminCompanySummary = Pick<Tables<'companies'>, 'id' | 'name'>;
+export type AdminCompanySummary = Pick<Tables<'companies'>, 'id' | 'name' | 'website_url'>;
 
 export type ListingWithCompany = Tables<'listings'> & {
   companies: AdminCompanySummary | null;
