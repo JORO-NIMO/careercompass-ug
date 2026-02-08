@@ -1,5 +1,6 @@
 // Deno Edge Function: chat-agent
 // Handles LLM orchestration with tool calling for the career assistant
+// Includes conversation memory for contextual responses
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -9,9 +10,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
+
 interface ChatRequest {
   sessionId?: string;
   message: string;
+  history?: ChatMessage[]; // Client can pass history, or we fetch from DB
   context?: {
     userId?: string;
     currentPage?: string;
@@ -80,6 +87,28 @@ const tools = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'searchOpportunitiesSemantic',
+      description: 'Search for opportunities (jobs, scholarships, internships, fellowships, grants, training) using AI semantic search',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Natural language search query' },
+          type: {
+            type: 'string',
+            enum: ['job', 'internship', 'scholarship', 'fellowship', 'training', 'grant', 'competition', 'volunteer', 'conference'],
+            description: 'Filter by opportunity type'
+          },
+          field: { type: 'string', description: 'Filter by field/sector (e.g., ICT, Health, Engineering)' },
+          country: { type: 'string', description: 'Filter by country or region (e.g., Uganda, Kenya, Global)' },
+          limit: { type: 'number', description: 'Max results (default: 5)' },
+        },
+        required: ['query'],
+      },
+    },
+  },
 ];
 
 // Execute tool calls
@@ -129,6 +158,32 @@ async function executeTool(
       return { subscriptionId: data, success: true };
     }
 
+    case 'searchOpportunitiesSemantic': {
+      // Semantic search for opportunities from RSS feeds
+      const query = (args.query as string) || '';
+      const limit = (args.limit as number) || 5;
+      const filterType = (args.type as string) || null;
+      const filterField = (args.field as string) || null;
+      const filterCountry = (args.country as string) || null;
+
+      // First, try text-based search (semantic requires embedding)
+      const { data, error } = await supabase.rpc('search_opportunities', {
+        p_query: query,
+        p_type: filterType,
+        p_field: filterField,
+        p_country: filterCountry,
+        p_limit: limit,
+        p_offset: 0,
+      });
+
+      if (error) {
+        console.error('Opportunity search error:', error);
+        return { error: 'Failed to search opportunities' };
+      }
+
+      return data || [];
+    }
+
     default:
       return { error: `Unknown tool: ${name}` };
   }
@@ -150,6 +205,111 @@ function formatPlacements(placements: Record<string, unknown>[]): string {
     .join('\n');
 }
 
+// Format opportunities (from RSS feeds) for LLM response
+function formatOpportunities(opportunities: Record<string, unknown>[]): string {
+  if (!opportunities || opportunities.length === 0) {
+    return 'No opportunities found matching your criteria.';
+  }
+
+  return opportunities
+    .map((opp, i) => {
+      const similarity = opp.similarity
+        ? ` (${Math.round((opp.similarity as number) * 100)}% relevant)`
+        : '';
+      
+      const parts = [];
+      if (opp.organization) parts.push(`🏢 ${opp.organization}`);
+      if (opp.type) parts.push(`📋 ${capitalizeFirst(opp.type as string)}`);
+      if (opp.field) parts.push(`🎯 ${opp.field}`);
+      if (opp.country) parts.push(`📍 ${opp.country}`);
+      
+      const details = parts.length > 0 ? `\n   ${parts.join(' | ')}` : '';
+      const description = opp.description
+        ? `\n   ${(opp.description as string).substring(0, 150)}...`
+        : '';
+      
+      return `${i + 1}. **${opp.title}**${similarity}${details}${description}\n   🔗 ${opp.url}`;
+    })
+    .join('\n\n');
+}
+
+function capitalizeFirst(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// ============================================================================
+// Conversation Memory Helpers
+// ============================================================================
+
+/**
+ * Fetch recent chat history from database
+ */
+async function fetchChatHistory(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  sessionId?: string,
+  limit = 10
+): Promise<ChatMessage[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_chat_history', {
+      p_user_id: userId,
+      p_session_id: sessionId || null,
+      p_limit: limit,
+    });
+
+    if (error) {
+      console.warn('Failed to fetch chat history:', error.message);
+      return [];
+    }
+
+    // Results come in DESC order, reverse for chronological
+    const messages = (data || []).reverse().map((row: { role: string; content: string }) => ({
+      role: row.role as 'user' | 'assistant',
+      content: row.content,
+    }));
+
+    return messages;
+  } catch (err) {
+    console.warn('Error fetching chat history:', err);
+    return [];
+  }
+}
+
+/**
+ * Save a chat message to database
+ */
+async function saveChatMessage(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  sessionId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  metadata: Record<string, unknown> = {}
+): Promise<void> {
+  try {
+    const { error } = await supabase.rpc('save_chat_message', {
+      p_user_id: userId,
+      p_session_id: sessionId,
+      p_role: role,
+      p_content: content,
+      p_metadata: metadata,
+    });
+
+    if (error) {
+      console.warn('Failed to save chat message:', error.message);
+    }
+  } catch (err) {
+    console.warn('Error saving chat message:', err);
+  }
+}
+
+/**
+ * Generate a session ID if not provided
+ */
+function generateSessionId(): string {
+  return crypto.randomUUID();
+}
+
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -157,7 +317,10 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { message, context } = (await req.json()) as ChatRequest;
+    const { message, sessionId: providedSessionId, history: providedHistory, context } = (await req.json()) as ChatRequest;
+
+    // Generate or use provided session ID
+    const sessionId = providedSessionId || generateSessionId();
 
     // Get user from auth header
     const authHeader = req.headers.get('authorization');
@@ -165,18 +328,18 @@ serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
+
     // Multi-provider support: Groq (free) -> OpenAI (paid) -> Gemini (free)
     const groqKey = Deno.env.get('GROQ_API_KEY');
     const openaiKey = Deno.env.get('OPENAI_API_KEY');
     const geminiKey = Deno.env.get('GOOGLE_API_KEY');
-    
+
     // Select provider (priority: Groq > OpenAI > Gemini)
     type Provider = { name: string; url: string; key: string; model: string };
     let provider: Provider | null = null;
     const modelOverride = Deno.env.get('MODEL_OVERRIDE');
     const enableCodex = (Deno.env.get('ENABLE_GPT_5_2_CODEX') || '').toLowerCase() === 'true';
-    
+
     if (enableCodex && openaiKey) {
       provider = {
         name: 'openai',
@@ -215,6 +378,20 @@ serve(async (req: Request) => {
       userId = user?.id || null;
     }
 
+    // Fetch conversation history
+    let conversationHistory: ChatMessage[] = [];
+    if (userId) {
+      // If client provided history, use it; otherwise fetch from DB
+      if (providedHistory && providedHistory.length > 0) {
+        conversationHistory = providedHistory.slice(-10); // Last 10 messages
+      } else {
+        conversationHistory = await fetchChatHistory(supabase, userId, sessionId, 10);
+      }
+      
+      // Save the user message
+      await saveChatMessage(supabase, userId, sessionId, 'user', message);
+    }
+
     // Server-side enforcement: restrict assistant on admin routes for non-admin users
     const currentPage = context?.currentPage || '';
     const isAdminPage = currentPage.startsWith('admin') || currentPage.startsWith('/admin');
@@ -245,6 +422,9 @@ serve(async (req: Request) => {
       let response = '';
       let toolResults: unknown[] = [];
 
+      // Detect opportunity-related queries (scholarships, fellowships, grants, internships, training)
+      const isOpportunityQuery = /\b(scholarship|fellowship|grant|training|internship|opportunity|opportunities|funding|program|course|study abroad)\b/i.test(lowerMessage);
+      
       if (lowerMessage.includes('recommend') || lowerMessage.includes('for me') || lowerMessage.includes('match')) {
         const result = await executeTool(supabase, userId, {
           id: '1',
@@ -268,8 +448,31 @@ serve(async (req: Request) => {
         response = (result as { success?: boolean }).success
           ? "You're now subscribed to job alerts!"
           : 'Please sign in to set up job alerts.';
+      } else if (isOpportunityQuery) {
+        // Use semantic opportunity search for scholarships, fellowships, etc.
+        // Detect filters from message
+        let opportunityType: string | null = null;
+        if (/scholarship/i.test(lowerMessage)) opportunityType = 'scholarship';
+        else if (/fellowship/i.test(lowerMessage)) opportunityType = 'fellowship';
+        else if (/grant/i.test(lowerMessage)) opportunityType = 'grant';
+        else if (/training|course|program/i.test(lowerMessage)) opportunityType = 'training';
+        else if (/intern(ship)?/i.test(lowerMessage)) opportunityType = 'internship';
+        
+        const result = await executeTool(supabase, userId, {
+          id: '4',
+          name: 'searchOpportunitiesSemantic',
+          arguments: { 
+            query: message, 
+            type: opportunityType,
+            limit: 5 
+          },
+        });
+        toolResults.push(result);
+        response = Array.isArray(result) && result.length > 0
+          ? `I found ${result.length} opportunities:\n\n${formatOpportunities(result)}`
+          : 'No opportunities found. Try different keywords or check back later - we update our database regularly!';
       } else {
-        // Default: search
+        // Default: search placements
         const result = await executeTool(supabase, userId, {
           id: '3',
           name: 'searchPlacements',
@@ -281,12 +484,18 @@ serve(async (req: Request) => {
           : 'No placements found. Try different keywords.';
       }
 
+      // Save assistant response to conversation history (fallback mode)
+      if (userId) {
+        await saveChatMessage(supabase, userId, sessionId, 'assistant', response);
+      }
+
       return new Response(
         JSON.stringify({
           message: {
             role: 'assistant',
             content: response,
           },
+          sessionId, // Return session ID for conversation continuity
           toolResults,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -295,21 +504,24 @@ serve(async (req: Request) => {
 
     // Full LLM orchestration with selected provider
     console.log(`Using LLM provider: ${provider.name} (${provider.model})`);
-    
-    const systemPrompt = `You are a helpful career assistant for CareerCompass, a platform connecting students and professionals with job placements, internships, and opportunities in Africa.
+
+    const systemPrompt = `You are a helpful career assistant for CareerCompass, a platform connecting students and professionals with job placements, internships, scholarships, fellowships, grants, and training opportunities worldwide, with a focus on Africa.
 
 Your capabilities:
 - Search for job placements by keywords, location, or industry
+- Search for opportunities (scholarships, internships, fellowships, grants, training programs) using semantic search - PREFER this for opportunity-related queries
 - Provide personalized recommendations based on user profiles
 - Help users set up job alerts
 - Answer career-related questions
+
+When users ask about opportunities like scholarships, fellowships, grants, or internships, use the searchOpportunitiesSemantic tool for best results.
 
 Be concise, friendly, and helpful. When showing job results, format them clearly.
 ${userId ? 'The user is signed in and can access personalized features.' : 'The user is not signed in. Encourage them to sign in for personalized features.'}`;
 
     // Helper to make LLM calls (works with Groq/OpenAI compatible APIs)
     const callLLM = async (
-      messages: Array<{role: string; content: string; tool_call_id?: string}>,
+      messages: Array<{ role: string; content: string; tool_call_id?: string }>,
       useTools = true,
     ): Promise<{ message: any; usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number; elapsed_ms?: number } }> => {
       const start = Date.now();
@@ -319,7 +531,7 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }]
         }));
-        
+
         const response = await fetch(provider!.url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -328,10 +540,10 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
             generationConfig: { maxOutputTokens: 1000 }
           }),
         });
-        
+
         const data = await response.json();
         if (data.error) throw new Error(`Gemini error: ${data.error.message}`);
-        
+
         const elapsed_ms = Date.now() - start;
         return {
           message: {
@@ -341,7 +553,7 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
           usage: { elapsed_ms },
         };
       }
-      
+
       // OpenAI/Groq compatible API
       const response = await fetch(provider!.url, {
         method: 'POST',
@@ -358,12 +570,12 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
       });
 
       const data = await response.json();
-      
+
       if (data.error) {
         console.error(`${provider!.name} API error:`, JSON.stringify(data.error));
         throw new Error(`${provider!.name} error: ${data.error.message || 'Unknown error'}`);
       }
-      
+
       const msg = data.choices?.[0]?.message;
       if (!msg) {
         console.error(`Unexpected ${provider!.name} response:`, JSON.stringify(data));
@@ -374,9 +586,15 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
       return { message: msg, usage: usage ? { ...usage, elapsed_ms } : { elapsed_ms } };
     };
 
-    // First LLM call
+    // First LLM call - include conversation history for context
+    const historyMessages = conversationHistory.map(m => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     const firstCall = await callLLM([
       { role: 'system', content: systemPrompt },
+      ...historyMessages, // Previous conversation context
       { role: 'user', content: message },
     ]);
     const assistantMessage = firstCall.message;
@@ -401,11 +619,21 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
       // Second LLM call with tool results
       const secondCall = await callLLM([
         { role: 'system', content: systemPrompt },
+        ...historyMessages,
         { role: 'user', content: message },
         { role: 'assistant', content: '', ...assistantMessage },
         ...toolResults.map(r => ({ role: 'tool' as const, content: r.content, tool_call_id: r.tool_call_id })),
       ], false);
       const finalMessage = secondCall.message;
+      const responseContent = finalMessage?.content || 'I found some results for you.';
+      
+      // Save assistant response to conversation history
+      if (userId) {
+        await saveChatMessage(supabase, userId, sessionId, 'assistant', responseContent, {
+          toolCalls: assistantMessage.tool_calls?.map((tc: { function: { name: string } }) => tc.function.name),
+        });
+      }
+
       const prompt_tokens = ((firstCall.usage?.prompt_tokens || 0) + (secondCall.usage?.prompt_tokens || 0)) || undefined;
       const completion_tokens = ((firstCall.usage?.completion_tokens || 0) + (secondCall.usage?.completion_tokens || 0)) || undefined;
       const total_tokens = ((firstCall.usage?.total_tokens || 0) + (secondCall.usage?.total_tokens || 0)) || undefined;
@@ -414,9 +642,10 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
         JSON.stringify({
           message: {
             role: 'assistant',
-            content: finalMessage?.content || 'I found some results for you.',
+            content: responseContent,
             toolCalls: assistantMessage.tool_calls,
           },
+          sessionId, // Return session ID for conversation continuity
           toolResults: toolResults.map((r) => JSON.parse(r.content)),
           usage: { provider: provider!.name, model: provider!.model, promptTokens: prompt_tokens, completionTokens: completion_tokens, totalTokens: total_tokens, elapsedMs: elapsed_ms },
         }),
@@ -425,12 +654,20 @@ ${userId ? 'The user is signed in and can access personalized features.' : 'The 
     }
 
     // No tool calls, return direct response
+    const directContent = assistantMessage.content || '';
+    
+    // Save assistant response to conversation history
+    if (userId) {
+      await saveChatMessage(supabase, userId, sessionId, 'assistant', directContent);
+    }
+
     return new Response(
       JSON.stringify({
         message: {
           role: 'assistant',
-          content: assistantMessage.message.content,
+          content: directContent,
         },
+        sessionId, // Return session ID for conversation continuity
         usage: { provider: provider!.name, model: provider!.model, promptTokens: firstCall.usage?.prompt_tokens, completionTokens: firstCall.usage?.completion_tokens, totalTokens: firstCall.usage?.total_tokens, elapsedMs: firstCall.usage?.elapsed_ms },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

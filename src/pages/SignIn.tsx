@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import HCaptchaWidget from '@/components/HCaptchaWidget';
+import HCaptchaWidget from '@/components/common/HCaptchaWidget';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import SEO from '@/components/SEO';
-import SingleJobPostingJsonLd from '@/components/SingleJobPostingJsonLd';
+import SEO from '@/components/seo/SEO';
+import SingleJobPostingJsonLd from '@/components/seo/SingleJobPostingJsonLd';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchListings, type ListingWithCompany } from '@/services/listingsService';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';

@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { CheckCircle, FileText, Target, Users, Mail, Phone, Video, Timer, Sparkles } from "lucide-react";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 
 const InterviewTips = () => {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://placementbridge.org";

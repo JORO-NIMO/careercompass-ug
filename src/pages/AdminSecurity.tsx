@@ -34,8 +34,9 @@ export default function AdminSecurity() {
         setLoadingIps(true);
         const data = await listUserIPs(300);
         setIps(data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+      } catch (e: unknown) {
+        const err = e as { message?: string };
+        setError(err?.message || 'Failed to load IP data');
       } finally {
         setLoadingIps(false);
       }
@@ -47,8 +48,9 @@ export default function AdminSecurity() {
       setSaving(true);
       await setAdminSetting('ai_token_daily_quota', quota);
       await setAdminSetting('ai_token_alert_threshold', threshold);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      setError(err?.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }

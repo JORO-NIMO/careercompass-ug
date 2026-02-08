@@ -144,9 +144,9 @@ import { env } from './env';
 const FUNCTIONS_URL = `${env.supabase.url}/functions/v1`;
 
 export const api = {
-  // Jobs
-  searchJobs: (query: string, provider: 'jsearch' | 'adzuna' = 'jsearch') =>
-    apiClient.get(`${FUNCTIONS_URL}/api/jobs`, { params: { query, provider } }),
+  // Jobs (JSearch only - Adzuna removed)
+  searchJobs: (query: string) =>
+    apiClient.get(`${FUNCTIONS_URL}/api/jobs`, { params: { query } }),
 
   // Courses
   getCourses: (limit = 20) =>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import CompanyMediaManager from '@/components/CompanyMediaManager';
+import CompanyMediaManager from '@/components/admin/CompanyMediaManager';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';

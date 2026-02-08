@@ -2,42 +2,26 @@
 .env
 .env.*
 !.env.example
+*.local
 
 # Node artifacts
 node_modules/
 dist/
+dist-ssr/
 .bun/
 bun.lockb
 
-# Vite cache
+# Vite
 .vite/
+*.timestamp-*.mjs
 
 # Supabase
 supabase/.temp/
 supabase/.cache/
+.supabase/
 
 # Logs
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-
-# OS files
-.DS_Store
-Thumbs.db
-node_modules/
-.env
-.env.local
-.env.*.local
-.supabase
-.supabase/.temp/
-dist/
-/.cache
-/.vite
-coverage/
-/*.log
-/.DS_Store
-# Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -45,15 +29,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
 
 # Sensitive files - NEVER commit!
-.env
-.env.local
-.env.*.local
 *.key
 *.pem
 secrets/
@@ -62,7 +45,6 @@ secrets/
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj

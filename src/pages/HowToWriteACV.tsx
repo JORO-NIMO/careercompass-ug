@@ -1,9 +1,9 @@
-import QuickNavigation from "@/components/QuickNavigation";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, FileText, Pencil, Sparkles } from "lucide-react";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 

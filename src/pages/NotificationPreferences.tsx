@@ -1,5 +1,5 @@
 import React from 'react';
-import PushOptIn from '@/components/PushOptIn';
+import PushOptIn from '@/components/common/PushOptIn';
 import { useNotificationPreferences } from '@/hooks/useNotifications';
 import type { NotificationChannel, NotificationType } from '@/types/notifications';
 import { ASSISTANT_PAGE_KEYS, getAssistantPrefs, setAssistantPrefs } from '@/lib/assistantConfig';

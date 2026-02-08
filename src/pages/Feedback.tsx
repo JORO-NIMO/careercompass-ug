@@ -1,5 +1,5 @@
 import React from 'react';
-import FeedbackModal from '@/components/FeedbackModal';
+import FeedbackModal from '@/components/common/FeedbackModal';
 
 const FeedbackPage: React.FC = () => {
   return (

@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { DynamicDataExplorer } from "@/components/AdminGenericData/DynamicDataExplorer";
+import { DynamicDataExplorer } from "@/components/admin/AdminGenericData/DynamicDataExplorer";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";

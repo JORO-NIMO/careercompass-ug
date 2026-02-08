@@ -1,10 +1,10 @@
-import QuickNavigation from "@/components/QuickNavigation";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle2, Mic, Timer } from "lucide-react";
-import SEO from "@/components/SEO";
+import SEO from "@/components/seo/SEO";
 
 const InterviewTipsUganda = () => {
   return (

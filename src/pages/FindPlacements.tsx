@@ -1,6 +1,6 @@
-import SearchFilters from "@/components/SearchFilters";
-import FeaturedPlacements from "@/components/FeaturedPlacements";
-import SEO from "@/components/SEO";
+import SearchFilters from "@/components/common/SearchFilters";
+import FeaturedPlacements from "@/components/placements/FeaturedPlacements";
+import SEO from "@/components/seo/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PlacementFilters } from "@/types/placements";

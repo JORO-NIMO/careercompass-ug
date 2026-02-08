@@ -1,5 +1,5 @@
 import React from 'react';
-import NotificationBell from '@/components/NotificationBell';
+import NotificationBell from '@/components/common/NotificationBell';
 import { useNotifications } from '@/hooks/useNotifications';
 
 const NotificationsPage: React.FC = () => {
