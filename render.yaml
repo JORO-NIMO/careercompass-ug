@@ -40,7 +40,6 @@ services:
     name: opportunity-ingest-cron
     runtime: node
     region: frankfurt
-    plan: free
     buildCommand: npm ci && npm run api:build
     schedule: "0 */6 * * *"
     startCommand: npm run api:ingest
