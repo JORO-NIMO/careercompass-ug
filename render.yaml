@@ -20,13 +20,13 @@ services:
       - key: PORT
         value: "3001"
       - key: SUPABASE_URL
-        value: ""
+        sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
-        value: ""
+        sync: false
       - key: OPENAI_API_KEY
-        value: ""
+        sync: false
       - key: REDIS_URL
-        value: ""
+        sync: false
       - key: CORS_ORIGINS
         value: https://careercompass-ug.vercel.app,https://placementbridge.org
       - key: INGESTION_INTERVAL_HOURS
@@ -34,3 +34,24 @@ services:
       - key: RATE_LIMIT_MAX_REQUESTS
         value: "100"
     autoDeploy: true
+
+  # =============================================================================
+  # CRON JOB FOR RSS INGESTION
+  # =============================================================================
+  - type: cron
+    name: opportunity-ingest-cron
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: npm ci && npm run api:build
+    schedule: "0 */6 * * *"
+    startCommand: npm run api:ingest
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
