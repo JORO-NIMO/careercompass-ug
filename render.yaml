@@ -1,6 +1,12 @@
 # Render Blueprint
 # Deploy with: render.com/deploy -> New Blueprint Instance -> Connect this repo
 # Docs: https://render.com/docs/blueprint-spec
+#
+# IMPORTANT: After deploying, add these env vars manually in Render Dashboard:
+#   - SUPABASE_URL
+#   - SUPABASE_SERVICE_ROLE_KEY
+#   - OPENAI_API_KEY
+#   - REDIS_URL (optional)
 
 services:
   # =============================================================================
@@ -19,14 +25,6 @@ services:
         value: production
       - key: PORT
         value: "3001"
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: REDIS_URL
-        sync: false
       - key: CORS_ORIGINS
         value: https://careercompass-ug.vercel.app,https://placementbridge.org
       - key: INGESTION_INTERVAL_HOURS
@@ -49,9 +47,3 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
