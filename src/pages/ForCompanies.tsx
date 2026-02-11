@@ -1,24 +1,58 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import SEO from "@/components/seo/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Sparkles, Clock, ShieldCheck, CircleAlert, Globe, MapPin } from 'lucide-react';
-import { fetchMyCompany, registerCompany, type Company, type VerificationMeta } from '@/services/companiesService';
-import { createPlacement } from '@/services/placementsService';
-import { companyRegistrationSchema, type CompanyRegistrationInput } from '@/lib/validations';
-import { resolveApiUrl } from '@/lib/api-client';
-import { LocationPicker } from '@/components/ui/LocationPicker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Loader2,
+  Sparkles,
+  Clock,
+  ShieldCheck,
+  CircleAlert,
+  Globe,
+  MapPin,
+} from "lucide-react";
+import {
+  fetchMyCompany,
+  registerCompany,
+  type Company,
+  type VerificationMeta,
+} from "@/services/companiesService";
+import { createPlacement } from "@/services/placementsService";
+import {
+  companyRegistrationSchema,
+  type CompanyRegistrationInput,
+} from "@/lib/validations";
+import { resolveApiUrl } from "@/lib/api-client";
+import { LocationPicker } from "@/components/ui/LocationPicker";
 
 interface ActiveBoost {
   id: string;
@@ -43,46 +77,55 @@ const ForCompanies = () => {
   const location = useLocation();
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement | null>(null);
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://placementbridge.org';
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://www.placementbridge.org";
 
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
   const [companyForm, setCompanyForm] = useState<CompanyFormState>({
-    name: '',
-    location: '',
-    website_url: '',
-    contact_email: '',
+    name: "",
+    location: "",
+    website_url: "",
+    contact_email: "",
   });
   const [registeringCompany, setRegisteringCompany] = useState(false);
-  const [verificationMeta, setVerificationMeta] = useState<VerificationMeta | null>(null);
+  const [verificationMeta, setVerificationMeta] =
+    useState<VerificationMeta | null>(null);
 
   // Wizard State
   const [currentStep, setCurrentStep] = useState(1);
-  const [positionTitle, setPositionTitle] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [description, setDescription] = useState('');
-  const [region, setRegion] = useState('');
-  const [customRegion, setCustomRegion] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [stipend, setStipend] = useState('');
-  const [availableSlots, setAvailableSlots] = useState('');
-  const [opportunityType, setOpportunityType] = useState('job');
-  const [applicationDeadline, setApplicationDeadline] = useState('');
-  const [applicationMethod, setApplicationMethod] = useState('website');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [applicationEmail, setApplicationEmail] = useState('');
-  const [applicationUrl, setApplicationUrl] = useState('');
+  const [positionTitle, setPositionTitle] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [description, setDescription] = useState("");
+  const [region, setRegion] = useState("");
+  const [customRegion, setCustomRegion] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [stipend, setStipend] = useState("");
+  const [availableSlots, setAvailableSlots] = useState("");
+  const [opportunityType, setOpportunityType] = useState("job");
+  const [applicationDeadline, setApplicationDeadline] = useState("");
+  const [applicationMethod, setApplicationMethod] = useState("website");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [applicationEmail, setApplicationEmail] = useState("");
+  const [applicationUrl, setApplicationUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [loadingBoosts, setLoadingBoosts] = useState(false);
-  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
-  const [listingLogoUrl, setListingLogoUrl] = useState('');
+  const [coordinates, setCoordinates] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [listingLogoUrl, setListingLogoUrl] = useState("");
 
-  const [geolocationCapturedAt, setGeolocationCapturedAt] = useState<string | null>(null);
+  const [geolocationCapturedAt, setGeolocationCapturedAt] = useState<
+    string | null
+  >(null);
   const featureMode = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    return params.get('mode') === 'feature';
+    return params.get("mode") === "feature";
   }, [location.search]);
 
   useEffect(() => {
@@ -91,7 +134,7 @@ const ForCompanies = () => {
         title: "Authentication Required",
         description: "Please sign in to post opportunities",
       });
-      navigate('/signin');
+      navigate("/signin");
     }
   }, [user, navigate, toast]);
 
@@ -115,9 +158,9 @@ const ForCompanies = () => {
         if (record) {
           setCompanyForm({
             name: record.name,
-            location: record.formatted_address ?? record.location_raw ?? '',
-            website_url: record.website_url ?? '',
-            contact_email: record.contact_email ?? user.email ?? '',
+            location: record.formatted_address ?? record.location_raw ?? "",
+            website_url: record.website_url ?? "",
+            contact_email: record.contact_email ?? user.email ?? "",
           });
           setCompanyName((prev) => prev || record.name);
         } else {
@@ -127,12 +170,12 @@ const ForCompanies = () => {
           }));
         }
       } catch (error: unknown) {
-        console.error('Failed to load company', error);
+        console.error("Failed to load company", error);
         if (isMounted) {
           toast({
-            title: 'Unable to load company',
-            description: 'Try again shortly.',
-            variant: 'destructive',
+            title: "Unable to load company",
+            description: "Try again shortly.",
+            variant: "destructive",
           });
         }
       } finally {
@@ -162,17 +205,20 @@ const ForCompanies = () => {
       try {
         const nowIso = new Date().toISOString();
         const { data: placementRows, error: placementError } = await supabase
-          .from('placements')
-          .select('id, position_title, company_name')
-          .eq('created_by', user.id);
+          .from("placements")
+          .select("id, position_title, company_name")
+          .eq("created_by", user.id);
 
         if (placementError) throw placementError;
 
-        const placementMap = new Map<string, { title: string; company: string }>();
+        const placementMap = new Map<
+          string,
+          { title: string; company: string }
+        >();
         (placementRows ?? []).forEach((row) => {
           placementMap.set(row.id, {
-            title: row.position_title ?? 'Untitled opportunity',
-            company: row.company_name ?? 'Your organization',
+            title: row.position_title ?? "Untitled opportunity",
+            company: row.company_name ?? "Your organization",
           });
         });
 
@@ -185,14 +231,16 @@ const ForCompanies = () => {
 
         const placementIds = Array.from(placementMap.keys());
         const { data: boostRows, error: boostError } = await supabase
-          .from('boosts')
-          .select('id, entity_id, entity_type, starts_at, ends_at, is_active, created_at')
-          .in('entity_id', placementIds)
-          .eq('entity_type', 'listing')
-          .eq('is_active', true)
-          .lte('starts_at', nowIso)
-          .gt('ends_at', nowIso)
-          .order('ends_at', { ascending: true });
+          .from("boosts")
+          .select(
+            "id, entity_id, entity_type, starts_at, ends_at, is_active, created_at",
+          )
+          .in("entity_id", placementIds)
+          .eq("entity_type", "listing")
+          .eq("is_active", true)
+          .lte("starts_at", nowIso)
+          .gt("ends_at", nowIso)
+          .order("ends_at", { ascending: true });
 
         if (boostError) throw boostError;
 
@@ -203,8 +251,8 @@ const ForCompanies = () => {
           return {
             id: row.id,
             entityId: row.entity_id,
-            placementTitle: placement?.title ?? 'Opportunity',
-            companyName: placement?.company ?? 'Your organization',
+            placementTitle: placement?.title ?? "Opportunity",
+            companyName: placement?.company ?? "Your organization",
             startsAt: row.starts_at,
             endsAt: row.ends_at,
             createdAt: row.created_at ?? row.starts_at,
@@ -213,7 +261,7 @@ const ForCompanies = () => {
 
         setActiveBoosts(mapped);
       } catch (error: unknown) {
-        console.error('Failed to load boosts', error);
+        console.error("Failed to load boosts", error);
         if (isMounted) {
           setActiveBoosts([]);
         }
@@ -231,7 +279,9 @@ const ForCompanies = () => {
     };
   }, [user, toast]);
 
-  const handleCompanySubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCompanySubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
     if (registeringCompany) {
       return;
@@ -240,16 +290,19 @@ const ForCompanies = () => {
       name: companyForm.name.trim(),
       location: companyForm.location.trim(),
       website_url: companyForm.website_url.trim() || undefined,
-      contact_email: companyForm.contact_email.trim() ? companyForm.contact_email.trim() : undefined,
+      contact_email: companyForm.contact_email.trim()
+        ? companyForm.contact_email.trim()
+        : undefined,
     };
     const parsed = companyRegistrationSchema.safeParse(toValidate);
 
     if (!parsed.success) {
-      const firstError = parsed.error.errors[0]?.message ?? 'Please review the form inputs.';
+      const firstError =
+        parsed.error.errors[0]?.message ?? "Please review the form inputs.";
       toast({
-        title: 'Invalid company details',
+        title: "Invalid company details",
         description: firstError,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
@@ -267,9 +320,16 @@ const ForCompanies = () => {
       setVerificationMeta(verification);
       setCompanyForm({
         name: savedCompany.name,
-        location: savedCompany.formatted_address ?? savedCompany.location_raw ?? parsed.data.location,
-        website_url: savedCompany.website_url ?? parsed.data.website_url ?? '',
-        contact_email: savedCompany.contact_email ?? parsed.data.contact_email ?? user?.email ?? '',
+        location:
+          savedCompany.formatted_address ??
+          savedCompany.location_raw ??
+          parsed.data.location,
+        website_url: savedCompany.website_url ?? parsed.data.website_url ?? "",
+        contact_email:
+          savedCompany.contact_email ??
+          parsed.data.contact_email ??
+          user?.email ??
+          "",
       });
       setCompanyName(savedCompany.name);
 
@@ -284,40 +344,42 @@ const ForCompanies = () => {
 
       if (savedCompany.approved) {
         toast({
-          title: 'Company approved automatically',
-          description: 'We verified your location and website successfully.',
+          title: "Company approved automatically",
+          description: "We verified your location and website successfully.",
         });
       } else {
         const pendingReasons: string[] = [];
         if (verification && !verification.maps.verified) {
-          pendingReasons.push('confirm your Google Maps location');
+          pendingReasons.push("confirm your Google Maps location");
         }
         if (verification && !verification.web.verified) {
-          pendingReasons.push('ensure your website is reachable');
+          pendingReasons.push("ensure your website is reachable");
         }
         if (missingWebsite) {
-          pendingReasons.push('share a website or let us build one for you');
+          pendingReasons.push("share a website or let us build one for you");
         }
         toast({
-          title: 'Verification pending',
+          title: "Verification pending",
           description: pendingReasons.length
-            ? `Pending manual review — ${pendingReasons.join(' and ')}.`
-            : 'We will review your company shortly. You will receive an email once approved.',
+            ? `Pending manual review — ${pendingReasons.join(" and ")}.`
+            : "We will review your company shortly. You will receive an email once approved.",
         });
         if (missingWebsite) {
           toast({
-            title: 'Website assistance queued',
-            description: 'Our team will contact you with a simple landing page brief so we can verify your organisation.',
+            title: "Website assistance queued",
+            description:
+              "Our team will contact you with a simple landing page brief so we can verify your organisation.",
           });
         }
       }
     } catch (error: unknown) {
-      console.error('Company registration error', error);
-      const message = error instanceof Error ? error.message : 'Please try again shortly.';
+      console.error("Company registration error", error);
+      const message =
+        error instanceof Error ? error.message : "Please try again shortly.";
       toast({
-        title: 'Unable to save company',
+        title: "Unable to save company",
         description: message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setRegisteringCompany(false);
@@ -330,7 +392,14 @@ const ForCompanies = () => {
       return;
     }
 
-    if (!positionTitle.trim() || !companyName.trim() || !description.trim() || !region || !industry || (region === 'other' && !customRegion.trim())) {
+    if (
+      !positionTitle.trim() ||
+      !companyName.trim() ||
+      !description.trim() ||
+      !region ||
+      !industry ||
+      (region === "other" && !customRegion.trim())
+    ) {
       toast({
         title: "Missing information",
         description: "Please complete all required fields before submitting.",
@@ -343,7 +412,7 @@ const ForCompanies = () => {
 
     try {
       // Use the new listings system instead of legacy placements
-      const { createListing } = await import('@/services/listingsService');
+      const { createListing } = await import("@/services/listingsService");
 
       await createListing({
         title: positionTitle.trim(),
@@ -352,10 +421,15 @@ const ForCompanies = () => {
         opportunity_type: opportunityType,
         application_deadline: applicationDeadline || undefined,
         application_method: applicationMethod,
-        whatsapp_number: applicationMethod === 'whatsapp' ? whatsappNumber.trim() : undefined,
-        application_email: applicationMethod === 'email' ? applicationEmail.trim() : undefined,
-        application_url: (applicationMethod === 'url' || applicationMethod === 'website') ? applicationUrl.trim() : undefined,
-        region: region === 'other' ? customRegion.trim() : region,
+        whatsapp_number:
+          applicationMethod === "whatsapp" ? whatsappNumber.trim() : undefined,
+        application_email:
+          applicationMethod === "email" ? applicationEmail.trim() : undefined,
+        application_url:
+          applicationMethod === "url" || applicationMethod === "website"
+            ? applicationUrl.trim()
+            : undefined,
+        region: region === "other" ? customRegion.trim() : region,
         logo_url: listingLogoUrl || undefined,
       });
 
@@ -363,23 +437,25 @@ const ForCompanies = () => {
 
       toast({
         title: "Published",
-        description: "Opportunity posted and is live. You can manage it from the dashboard.",
+        description:
+          "Opportunity posted and is live. You can manage it from the dashboard.",
       });
 
       // Reset form
-      setPositionTitle('');
-      setDescription('');
-      setRegion('');
-      setCustomRegion('');
-      setIndustry('');
-      setStipend('');
-      setAvailableSlots('');
-      setApplicationDeadline('');
-      setWhatsappNumber('');
-      setApplicationEmail('');
-      setApplicationUrl('');
+      setPositionTitle("");
+      setDescription("");
+      setRegion("");
+      setCustomRegion("");
+      setIndustry("");
+      setStipend("");
+      setAvailableSlots("");
+      setApplicationDeadline("");
+      setWhatsappNumber("");
+      setApplicationEmail("");
+      setApplicationUrl("");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to post opportunity";
+      const message =
+        error instanceof Error ? error.message : "Failed to post opportunity";
       toast({
         title: "Error",
         description: message,
@@ -391,37 +467,44 @@ const ForCompanies = () => {
   };
 
   const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const notifyMissingWebsite = useCallback(async (payload: { id: string; name: string; contactEmail?: string | null }) => {
-    try {
-      const response = await fetch(resolveApiUrl('/api/notifications'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'company_missing_website',
-          title: 'Company requested website support',
-          body: `${payload.name} registered without a website. Reach out to help them publish a landing page.`,
-          metadata: {
-            company_id: payload.id,
-            contact_email: payload.contactEmail ?? null,
-          },
-          channel: ['in_app', 'email'],
-        }),
-      });
+  const notifyMissingWebsite = useCallback(
+    async (payload: {
+      id: string;
+      name: string;
+      contactEmail?: string | null;
+    }) => {
+      try {
+        const response = await fetch(resolveApiUrl("/api/notifications"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "company_missing_website",
+            title: "Company requested website support",
+            body: `${payload.name} registered without a website. Reach out to help them publish a landing page.`,
+            metadata: {
+              company_id: payload.id,
+              contact_email: payload.contactEmail ?? null,
+            },
+            channel: ["in_app", "email"],
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Notification request failed');
+        if (!response.ok) {
+          throw new Error("Notification request failed");
+        }
+      } catch (error) {
+        console.error("Failed to queue website assistance notification", error);
       }
-    } catch (error) {
-      console.error('Failed to queue website assistance notification', error);
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('mode') === 'feature') {
+    if (params.get("mode") === "feature") {
       scrollToForm();
     }
   }, [location.search]);
@@ -433,7 +516,7 @@ const ForCompanies = () => {
       return;
     }
     const normalized = locationValue.toLowerCase();
-    if (!normalized.includes('coordinate')) {
+    if (!normalized.includes("coordinate")) {
       return;
     }
     const matches = locationValue.match(/-?\d+\.\d+/g);
@@ -450,22 +533,22 @@ const ForCompanies = () => {
   // Geolocation logic is now handled by LocationPicker component
 
   const regionOptions = [
-    { value: 'global', label: 'Global' },
-    { value: 'africa', label: 'Africa' },
-    { value: 'americas', label: 'Americas' },
-    { value: 'asia', label: 'Asia' },
-    { value: 'europe', label: 'Europe' },
-    { value: 'oceania', label: 'Oceania' },
-    { value: 'middle_east', label: 'Middle East' },
+    { value: "global", label: "Global" },
+    { value: "africa", label: "Africa" },
+    { value: "americas", label: "Americas" },
+    { value: "asia", label: "Asia" },
+    { value: "europe", label: "Europe" },
+    { value: "oceania", label: "Oceania" },
+    { value: "middle_east", label: "Middle East" },
   ];
 
   const industryOptions = [
-    { value: 'technology', label: 'Technology' },
-    { value: 'finance', label: 'Finance' },
-    { value: 'healthcare', label: 'Healthcare' },
-    { value: 'education', label: 'Education' },
-    { value: 'agriculture', label: 'Agriculture' },
-    { value: 'creative', label: 'Creative & Media' },
+    { value: "technology", label: "Technology" },
+    { value: "finance", label: "Finance" },
+    { value: "healthcare", label: "Healthcare" },
+    { value: "education", label: "Education" },
+    { value: "agriculture", label: "Agriculture" },
+    { value: "creative", label: "Creative & Media" },
   ];
 
   return (
@@ -474,27 +557,27 @@ const ForCompanies = () => {
         title="Hire Interns and Early Talent Worldwide | PlacementBridge for Companies"
         description="Publish internships and early-career roles globally with instant moderation, verified companies, and built-in talent sourcing tools."
         keywords={[
-          'post internships',
-          'hire graduates',
-          'early talent marketplace',
-          'student placements employers',
+          "post internships",
+          "hire graduates",
+          "early talent marketplace",
+          "student placements employers",
         ]}
         canonical="https://www.placementbridge.org/for-companies"
         jsonLd={{
-          '@context': 'https://schema.org',
-          '@type': 'Service',
-          name: 'PlacementBridge Employer Portal',
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "PlacementBridge Employer Portal",
           url: `${baseUrl}/for-companies`,
           areaServed: {
-            '@type': 'Place',
-            name: 'Worldwide',
+            "@type": "Place",
+            name: "Worldwide",
           },
           provider: {
-            '@type': 'Organization',
-            name: 'PlacementBridge',
+            "@type": "Organization",
+            name: "PlacementBridge",
             url: baseUrl,
           },
-          serviceType: 'Internship and early-career recruitment',
+          serviceType: "Internship and early-career recruitment",
         }}
         siteName="All jobs in one place"
       />
@@ -502,13 +585,18 @@ const ForCompanies = () => {
       <main className="py-16">
         <div className="container mx-auto px-4 space-y-16">
           <section className="max-w-3xl mx-auto text-center space-y-6">
-            <h1 className="text-4xl md:text-5xl font-bold">Post an Opportunity</h1>
+            <h1 className="text-4xl md:text-5xl font-bold">
+              Post an Opportunity
+            </h1>
             <p className="text-lg text-muted-foreground">
-              Share your internships, fellowships, apprenticeships, and roles with thousands of motivated learners and professionals across the globe. Provide the details below and your opportunity will go live instantly while our team monitors for anything suspicious.
+              Share your internships, fellowships, apprenticeships, and roles
+              with thousands of motivated learners and professionals across the
+              globe. Provide the details below and your opportunity will go live
+              instantly while our team monitors for anything suspicious.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button size="lg" onClick={scrollToForm} disabled={submitting}>
-                {submitting ? 'Submitting…' : 'Start Posting'}
+                {submitting ? "Submitting…" : "Start Posting"}
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <a href="/find-talent">Browse Candidates</a>
@@ -539,21 +627,35 @@ const ForCompanies = () => {
                         <span className="font-medium">
                           {company
                             ? company.approved
-                              ? 'Company approved'
-                              : 'Pending approval'
-                            : 'Register your company to unlock opportunity publishing.'}
+                              ? "Company approved"
+                              : "Pending approval"
+                            : "Register your company to unlock opportunity publishing."}
                         </span>
                       </div>
                       {company && (
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <Badge variant={company.maps_verified ? 'default' : 'outline'}>
-                            Google Maps {company.maps_verified ? 'verified' : 'not verified'}
+                          <Badge
+                            variant={
+                              company.maps_verified ? "default" : "outline"
+                            }
+                          >
+                            Google Maps{" "}
+                            {company.maps_verified
+                              ? "verified"
+                              : "not verified"}
                           </Badge>
-                          <Badge variant={company.web_verified ? 'default' : 'outline'}>
-                            Website {company.web_verified ? 'verified' : 'not verified'}
+                          <Badge
+                            variant={
+                              company.web_verified ? "default" : "outline"
+                            }
+                          >
+                            Website{" "}
+                            {company.web_verified ? "verified" : "not verified"}
                           </Badge>
-                          <Badge variant={company.approved ? 'default' : 'secondary'}>
-                            {company.approved ? 'Approved' : 'Review pending'}
+                          <Badge
+                            variant={company.approved ? "default" : "secondary"}
+                          >
+                            {company.approved ? "Approved" : "Review pending"}
                           </Badge>
                         </div>
                       )}
@@ -591,7 +693,12 @@ const ForCompanies = () => {
                           <Input
                             id="company-name"
                             value={companyForm.name}
-                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, name: event.target.value }))}
+                            onChange={(event) =>
+                              setCompanyForm((prev) => ({
+                                ...prev,
+                                name: event.target.value,
+                              }))
+                            }
                             placeholder="e.g. Acme Innovations"
                             required
                             disabled={registeringCompany}
@@ -603,23 +710,35 @@ const ForCompanies = () => {
                             id="company-email"
                             type="email"
                             value={companyForm.contact_email}
-                            onChange={(event) => setCompanyForm((prev) => ({ ...prev, contact_email: event.target.value }))}
+                            onChange={(event) =>
+                              setCompanyForm((prev) => ({
+                                ...prev,
+                                contact_email: event.target.value,
+                              }))
+                            }
                             placeholder="team@example.com"
                             disabled={registeringCompany}
                           />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="company-location">Company location</Label>
+                        <Label htmlFor="company-location">
+                          Company location
+                        </Label>
                         <div className="flex flex-col gap-2">
                           <LocationPicker
                             initialLat={coordinates?.lat}
                             initialLng={coordinates?.lng}
                             onLocationSelect={(lat, lng) => {
                               const formatted = `Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-                              setCompanyForm(prev => ({ ...prev, location: formatted }));
+                              setCompanyForm((prev) => ({
+                                ...prev,
+                                location: formatted,
+                              }));
                               setCoordinates({ lat, lng });
-                              setGeolocationCapturedAt(new Date().toLocaleTimeString());
+                              setGeolocationCapturedAt(
+                                new Date().toLocaleTimeString(),
+                              );
                             }}
                             readOnly={registeringCompany}
                           />
@@ -633,7 +752,8 @@ const ForCompanies = () => {
                           />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Use the map to pin your exact entrance. Drag the marker if needed.
+                          Use the map to pin your exact entrance. Drag the
+                          marker if needed.
                         </p>
                       </div>
                       <div className="space-y-2">
@@ -641,17 +761,24 @@ const ForCompanies = () => {
                         <Input
                           id="company-website"
                           value={companyForm.website_url}
-                          onChange={(event) => setCompanyForm((prev) => ({ ...prev, website_url: event.target.value }))}
+                          onChange={(event) =>
+                            setCompanyForm((prev) => ({
+                              ...prev,
+                              website_url: event.target.value,
+                            }))
+                          }
                           placeholder="https://yourcompany.com (leave blank if you need help)"
                           disabled={registeringCompany}
                         />
                         <p className="text-xs text-muted-foreground">
-                          No website yet? Leave this empty and we will reach out to set up a simple landing page for verification.
+                          No website yet? Leave this empty and we will reach out
+                          to set up a simple landing page for verification.
                         </p>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <p className="text-xs text-muted-foreground">
-                          We auto-approve once your location and website are verified.
+                          We auto-approve once your location and website are
+                          verified.
                         </p>
                         <Button type="submit" disabled={registeringCompany}>
                           {registeringCompany ? (
@@ -660,9 +787,9 @@ const ForCompanies = () => {
                               Saving…
                             </>
                           ) : company ? (
-                            'Update & re-verify'
+                            "Update & re-verify"
                           ) : (
-                            'Register company'
+                            "Register company"
                           )}
                         </Button>
                       </div>
@@ -671,18 +798,21 @@ const ForCompanies = () => {
                     {verificationMeta && (
                       <div className="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
                         <div>
-                          Google Maps: {verificationMeta.maps.verified
-                            ? 'Verified'
-                            : verificationMeta.maps.rawStatus ?? 'Not verified'}
+                          Google Maps:{" "}
+                          {verificationMeta.maps.verified
+                            ? "Verified"
+                            : (verificationMeta.maps.rawStatus ??
+                              "Not verified")}
                         </div>
                         <div>
-                          Website: {verificationMeta.web.verified
-                            ? 'Verified'
+                          Website:{" "}
+                          {verificationMeta.web.verified
+                            ? "Verified"
                             : verificationMeta.web.rawError
                               ? verificationMeta.web.rawError
                               : verificationMeta.web.status
                                 ? `Status ${verificationMeta.web.status}`
-                                : 'Not verified'}
+                                : "Not verified"}
                         </div>
                       </div>
                     )}
@@ -699,11 +829,23 @@ const ForCompanies = () => {
                   <CardTitle>Speed up verification</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <p>Double-check these items so your opportunity goes live without delay:</p>
+                  <p>
+                    Double-check these items so your opportunity goes live
+                    without delay:
+                  </p>
                   <ul className="list-disc space-y-1 pl-4">
-                    <li>Use an official work email so we can confirm your organisation quickly.</li>
-                    <li>Capture accurate coordinates using the device location button or paste them manually.</li>
-                    <li>Share a short description for why your organisation is engaging students or graduates now.</li>
+                    <li>
+                      Use an official work email so we can confirm your
+                      organisation quickly.
+                    </li>
+                    <li>
+                      Capture accurate coordinates using the device location
+                      button or paste them manually.
+                    </li>
+                    <li>
+                      Share a short description for why your organisation is
+                      engaging students or graduates now.
+                    </li>
                   </ul>
                 </CardContent>
               </Card>
@@ -713,11 +855,21 @@ const ForCompanies = () => {
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm text-muted-foreground">
                   <p>
-                    If you register without a website, we automatically notify the PlacementBridge admin team. Expect an
-                    email with a lightweight landing page brief so we can publish a trusted company profile for you.
+                    If you register without a website, we automatically notify
+                    the PlacementBridge admin team. Expect an email with a
+                    lightweight landing page brief so we can publish a trusted
+                    company profile for you.
                   </p>
                   <p>
-                    You can also email <a className="underline" href="mailto:admin@placementbridge.org?subject=Website%20support%20request">admin@placementbridge.org</a> with your logo and contact details to fast-track the process.
+                    You can also email{" "}
+                    <a
+                      className="underline"
+                      href="mailto:admin@placementbridge.org?subject=Website%20support%20request"
+                    >
+                      admin@placementbridge.org
+                    </a>{" "}
+                    with your logo and contact details to fast-track the
+                    process.
                   </p>
                 </CardContent>
               </Card>
@@ -737,32 +889,45 @@ const ForCompanies = () => {
                   </div>
                 ) : activeBoosts.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    Featured opportunities go live automatically once your payment is confirmed. Active features appear here with their scheduled end date.
+                    Featured opportunities go live automatically once your
+                    payment is confirmed. Active features appear here with their
+                    scheduled end date.
                   </p>
                 ) : (
                   <div className="space-y-3">
                     {activeBoosts.map((boost) => {
-                      const boostEnd = new Date(boost.endsAt).toLocaleDateString(undefined, {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
+                      const boostEnd = new Date(
+                        boost.endsAt,
+                      ).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
                       });
-                      const boostStart = new Date(boost.startsAt).toLocaleDateString(undefined, {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
+                      const boostStart = new Date(
+                        boost.startsAt,
+                      ).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
                       });
 
                       return (
-                        <div key={boost.id} className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                        <div
+                          key={boost.id}
+                          className="rounded-lg border border-primary/30 bg-primary/5 p-4"
+                        >
                           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                 <Sparkles className="h-4 w-4" />
                                 Featured opportunity
                               </div>
-                              <h3 className="text-lg font-semibold text-foreground">{boost.placementTitle}</h3>
-                              <p className="text-sm text-muted-foreground">{boost.companyName}</p>
+                              <h3 className="text-lg font-semibold text-foreground">
+                                {boost.placementTitle}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {boost.companyName}
+                              </p>
                               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground pt-1">
                                 <span className="flex items-center gap-1">
                                   <Clock className="h-4 w-4" />
@@ -788,21 +953,33 @@ const ForCompanies = () => {
               <CardContent className="pt-2">
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="timeline">
-                    <AccordionTrigger>How long does it take for opportunities to go live?</AccordionTrigger>
+                    <AccordionTrigger>
+                      How long does it take for opportunities to go live?
+                    </AccordionTrigger>
                     <AccordionContent>
-                      Most listings are reviewed within one to two business days. Verified partners are typically approved instantly, while new organizations may require additional checks before publishing.
+                      Most listings are reviewed within one to two business
+                      days. Verified partners are typically approved instantly,
+                      while new organizations may require additional checks
+                      before publishing.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="boosts">
                     <AccordionTrigger>What do boosts include?</AccordionTrigger>
                     <AccordionContent>
-                      Boosted opportunities receive priority placement in search, a featured badge, and inclusion in highlight emails sent to active candidates. You can manage boosts from your company wallet at any time.
+                      Boosted opportunities receive priority placement in
+                      search, a featured badge, and inclusion in highlight
+                      emails sent to active candidates. You can manage boosts
+                      from your company wallet at any time.
                     </AccordionContent>
                   </AccordionItem>
                   <AccordionItem value="payments">
-                    <AccordionTrigger>Can we pay with mobile money or invoice?</AccordionTrigger>
+                    <AccordionTrigger>
+                      Can we pay with mobile money or invoice?
+                    </AccordionTrigger>
                     <AccordionContent>
-                      Yes. Our billing flow supports mobile money, cards, and invoicing for enterprise partners. Reach out via support if you need a tailored payment arrangement.
+                      Yes. Our billing flow supports mobile money, cards, and
+                      invoicing for enterprise partners. Reach out via support
+                      if you need a tailored payment arrangement.
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -810,7 +987,11 @@ const ForCompanies = () => {
             </Card>
           </section>
 
-          <section id="post-opportunity" ref={formRef} className="max-w-3xl mx-auto w-full">
+          <section
+            id="post-opportunity"
+            ref={formRef}
+            className="max-w-3xl mx-auto w-full"
+          >
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle>Opportunity details</CardTitle>
@@ -818,28 +999,42 @@ const ForCompanies = () => {
               <CardContent className="pt-2">
                 {company && !company.approved && (
                   <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    Your organization is currently pending approval. Opportunities stay live, but our team may flag them for manual review until verification is complete.
+                    Your organization is currently pending approval.
+                    Opportunities stay live, but our team may flag them for
+                    manual review until verification is complete.
                   </div>
                 )}
                 {featureMode && (
                   <div className="mb-4 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary-dark">
-                    Feature mode enabled. Submit your opportunity and it will publish immediately with a spotlight badge once payment is confirmed.
+                    Feature mode enabled. Submit your opportunity and it will
+                    publish immediately with a spotlight badge once payment is
+                    confirmed.
                   </div>
                 )}
                 {/* Wizard Steps Indicator (Cognitive Load Reduction) */}
                 <div className="mb-8">
                   <div className="flex items-center justify-between mb-2">
-                    {['Organization', 'Opportunity', 'Application'].map((step, index) => (
-                      <div key={step} className={`flex flex-col items-center ${index + 1 <= currentStep ? 'text-primary' : 'text-muted-foreground'}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 mb-1 ${index + 1 <= currentStep ? 'border-primary bg-primary/10 font-bold' : 'border-muted bg-muted/20'}`}>
-                          {index + 1}
+                    {["Organization", "Opportunity", "Application"].map(
+                      (step, index) => (
+                        <div
+                          key={step}
+                          className={`flex flex-col items-center ${index + 1 <= currentStep ? "text-primary" : "text-muted-foreground"}`}
+                        >
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center border-2 mb-1 ${index + 1 <= currentStep ? "border-primary bg-primary/10 font-bold" : "border-muted bg-muted/20"}`}
+                          >
+                            {index + 1}
+                          </div>
+                          <span className="text-xs font-medium">{step}</span>
                         </div>
-                        <span className="text-xs font-medium">{step}</span>
-                      </div>
-                    ))}
+                      ),
+                    )}
                   </div>
                   <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className="h-full bg-primary transition-all duration-300 ease-in-out" style={{ width: `${(currentStep / 3) * 100}%` }}></div>
+                    <div
+                      className="h-full bg-primary transition-all duration-300 ease-in-out"
+                      style={{ width: `${(currentStep / 3) * 100}%` }}
+                    ></div>
                   </div>
                 </div>
 
@@ -859,7 +1054,9 @@ const ForCompanies = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Logo (Optional - Upload to override default)</Label>
+                        <Label>
+                          Logo (Optional - Upload to override default)
+                        </Label>
                         <Input
                           type="file"
                           accept="image/*"
@@ -868,13 +1065,24 @@ const ForCompanies = () => {
                             if (file) {
                               try {
                                 setSubmitting(true);
-                                const { uploadListingLogo } = await import("@/services/listingsService");
+                                const { uploadListingLogo } =
+                                  await import("@/services/listingsService");
                                 const url = await uploadListingLogo(file);
                                 setListingLogoUrl(url);
-                                toast({ title: "Logo Uploaded", description: "Logo ready for publication." });
+                                toast({
+                                  title: "Logo Uploaded",
+                                  description: "Logo ready for publication.",
+                                });
                               } catch (err: unknown) {
-                                const message = err instanceof Error ? err.message : 'Unknown error';
-                                toast({ title: "Upload Failed", description: message, variant: "destructive" });
+                                const message =
+                                  err instanceof Error
+                                    ? err.message
+                                    : "Unknown error";
+                                toast({
+                                  title: "Upload Failed",
+                                  description: message,
+                                  variant: "destructive",
+                                });
                               } finally {
                                 setSubmitting(false);
                               }
@@ -885,13 +1093,19 @@ const ForCompanies = () => {
 
                       <div className="space-y-2">
                         <Label>Industry</Label>
-                        <Select value={industry || undefined} onValueChange={setIndustry}>
+                        <Select
+                          value={industry || undefined}
+                          onValueChange={setIndustry}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select industry" />
                           </SelectTrigger>
                           <SelectContent>
                             {industryOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
                                 {option.label}
                               </SelectItem>
                             ))}
@@ -916,16 +1130,27 @@ const ForCompanies = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="opportunity-type">Opportunity type</Label>
-                        <Select value={opportunityType} onValueChange={setOpportunityType}>
+                        <Label htmlFor="opportunity-type">
+                          Opportunity type
+                        </Label>
+                        <Select
+                          value={opportunityType}
+                          onValueChange={setOpportunityType}
+                        >
                           <SelectTrigger id="opportunity-type">
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="job">Job</SelectItem>
-                            <SelectItem value="internship">Internship</SelectItem>
-                            <SelectItem value="apprenticeship">Apprenticeship</SelectItem>
-                            <SelectItem value="fellowship">Fellowship</SelectItem>
+                            <SelectItem value="internship">
+                              Internship
+                            </SelectItem>
+                            <SelectItem value="apprenticeship">
+                              Apprenticeship
+                            </SelectItem>
+                            <SelectItem value="fellowship">
+                              Fellowship
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -945,21 +1170,31 @@ const ForCompanies = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Region or Delivery Mode</Label>
-                          <Select value={region || undefined} onValueChange={setRegion}>
+                          <Select
+                            value={region || undefined}
+                            onValueChange={setRegion}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select region or mode" />
                             </SelectTrigger>
                             <SelectContent>
                               {regionOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
+                                <SelectItem
+                                  key={option.value}
+                                  value={option.value}
+                                >
                                   {option.label}
                                 </SelectItem>
                               ))}
-                              <SelectItem value="online">Online / Remote</SelectItem>
-                              <SelectItem value="other">Other (Specify)</SelectItem>
+                              <SelectItem value="online">
+                                Online / Remote
+                              </SelectItem>
+                              <SelectItem value="other">
+                                Other (Specify)
+                              </SelectItem>
                             </SelectContent>
                           </Select>
-                          {region === 'other' && (
+                          {region === "other" && (
                             <Input
                               className="mt-2"
                               placeholder="Enter region name"
@@ -975,7 +1210,9 @@ const ForCompanies = () => {
                             id="deadline"
                             type="date"
                             value={applicationDeadline}
-                            onChange={(e) => setApplicationDeadline(e.target.value)}
+                            onChange={(e) =>
+                              setApplicationDeadline(e.target.value)
+                            }
                           />
                         </div>
                       </div>
@@ -997,34 +1234,51 @@ const ForCompanies = () => {
                     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                       <div className="space-y-4 rounded-lg border border-border p-4 bg-muted/20">
                         <div className="space-y-2">
-                          <Label htmlFor="app-method">How should users apply?</Label>
-                          <Select value={applicationMethod} onValueChange={setApplicationMethod}>
+                          <Label htmlFor="app-method">
+                            How should users apply?
+                          </Label>
+                          <Select
+                            value={applicationMethod}
+                            onValueChange={setApplicationMethod}
+                          >
                             <SelectTrigger id="app-method">
                               <SelectValue placeholder="Select application method" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="website">Internal (via PlacementBridge)</SelectItem>
-                              <SelectItem value="whatsapp">WhatsApp Connect</SelectItem>
-                              <SelectItem value="email">Email Application</SelectItem>
-                              <SelectItem value="url">External Website / Form</SelectItem>
+                              <SelectItem value="website">
+                                Internal (via PlacementBridge)
+                              </SelectItem>
+                              <SelectItem value="whatsapp">
+                                WhatsApp Connect
+                              </SelectItem>
+                              <SelectItem value="email">
+                                Email Application
+                              </SelectItem>
+                              <SelectItem value="url">
+                                External Website / Form
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
-                        {applicationMethod === 'whatsapp' && (
+                        {applicationMethod === "whatsapp" && (
                           <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                            <Label htmlFor="whatsapp">WhatsApp Number (with country code)</Label>
+                            <Label htmlFor="whatsapp">
+                              WhatsApp Number (with country code)
+                            </Label>
                             <Input
                               id="whatsapp"
                               placeholder="e.g. +256700000000"
                               value={whatsappNumber}
-                              onChange={(e) => setWhatsappNumber(e.target.value)}
+                              onChange={(e) =>
+                                setWhatsappNumber(e.target.value)
+                              }
                               required
                             />
                           </div>
                         )}
 
-                        {applicationMethod === 'email' && (
+                        {applicationMethod === "email" && (
                           <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
                             <Label htmlFor="email">Application Email</Label>
                             <Input
@@ -1032,29 +1286,40 @@ const ForCompanies = () => {
                               type="email"
                               placeholder="jobs@company.com"
                               value={applicationEmail}
-                              onChange={(e) => setApplicationEmail(e.target.value)}
+                              onChange={(e) =>
+                                setApplicationEmail(e.target.value)
+                              }
                               required
                             />
                           </div>
                         )}
 
-                        {(applicationMethod === 'url' || applicationMethod === 'website') && (
+                        {(applicationMethod === "url" ||
+                          applicationMethod === "website") && (
                           <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                            <Label htmlFor="url">{applicationMethod === 'url' ? 'External URL' : 'Website URL (Optional)'}</Label>
+                            <Label htmlFor="url">
+                              {applicationMethod === "url"
+                                ? "External URL"
+                                : "Website URL (Optional)"}
+                            </Label>
                             <Input
                               id="url"
                               type="url"
                               placeholder="https://company.com/apply"
                               value={applicationUrl}
-                              onChange={(e) => setApplicationUrl(e.target.value)}
-                              required={applicationMethod === 'url'}
+                              onChange={(e) =>
+                                setApplicationUrl(e.target.value)
+                              }
+                              required={applicationMethod === "url"}
                             />
                           </div>
                         )}
                       </div>
 
                       <div className="text-sm text-muted-foreground">
-                        Opportunities publish immediately. If we flag a listing, it will pause until resolved, and any boosts resume once it is cleared.
+                        Opportunities publish immediately. If we flag a listing,
+                        it will pause until resolved, and any boosts resume once
+                        it is cleared.
                       </div>
                     </div>
                   )}
@@ -1062,7 +1327,11 @@ const ForCompanies = () => {
                   {/* Navigation Buttons */}
                   <div className="flex justify-between pt-4 border-t">
                     {currentStep > 1 ? (
-                      <Button type="button" variant="outline" onClick={() => setCurrentStep(prev => prev - 1)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setCurrentStep((prev) => prev - 1)}
+                      >
                         Back
                       </Button>
                     ) : (
@@ -1070,12 +1339,15 @@ const ForCompanies = () => {
                     )}
 
                     {currentStep < 3 ? (
-                      <Button type="button" onClick={() => setCurrentStep(prev => prev + 1)}>
+                      <Button
+                        type="button"
+                        onClick={() => setCurrentStep((prev) => prev + 1)}
+                      >
                         Next Step
                       </Button>
                     ) : (
                       <Button type="submit" disabled={submitting}>
-                        {submitting ? 'Publishing…' : 'Publish Opportunity'}
+                        {submitting ? "Publishing…" : "Publish Opportunity"}
                       </Button>
                     )}
                   </div>
@@ -1084,7 +1356,7 @@ const ForCompanies = () => {
             </Card>
           </section>
         </div>
-      </main >
+      </main>
 
       <Dialog open={submissionSuccess} onOpenChange={setSubmissionSuccess}>
         <DialogContent className="sm:max-w-md">
@@ -1094,7 +1366,8 @@ const ForCompanies = () => {
               Opportunity Published!
             </DialogTitle>
             <DialogDescription>
-              Your listing is now live. Candidates can view and apply immediately.
+              Your listing is now live. Candidates can view and apply
+              immediately.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
@@ -1108,17 +1381,20 @@ const ForCompanies = () => {
             </div>
           </div>
           <DialogFooter className="sm:justify-start">
-            <Button type="button" variant="secondary" onClick={() => setSubmissionSuccess(false)}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setSubmissionSuccess(false)}
+            >
               Post Another Opportunity
             </Button>
-            <Button type="button" onClick={() => navigate('/find-talent')}>
+            <Button type="button" onClick={() => navigate("/find-talent")}>
               View Live Listing
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-    </div >
+    </div>
   );
 };
 

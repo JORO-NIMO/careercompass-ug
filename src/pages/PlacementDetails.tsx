@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import SEO from '@/components/seo/SEO';
-import SingleJobPostingJsonLd from '@/components/seo/SingleJobPostingJsonLd';
-import { supabase } from '@/integrations/supabase/client';
-import { fetchListings, type ListingWithCompany } from '@/services/listingsService';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import SEO from "@/components/seo/SEO";
+import SingleJobPostingJsonLd from "@/components/seo/SingleJobPostingJsonLd";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  fetchListings,
+  type ListingWithCompany,
+} from "@/services/listingsService";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 type FallbackPlacement = {
   id: string;
@@ -46,9 +49,11 @@ export default function PlacementDetails() {
         } else {
           // Fallback to placements table
           const { data, error } = await supabase
-            .from('placements')
-            .select('id, position_title, company_name, description, region, industry, stipend, available_slots, created_at, approved, deadline, application_link')
-            .eq('id', id)
+            .from("placements")
+            .select(
+              "id, position_title, company_name, description, region, industry, stipend, available_slots, created_at, approved, deadline, application_link",
+            )
+            .eq("id", id)
             .single();
 
           if (error) throw error;
@@ -58,21 +63,24 @@ export default function PlacementDetails() {
           setError(null);
         }
       } catch (err: any) {
-        console.error('PlacementDetails load failed', err);
+        console.error("PlacementDetails load failed", err);
         if (!mounted) return;
-        setError(err?.message || 'Failed to load placement');
+        setError(err?.message || "Failed to load placement");
       } finally {
         if (mounted) setLoading(false);
       }
     }
 
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
-  const title = listing?.title || fallback?.position_title || 'Opportunity';
-  const description = listing?.description || fallback?.description || '';
-  const companyName = listing?.companies?.name || fallback?.company_name || null;
+  const title = listing?.title || fallback?.position_title || "Opportunity";
+  const description = listing?.description || fallback?.description || "";
+  const companyName =
+    listing?.companies?.name || fallback?.company_name || null;
   const companyWebsite = listing?.companies?.website_url || null;
   const region = listing?.region || fallback?.region || null;
   const updatedAt = listing?.updated_at || null;
@@ -81,9 +89,13 @@ export default function PlacementDetails() {
   const opportunityType = listing?.opportunity_type || null;
   const applicationMethod = listing?.application_method || null;
   const applicationEmail = listing?.application_email || null;
-  const applicationUrl = listing?.application_url || fallback?.application_link || null;
+  const applicationUrl =
+    listing?.application_url || fallback?.application_link || null;
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://placementbridge.org';
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://www.placementbridge.org";
   const canonical = `${baseUrl}/placements/${id}`;
 
   return (
@@ -120,10 +132,16 @@ export default function PlacementDetails() {
           <Card className="max-w-3xl mx-auto">
             <CardHeader>
               <h1 className="text-3xl font-bold">{title}</h1>
-              {companyName && <p className="text-muted-foreground">{companyName}</p>}
+              {companyName && (
+                <p className="text-muted-foreground">{companyName}</p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
-              {region && <p className="text-sm text-muted-foreground">Region: {region}</p>}
+              {region && (
+                <p className="text-sm text-muted-foreground">
+                  Region: {region}
+                </p>
+              )}
               {deadline && (
                 <p className="text-sm text-muted-foreground">
                   Deadline: {new Date(deadline).toLocaleDateString()}
@@ -135,11 +153,21 @@ export default function PlacementDetails() {
               <div className="flex gap-3 pt-2">
                 {applicationUrl ? (
                   <Button asChild>
-                    <a href={applicationUrl} target="_blank" rel="noopener noreferrer">Apply External</a>
+                    <a
+                      href={applicationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Apply External
+                    </a>
                   </Button>
                 ) : applicationEmail ? (
                   <Button asChild>
-                    <a href={`mailto:${applicationEmail}?subject=Application: ${title}`}>Apply via Email</a>
+                    <a
+                      href={`mailto:${applicationEmail}?subject=Application: ${title}`}
+                    >
+                      Apply via Email
+                    </a>
                   </Button>
                 ) : (
                   <Button disabled>Application Instructions Unavailable</Button>

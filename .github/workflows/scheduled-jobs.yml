@@ -7,13 +7,20 @@ name: Job Ingestion Pipeline (Backup)
 on:
   schedule:
     # Run every 6 hours, 15 minutes AFTER pg_cron (offset for failover)
-    - cron: '15 */6 * * *'
+    - cron: "15 */6 * * *"
   workflow_dispatch: # Allow manual trigger
 
 jobs:
   ingest-jobs:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            echo "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY secret" >&2
+            exit 1
+          fi
+
       - name: Trigger Job Ingestion
         run: |
           curl -X POST \
@@ -21,6 +28,9 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -d '{}' \
+            --retry 3 \
+            --retry-all-errors \
+            --max-time 60 \
             --fail-with-body
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -37,6 +47,9 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -d '{}' \
+            --retry 3 \
+            --retry-all-errors \
+            --max-time 60 \
             --fail-with-body
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
