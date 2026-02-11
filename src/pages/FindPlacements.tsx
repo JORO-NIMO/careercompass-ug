@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import type { PlacementFilters } from "@/types/placements";
 
 const FindPlacements = () => {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://placementbridge.org";
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://www.placementbridge.org";
 
   const handleSearch = (filters: PlacementFilters) => {
     // Current search updates filtered listings directly or triggers a navigation
@@ -31,7 +34,8 @@ const FindPlacements = () => {
           "@type": "CollectionPage",
           name: "Find Placements",
           url: `${baseUrl}/find-placements`,
-          description: "Discover curated internships, fellowships, and placements worldwide.",
+          description:
+            "Discover curated internships, fellowships, and placements worldwide.",
         }}
         siteName="All jobs in one place"
       />
@@ -43,7 +47,8 @@ const FindPlacements = () => {
                 Discover Your Next Opportunity
               </h1>
               <p className="text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-                Search curated internships, projects, fellowships, and roles worldwide
+                Search curated internships, projects, fellowships, and roles
+                worldwide
               </p>
             </div>
           </div>

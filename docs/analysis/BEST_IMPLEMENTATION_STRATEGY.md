@@ -332,7 +332,7 @@ npm run build
 # Then deploy to Vercel/your hosting
 
 # 4. Verify in production
-curl https://your-domain.com/opportunities-chat
+curl https://www.placementbridge.org/opportunities-chat
 # Should load chat page
 ```
 

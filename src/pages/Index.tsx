@@ -9,30 +9,35 @@ import { HomepageAdsBanner } from "@/components/layout/HomepageAdsBanner";
 
 import { PlatformNews } from "@/components/common/PlatformNews";
 
-
 const AUDIENCE_SEGMENTS = [
   {
     title: "I'm building my career",
-    description: "Explore internships, fellowships, and learning paths curated for students and graduates across the world.",
+    description:
+      "Explore internships, fellowships, and learning paths curated for students and graduates across the world.",
     cta: "Browse opportunities",
     href: "/find-placements",
   },
   {
     title: "I need talented hires",
-    description: "Post roles, feature listings, and review verified talent profiles ready to contribute from day one.",
+    description:
+      "Post roles, feature listings, and review verified talent profiles ready to contribute from day one.",
     cta: "Post an opportunity",
     href: "/for-companies",
   },
   {
     title: "I support learners",
-    description: "Partner with PlacementBridge to share programmes, scholarships, and mentorship across our network.",
+    description:
+      "Partner with PlacementBridge to share programmes, scholarships, and mentorship across our network.",
     cta: "Share a resource",
     href: "/learning",
   },
 ];
 
 const Index = () => {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://placementbridge.org";
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://www.placementbridge.org";
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,7 +61,6 @@ const Index = () => {
           "AI powered opportunity engine",
           "Interns",
           "talent",
-
         ]}
         canonical="https://www.placementbridge.org/"
         jsonLd={{
@@ -111,8 +115,12 @@ const Index = () => {
                 className="group flex h-full flex-col justify-between rounded-2xl border border-primary/40 bg-background p-6 shadow-sm transition hover:border-primary hover:bg-primary/5"
               >
                 <div className="space-y-3">
-                  <h3 className="text-2xl font-semibold text-foreground">{segment.title}</h3>
-                  <p className="text-base text-muted-foreground">{segment.description}</p>
+                  <h3 className="text-2xl font-semibold text-foreground">
+                    {segment.title}
+                  </h3>
+                  <p className="text-base text-muted-foreground">
+                    {segment.description}
+                  </p>
                 </div>
                 <span className="mt-6 inline-flex items-center gap-2 text-base font-medium text-primary group-hover:translate-x-1 group-hover:underline">
                   {segment.cta}

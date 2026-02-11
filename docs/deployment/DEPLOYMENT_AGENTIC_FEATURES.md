@@ -218,7 +218,7 @@ npx supabase secrets set VAPID_PRIVATE_KEY=your-private-key --project-ref xicdxs
 ## 8. Email Ingestion Setup
 
 ### Option A: Dedicated Email Address
-1. Create an email like `jobs@careercompass.ug`
+1. Create an email like `jobs@placementbridge.org`
 2. Subscribe it to job newsletters (LinkedIn, BrighterMonday, etc.)
 3. Configure IMAP credentials in n8n
 
