@@ -57,13 +57,12 @@ const JOB_SOURCES = [
 
 // RSS feeds to ingest on each run (user-provided)
 const RSS_SOURCES = [
-  'https://opportunitiesforyouth.org/feed',
-  'https://opportunitiescorners.com/feed/',
-  'https://opportunitycornors.com/feed/',
-  'https://opportunitydesk.org/feed/',
-  'https://www.education.go.ug/feed/',
-  'https://www.chevening.org/feed/',
-  'https://www.scholars4dev.com/feed/',
+  { name: 'Opportunities For Youth', url: 'https://opportunitiesforyouth.org/feed' },
+  { name: 'Opportunities Corners', url: 'https://opportunitiescorners.com/feed/' },
+  { name: 'Opportunity Desk', url: 'https://opportunitydesk.org/feed/' },
+  { name: 'Uganda Ministry of Education', url: 'https://www.education.go.ug/feed/' },
+  { name: 'Chevening', url: 'https://www.chevening.org/feed/' },
+  { name: 'Scholars4Dev', url: 'https://www.scholars4dev.com/feed/' },
 ];
 
 // Keywords to filter for Africa-relevant jobs
@@ -113,46 +112,28 @@ type RssItem = {
 function extractDeadlineFromText(text: string | undefined): string | null {
   if (!text) return null;
   const t = text.replace(/\s+/g, ' ').trim();
-  // Patterns: 2026-02-15, 15 Feb 2026, Feb 15, 2026, 15/02/2026
+
   const iso = /(20\d{2})-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])/i.exec(t);
   if (iso) return new Date(`${iso[1]}-${iso[2]}-${iso[3]}`).toISOString();
 
-  const monthNames = '(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)';
-  const kw = '(apply by|deadline|closing date|applications close|application closes|applications closing|closes on|due by|due|last date|last day|ends on|submission deadline)';
-  const dmy = new RegExp(`${kw}[^\n\r:]*?(?:on|is|:)?\s*(\\b(0?[1-9]|[12]\\d|3[01])\\b)\\s+${monthNames}\\s+(\\d{4})`, 'i').exec(t);
+  const dmy = /(?:apply by|deadline|closing date|applications close|application closes|applications closing|closes on|due by|due|last date|last day|ends on|submission deadline)[^\n\r:]*?(?:on|is|:)?\s*(0?[1-9]|[12]\d|3[01])\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i.exec(t);
   if (dmy) {
-    const day = dmy[2];
-    const month = dmy[3];
-    const year = dmy[4];
-    const dateStr = `${day} ${month} ${year}`;
-    const parsed = Date.parse(dateStr);
+    const parsed = Date.parse(`${dmy[1]} ${dmy[2]} ${dmy[3]}`);
     if (!Number.isNaN(parsed)) return new Date(parsed).toISOString();
   }
 
-  const mdy = new RegExp(`${kw}[^\n\r:]*?(?:on|is|:)?\s*${monthNames}\\s+(\\b(0?[1-9]|[12]\\d|3[01])\\b),?\\s+(\\d{4})`, 'i').exec(t);
+  const mdy = /(?:apply by|deadline|closing date|applications close|application closes|applications closing|closes on|due by|due|last date|last day|ends on|submission deadline)[^\n\r:]*?(?:on|is|:)?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s+(0?[1-9]|[12]\d|3[01]),?\s+(\d{4})/i.exec(t);
   if (mdy) {
-    const month = mdy[2];
-    const day = mdy[3];
-    const year = mdy[4];
-    const dateStr = `${month} ${day}, ${year}`;
-    const parsed = Date.parse(dateStr);
+    const parsed = Date.parse(`${mdy[1]} ${mdy[2]}, ${mdy[3]}`);
     if (!Number.isNaN(parsed)) return new Date(parsed).toISOString();
   }
 
-  const slash = new RegExp(`${kw}[^\n\r:]*?(?:on|is|:)?\s*(0?[1-9]|[12]\\d|3[01])[\\/.-](0?[1-9]|1[0-2])[\\/.-](\\d{4})`, 'i').exec(t);
-  if (slash) {
-    const d = slash[1];
-    const m = slash[2];
-    const y = slash[3];
-    return new Date(`${y}-${m}-${d}`).toISOString();
-  }
-  const usSlash = new RegExp(`${kw}[^\n\r:]*?(?:on|is|:)?\s*(0?[1-9]|1[0-2])[\\/.-](0?[1-9]|[12]\\d|3[01])[\\/.-](\\d{4})`, 'i').exec(t);
-  if (usSlash) {
-    const m = usSlash[1];
-    const d = usSlash[2];
-    const y = usSlash[3];
-    return new Date(`${y}-${m}-${d}`).toISOString();
-  }
+  const dmyNumeric = /(?:apply by|deadline|closing date|applications close|application closes|applications closing|closes on|due by|due|last date|last day|ends on|submission deadline)[^\n\r:]*?(?:on|is|:)?\s*(0?[1-9]|[12]\d|3[01])[/.-](0?[1-9]|1[0-2])[/.-](\d{4})/i.exec(t);
+  if (dmyNumeric) return new Date(`${dmyNumeric[3]}-${dmyNumeric[2]}-${dmyNumeric[1]}`).toISOString();
+
+  const mdyNumeric = /(?:apply by|deadline|closing date|applications close|application closes|applications closing|closes on|due by|due|last date|last day|ends on|submission deadline)[^\n\r:]*?(?:on|is|:)?\s*(0?[1-9]|1[0-2])[/.-](0?[1-9]|[12]\d|3[01])[/.-](\d{4})/i.exec(t);
+  if (mdyNumeric) return new Date(`${mdyNumeric[3]}-${mdyNumeric[1]}-${mdyNumeric[2]}`).toISOString();
+
   return null;
 }
 
@@ -200,11 +181,12 @@ function classifyOpportunityTypeFromText(text: string | undefined, categories?: 
 }
 
 function normalizeRssItem(item: RssItem, source: string): NormalizedJob | null {
-  const title = item.title?.trim();
+  const title = cleanText(item.title);
   const company = new URL(source).hostname.replace('www.', '');
   if (!title) return null;
-  const description = (item.contentSnippet || item.content || '').trim();
+  const description = cleanText(item.contentSnippet || item.content || '');
   const oppType = classifyOpportunityTypeFromText(`${title} ${description}`, item.categories);
+  const cleanedUrl = cleanUrl(item.link);
   return {
     position_title: title.substring(0, 200),
     company_name: company.substring(0, 100),
@@ -212,10 +194,35 @@ function normalizeRssItem(item: RssItem, source: string): NormalizedJob | null {
     region: 'Global',
     industry: oppType || item.categories?.[0] || 'General',
     stipend: 'Not specified',
-    application_link: item.link || null,
+    application_link: cleanedUrl || null,
     source,
     approved: false,
   };
+}
+
+function cleanText(value?: string): string {
+  if (!value) return '';
+  return value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function cleanUrl(url?: string): string {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', 'ref', 'source'].forEach((param) => {
+      parsed.searchParams.delete(param);
+    });
+    return parsed.toString();
+  } catch {
+    return url;
+  }
 }
 
 function isRelevant(job: ExternalJob): boolean {
@@ -323,13 +330,12 @@ serve(async (req: Request) => {
             application_method: normalized.application_link ? 'url' : null,
             application_url: normalized.application_link,
             region: normalized.region,
-            status: 'draft',
-            expires_at: null,
-            logo_url: null,
-            image_url: null,
-            banner_urls: null,
           });
-          if (!error) results.jobs_inserted++;
+          if (!error) {
+            results.jobs_inserted++;
+          } else {
+            results.errors.push(`${source.name} insert: ${error.message}`);
+          }
         }
         
       } catch (err) {
@@ -338,34 +344,52 @@ serve(async (req: Request) => {
     }
 
     // Ingest RSS feeds
-    const parser = new Parser({ timeout: 15000 });
-    for (const feedUrl of RSS_SOURCES) {
+    const parser = new Parser({
+      timeout: 20000,
+      headers: {
+        'User-Agent': 'CareerCompassBot/1.0 (+https://careercompass-ug.vercel.app)',
+        Accept: 'application/rss+xml, application/xml, text/xml, application/atom+xml',
+      },
+    });
+    for (const feedSource of RSS_SOURCES) {
       try {
         results.rss_sources_checked++;
-        const feed = await parser.parseURL(feedUrl);
+        const feed = await parser.parseURL(feedSource.url);
         const items = feed.items as RssItem[];
         results.rss_items_fetched += items.length;
 
         for (const item of items) {
-          const text = [item.title, item.contentSnippet, item.content].join(' ').toLowerCase();
+          const text = cleanText([item.title, item.contentSnippet, item.content].join(' ')).toLowerCase();
           const relevant = GLOBAL_KEYWORDS.some((kw) => text.includes(kw)) || AFRICA_KEYWORDS.some((kw) => text.includes(kw));
-          if (!relevant) continue; // filter consistently
+          if (!relevant) continue;
           results.rss_items_relevant++;
 
-          const normalized = normalizeRssItem(item, feedUrl);
+          const normalized = normalizeRssItem(item, feedSource.url);
           if (!normalized) continue;
 
-          // Lightweight extraction for deadline and region
-          const rawContent = (item.content || item.contentSnippet || '') as string;
+          const rawContent = cleanText((item.content || item.contentSnippet || '') as string);
           const extractedDeadline = extractDeadlineFromText(rawContent);
           const inferredRegion = inferRegionFromText(rawContent) || normalized.region;
 
-          // Dedupe by title in listings
-          const { data: existing } = await supabase
-            .from('listings')
-            .select('id')
-            .ilike('title', normalized.position_title)
-            .limit(1);
+          let existing: { id: string }[] | null = null;
+          if (normalized.application_link) {
+            const { data } = await supabase
+              .from('listings')
+              .select('id')
+              .eq('application_url', normalized.application_link)
+              .limit(1);
+            existing = data;
+          }
+
+          if (!existing || existing.length === 0) {
+            const { data } = await supabase
+              .from('listings')
+              .select('id')
+              .ilike('title', normalized.position_title)
+              .limit(1);
+            existing = data;
+          }
+
           if (existing && existing.length > 0) continue;
 
           const { error } = await supabase.from('listings').insert({
@@ -378,16 +402,16 @@ serve(async (req: Request) => {
             application_method: normalized.application_link ? 'url' : null,
             application_url: normalized.application_link,
             region: inferredRegion,
-            status: 'draft',
-            expires_at: null,
-            logo_url: null,
-            image_url: null,
-            banner_urls: null,
           });
-          if (!error) results.rss_items_inserted++;
+
+          if (!error) {
+            results.rss_items_inserted++;
+          } else {
+            results.errors.push(`RSS insert ${feedSource.name}: ${error.message}`);
+          }
         }
       } catch (err) {
-        results.errors.push(`RSS ${feedUrl}: ${(err as Error).message}`);
+        results.errors.push(`RSS ${feedSource.name}: ${(err as Error).message}`);
       }
     }
 
