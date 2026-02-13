@@ -100,11 +100,11 @@ CREATE TABLE public.placements (
 ALTER TABLE public.placements ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for placements
-CREATE POLICY "Anyone can view placements"
+CREATE POLICY "Users can view their own placements"
 ON public.placements
 FOR SELECT
 TO authenticated
-USING (true);
+USING (auth.uid() = user_id OR public.has_role(auth.uid(), 'admin'));
 
 CREATE POLICY "Admins can insert placements"
 ON public.placements

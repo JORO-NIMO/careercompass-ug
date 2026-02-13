@@ -12,13 +12,15 @@ services:
     region: frankfurt  # EU region, change to oregon for US
     plan: free  # Use 'starter' for production ($7/mo)
     buildCommand: npm ci && npm run api:build
-    startCommand: npm run api:start
+    startCommand: npm run api:start -- --immediate
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3001
+      - key: TZ
+        value: Africa/Kampala
       - key: SUPABASE_URL
         sync: false  # Set manually in Render dashboard
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -45,10 +47,12 @@ services:
     plan: free
     buildCommand: npm ci && npm run api:build
     schedule: "0 */6 * * *"  # Every 6 hours
-    startCommand: npm run api:ingest
+    startCommand: node dist/server/scripts/ingest.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: TZ
+        value: Africa/Kampala
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY

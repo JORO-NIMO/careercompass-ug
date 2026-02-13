@@ -7,6 +7,13 @@ import { config as loadEnv } from "dotenv";
 import { z } from "zod";
 
 // Load environment variables
+
+/**
+ * SECURITY WARNING:
+ * SUPABASE_SERVICE_ROLE_KEY must NEVER be exposed to the frontend or bundled client-side.
+ * Only use SUPABASE_SERVICE_ROLE_KEY in server-side Node.js code.
+ * For client-side, use NEXT_PUBLIC_SUPABASE_ANON_KEY or equivalent.
+ */
 loadEnv();
 
 // Configuration schema
@@ -47,7 +54,7 @@ function loadConfig() {
     ingestionIntervalHours: process.env.INGESTION_INTERVAL_HOURS,
     maxDescriptionLength: process.env.MAX_DESCRIPTION_LENGTH,
     batchSize: process.env.BATCH_SIZE,
-    rateLimitRequests: process.env.RATE_LIMIT_REQUESTS,
+    rateLimitRequests: process.env.RATE_LIMIT_REQUESTS ?? process.env.RATE_LIMIT_MAX_REQUESTS,
     rateLimitWindowMs: process.env.RATE_LIMIT_WINDOW_MS,
     corsAllowedOrigins: process.env.CORS_ALLOWED_ORIGINS?.split(",")
       .map((origin) => origin.trim())

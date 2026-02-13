@@ -8,9 +8,22 @@ import path from 'path';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
+// Sanitize log message to remove PII
+function sanitizeLogMessage(msg: any) {
+  if (typeof msg === 'string') return msg.replace(/\b(email|phone|user_id|token|apikey|key|secret)\s*[:=]\s*[^\s]+/gi, '[REDACTED]');
+  if (typeof msg === 'object') {
+    const clone = { ...msg };
+    ['email', 'phone', 'user_id', 'token', 'apikey', 'key', 'secret'].forEach(k => {
+      if (clone[k]) clone[k] = '[REDACTED]';
+    });
+    return JSON.stringify(clone);
+  }
+  return msg;
+}
+
 // Custom log format
 const logFormat = printf(({ level, message, timestamp, stack }) => {
-  return `${timestamp} [${level}]: ${stack || message}`;
+  return `${timestamp} [${level}]: ${stack || sanitizeLogMessage(message)}`;
 });
 
 // Create logger instance
