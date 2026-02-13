@@ -13,7 +13,7 @@ services:
   # OPPORTUNITY BACKEND API
   # =============================================================================
   - type: web
-    name: opportunity-backend
+    name: rss-feeds-api
     runtime: node
     region: frankfurt
     plan: free
@@ -37,7 +37,7 @@ services:
   # CRON JOB FOR RSS INGESTION
   # =============================================================================
   - type: cron
-    name: opportunity-ingest-cron
+    name: rss-feeds-ingest-cron
     runtime: node
     region: frankfurt
     buildCommand: npm ci && npm run api:build
