@@ -11,8 +11,7 @@ BEGIN
   END IF;
 END$$;
 
--- Create user_roles table
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   role app_role NOT NULL,
@@ -39,20 +38,21 @@ AS $$
 $$;
 
 -- RLS policies for user_roles
+DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles;
 CREATE POLICY "Users can view their own roles"
 ON public.user_roles
 FOR SELECT
 TO authenticated
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all roles" ON public.user_roles;
 CREATE POLICY "Admins can view all roles"
 ON public.user_roles
 FOR SELECT
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
--- Create profiles table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   full_name TEXT,
@@ -83,7 +83,7 @@ TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
 -- Create placements table
-CREATE TABLE public.placements (
+CREATE TABLE IF NOT EXISTS public.placements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   position_title TEXT NOT NULL,
   company_name TEXT NOT NULL,
@@ -99,27 +99,37 @@ CREATE TABLE public.placements (
 
 ALTER TABLE public.placements ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for placements
-CREATE POLICY "Users can view their own placements"
-ON public.placements
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+CREATE POLICY "Users can view their own profile"
+ON public.profiles
 FOR SELECT
 TO authenticated
-USING (auth.uid() = user_id OR public.has_role(auth.uid(), 'admin'));
+USING (auth.uid() = id);
 
+-- Policies for placements
 CREATE POLICY "Admins can insert placements"
 ON public.placements
 FOR INSERT
 TO authenticated
 WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
-CREATE POLICY "Admins can update placements"
-ON public.placements
+-- Policies for profiles
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+CREATE POLICY "Users can update their own profile"
+ON public.profiles
 FOR UPDATE
+TO authenticated
+USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+CREATE POLICY "Admins can view all profiles"
+ON public.profiles
+FOR SELECT
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
 
-CREATE POLICY "Admins can delete placements"
-ON public.placements
+CREATE POLICY "Admins can delete profiles"
+ON public.profiles
 FOR DELETE
 TO authenticated
 USING (public.has_role(auth.uid(), 'admin'));
@@ -149,7 +159,7 @@ BEGIN
 END;
 $$;
 
--- Trigger to create profile and assign role on signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -165,11 +175,12 @@ BEGIN
 END;
 $$;
 
--- Triggers for updated_at
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_placements_updated_at ON public.placements;
 CREATE TRIGGER update_placements_updated_at
   BEFORE UPDATE ON public.placements
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
