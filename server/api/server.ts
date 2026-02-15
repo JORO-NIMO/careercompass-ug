@@ -19,7 +19,7 @@ const logger = createModuleLogger("api");
 initRedisCache();
 
 // Create Express app
-const app = express();
+const app: any = express();
 
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) {
@@ -35,7 +35,6 @@ function isAllowedOrigin(origin: string | undefined): boolean {
 
 // Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Apply default rate limiter to all routes
 app.use(defaultRateLimiter);
