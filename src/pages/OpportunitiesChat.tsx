@@ -347,7 +347,7 @@ const OpportunitiesChat = () => {
                                                                             </Badge>
                                                                         )}
                                                                         {opp.country && (
-                                                                            {/* Messages */}
+                                                                            // Messages
                                                                             <ScrollArea ref={scrollRef} className="flex-1 p-2 lg:p-4">
                                                                                 <div className="space-y-4">
                                                                                     {messages.map((message) => (
