@@ -216,68 +216,21 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OnboardingProvider>
-          <LocaleProvider>
-            <TooltipProvider>
-              <Toaster />
-              <BrowserRouter>
-              <AppLayout>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/find-placements" element={<FindPlacements />} />
-                    <Route path="/for-companies" element={<ForCompanies />} />
-                    <Route path="/about" element={<About />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/profile" element={<StudentProfile />} />
-                  <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                  <Route path="/admin/listings-review" element={<AdminRoute><AdminListingsReview /></AdminRoute>} />
-                  <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/notification-preferences" element={<NotificationPreferences />} />
-                  <Route path="/feedback" element={<FeedbackPage />} />
-                  <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
-                  <Route path="/admin/ai-usage" element={<AdminRoute><AdminAIUsage /></AdminRoute>} />
-                  <Route path="/admin/workflows" element={<AdminRoute><AdminWorkflowAnalytics /></AdminRoute>} />
-                  <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
-                  <Route path="/learning" element={<LearningHub />} />
-                  <Route path="/jobs" element={<JobFeed />} />
-                  <Route path="/cv-builder" element={<CVBuilder />} />
-                  <Route
-                    path="/find-talent"
-                    element={
-                      <ProtectedRoute>
-                        <FindTalent />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/updates" element={<Updates />} />
-
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/dashboard" element={<UserDashboard />} />
-                  <Route path="/oauth/consent" element={<OAuthConsent />} />
-                  <Route path="/guides/how-to-write-a-cv" element={<HowToWriteACV />} />
-                  <Route path="/guides/interview-tips-uganda" element={<InterviewTipsUganda />} />
-                  <Route path="/guides/interview-tips" element={<InterviewTips />} />
-                  <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
-                  <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
-                  <Route path="/updates/:id" element={<UpdateDetails />} />
-                    <Route path="/placements/:id" element={<PlacementDetails />} />
-                  <Route path="/application-tips" element={<ApplicationTips />} />
-                  <Route path="/data/:id" element={<PublicDataView />} />
-                  <Route path="/opportunities-chat" element={<OpportunitiesChat />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </AppLayout>
-            </BrowserRouter>
-            </TooltipProvider>
-          </LocaleProvider>
-        </OnboardingProvider>
-      </AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={
+            <Suspense fallback={<PageLoader />}>
+              {/** Only show the Project Under Development page, block all other content */}
+              <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#f8fafc' }}>
+                <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b' }}>Project Under Development-Contact admin incase you want to access version 1 or 2.</h1>
+                <p style={{ fontSize: '1.25rem', marginTop: '1rem', color: '#334155' }}>
+                  For inquiries, contact <a href="mailto:admin@placementbridge.org" style={{ color: '#2563eb', textDecoration: 'underline' }}>admin@placementbridge.org</a>
+                </p>
+              </div>
+            </Suspense>
+          } />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   </ErrorBoundary>
 );
