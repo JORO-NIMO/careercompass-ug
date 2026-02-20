@@ -177,8 +177,8 @@ const OpportunitiesChat = () => {
                                                                                 {opp.country}
                                                                             </Badge>
                                                                         )}
-                                        </div>
-                                    )}
+                                                                    </div>
+                                                                )}
                                     <div
                                         className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${message.role === 'user'
                                             ? 'bg-primary text-primary-foreground rounded-tr-none'
