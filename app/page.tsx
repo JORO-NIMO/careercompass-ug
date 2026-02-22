@@ -109,7 +109,7 @@ export default function LandingPage() {
                 type="text"
                 placeholder="Full Name*"
                 value={studentForm.full_name}
-                onChange={e => setStudentForm(f => ({ ...f, full_name: e.target.value }))
+                onChange={e => setStudentForm(f => ({ ...f, full_name: e.target.value }))}
                 required
                 className="w-full p-2 border rounded"
                 disabled={studentLoading || studentSuccess}
@@ -118,7 +118,7 @@ export default function LandingPage() {
                 type="email"
                 placeholder="Email*"
                 value={studentForm.email}
-                onChange={e => setStudentForm(f => ({ ...f, email: e.target.value }))
+                onChange={e => setStudentForm(f => ({ ...f, email: e.target.value }))}
                 required
                 className="w-full p-2 border rounded"
                 disabled={studentLoading || studentSuccess}
@@ -127,7 +127,7 @@ export default function LandingPage() {
                 type="text"
                 placeholder="Phone"
                 value={studentForm.phone}
-                onChange={e => setStudentForm(f => ({ ...f, phone: e.target.value }))
+                onChange={e => setStudentForm(f => ({ ...f, phone: e.target.value }))}
                 className="w-full p-2 border rounded"
                 disabled={studentLoading || studentSuccess}
               />
@@ -135,7 +135,7 @@ export default function LandingPage() {
                 type="text"
                 placeholder="Field of Study"
                 value={studentForm.field_of_study}
-                onChange={e => setStudentForm(f => ({ ...f, field_of_study: e.target.value }))
+                onChange={e => setStudentForm(f => ({ ...f, field_of_study: e.target.value }))}
                 className="w-full p-2 border rounded"
                 disabled={studentLoading || studentSuccess}
               />
@@ -143,7 +143,7 @@ export default function LandingPage() {
                 type="text"
                 placeholder="Country"
                 value={studentForm.country}
-                onChange={e => setStudentForm(f => ({ ...f, country: e.target.value }))
+                onChange={e => setStudentForm(f => ({ ...f, country: e.target.value }))}
                 className="w-full p-2 border rounded"
                 disabled={studentLoading || studentSuccess}
               />
@@ -173,7 +173,7 @@ export default function LandingPage() {
                 type="text"
                 placeholder="Company Name*"
                 value={recruiterForm.company_name}
-                onChange={e => setRecruiterForm(f => ({ ...f, company_name: e.target.value }))
+                onChange={e => setRecruiterForm(f => ({ ...f, company_name: e.target.value }))}
                 required
                 className="w-full p-2 border rounded"
                 disabled={recruiterLoading || recruiterSuccess}
@@ -182,7 +182,7 @@ export default function LandingPage() {
                 type="email"
                 placeholder="Email*"
                 value={recruiterForm.email}
-                onChange={e => setRecruiterForm(f => ({ ...f, email: e.target.value }))
+                onChange={e => setRecruiterForm(f => ({ ...f, email: e.target.value }))}
                 required
                 className="w-full p-2 border rounded"
                 disabled={recruiterLoading || recruiterSuccess}
@@ -191,7 +191,7 @@ export default function LandingPage() {
                 type="text"
                 placeholder="Roles Hiring For"
                 value={recruiterForm.roles_hiring}
-                onChange={e => setRecruiterForm(f => ({ ...f, roles_hiring: e.target.value }))
+                onChange={e => setRecruiterForm(f => ({ ...f, roles_hiring: e.target.value }))}
                 className="w-full p-2 border rounded"
                 disabled={recruiterLoading || recruiterSuccess}
               />
