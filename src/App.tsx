@@ -220,12 +220,8 @@ const App = () => (
         <Routes>
           <Route path="*" element={
             <Suspense fallback={<PageLoader />}>
-              {/* Render the new registration landing page */}
-              <iframe
-                src="/"
-                style={{ width: '100vw', height: '100vh', border: 'none' }}
-                title="PlacementBridge Landing Page"
-              />
+              {/* No catch-all route: allow Next.js app/page.tsx to serve the root */}
+              <NotFound />
             </Suspense>
           } />
         </Routes>
