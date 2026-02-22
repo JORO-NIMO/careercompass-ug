@@ -171,57 +171,110 @@ const OpportunitiesChat = () => {
         }
     };
 
-                                                                        {opp.country && (
-                                                                            <Badge variant="secondary" className="text-[10px]">
-                                                                                <Globe className="h-2.5 w-2.5 mr-0.5" />
-                                                                                {opp.country}
-                                                                            </Badge>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                    <div
-                                        className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm ${message.role === 'user'
-                                            ? 'bg-primary text-primary-foreground rounded-tr-none'
-                                            : 'bg-muted rounded-tl-none border border-border/50'
-                                            }`}
-                                    >
-                                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-
-                                        {/* Rich Opportunity Cards */}
-                                        {message.opportunities && message.opportunities.length > 0 && (
-                                            <div className="mt-4 pt-3 border-t border-border/50 space-y-3">
-                                                {message.opportunities.slice(0, 5).map((opp) => {
-                                                    const Icon = TYPE_ICONS[opp.type || 'default'] || TYPE_ICONS.default;
-                                                    const colorClass = TYPE_COLORS[opp.type || 'default'] || TYPE_COLORS.default;
-                                                    return (
-                                                        <div
-                                                            key={opp.id}
-                                                            className="bg-background rounded-lg p-3 border shadow-sm hover:shadow-md transition-shadow"
-                                                        >
-                                                            <div className="flex items-start gap-3">
-                                                                <div className={`p-2 rounded-lg ${colorClass}`}>
-                                                                    <Icon className="h-4 w-4" />
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <h4 className="font-semibold text-sm line-clamp-2">{opp.title}</h4>
-                                                                    {opp.organization && (
-                                                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                                                            <Building2 className="h-3 w-3 inline mr-1" />
-                                                                            {opp.organization}
-                                                                        </p>
-                                                                    )}
-                                                                    <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                        {opp.type && (
-                                                                            <Badge variant="outline" className={`text-[10px] capitalize ${colorClass}`}>
-                                                                                {opp.type}
-                                                                            </Badge>
-                                                                        )}
-                                                                        {opp.country && (
-                                                                            <Badge variant="secondary" className="text-[10px]">
-                                                                                <Globe className="h-2.5 w-2.5 mr-0.5" />
-                                                                                {opp.country}
-                                                                            </Badge>
-                                                                        )}
+    return (
+        <div className="flex flex-col h-screen">
+            <div className="flex items-center justify-between p-4 border-b border-border/50">
+                <h1 className="text-xl font-bold">Opportunities Chat</h1>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('scholarship')}>
+                        Scholarship
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('internship')}>
+                        Internship
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('job')}>
+                        Job
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('fellowship')}>
+                        Fellowship
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('competition')}>
+                        Competition
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('grant')}>
+                        Grant
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('training')}>
+                        Training
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setActiveFilter('default')}>
+                        Default
+                    </Button>
+                </div>
+            </div>
+            <div className="flex-1 overflow-auto">
+                <div className="flex flex-col gap-4 p-4">
+                    {messages.map(message => (
+                        <div key={message.id}>
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1">
+                                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setActiveFilter(message.opportunities?.[0]?.type || 'default')}>
+                                        {message.opportunities?.[0]?.type}
+                                    </Button>
+                                </div>
+                            </div>
+                            {message.opportunities && message.opportunities.length > 0 && (
+                                <div className="mt-4 pt-3 border-t border-border/50 space-y-3">
+                                    {message.opportunities.slice(0, 5).map((opp) => {
+                                        const Icon = TYPE_ICONS[opp.type || 'default'] || TYPE_ICONS.default;
+                                        const colorClass = TYPE_COLORS[opp.type || 'default'] || TYPE_COLORS.default;
+                                        return (
+                                            <div
+                                                key={opp.id}
+                                                className="bg-background rounded-lg p-3 border shadow-sm hover:shadow-md transition-shadow"
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`p-2 rounded-lg ${colorClass}`}>
+                                                        <Icon className="h-4 w-4" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="font-semibold text-sm line-clamp-2">{opp.title}</h4>
+                                                        {opp.organization && (
+                                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                                <Building2 className="h-3 w-3 inline mr-1" />
+                                                                {opp.organization}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex flex-wrap gap-1.5 mt-2">
+                                                            {opp.type && (
+                                                                <Badge variant="outline" className={`text-[10px] capitalize ${colorClass}`}>
+                                                                    {opp.type}
+                                                                </Badge>
+                                                            )}
+                                                            {opp.country && (
+                                                                <Badge variant="secondary" className="text-[10px]">
+                                                                    <Globe className="h-2.5 w-2.5 mr-0.5" />
+                                                                    {opp.country}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="flex items-center justify-between p-4 border-t border-border/50">
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setInput('')}>
+                        Clear
+                    </Button>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={sendMessage}>
+                        Send
+                    </Button>
+                </div>
+            </div>
+        </div>
     );
 };
 
