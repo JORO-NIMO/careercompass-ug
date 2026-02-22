@@ -32,6 +32,15 @@ async function main() {
   startServer();
   
   // Start scheduler (optionally run immediate ingestion first)
+  // Schedule embedding refresh job
+  try {
+    const { runEmbeddingRefreshJob } = await import('./jobs/embeddingRefreshJob');
+    const cron = (await import('node-cron')).default;
+    cron.schedule('0 3 * * *', runEmbeddingRefreshJob); // Every day at 3am
+    logger.info('Scheduled embedding refresh job at 3am daily');
+  } catch (err) {
+    logger.warn('Failed to schedule embedding refresh job', { error: err });
+  }
   const runImmediate = process.argv.includes('--immediate');
   
   if (runImmediate) {

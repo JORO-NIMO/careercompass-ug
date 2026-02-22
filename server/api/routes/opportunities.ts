@@ -154,28 +154,74 @@ router.get('/search', searchRateLimiter, async (req: Request, res: Response) => 
  */
 router.post('/chat-search', aiRateLimiter, async (req: Request, res: Response) => {
   try {
-    const { query, type, field, country, limit } = req.body;
-    
-    if (!query || typeof query !== 'string') {
+    const chatSearchSchema = z.object({
+      query: z.string().min(1),
+      type: z.string().optional(),
+      field: z.string().optional(),
+      country: z.string().optional(),
+      limit: z.number().int().positive().max(100).optional(),
+      userId: z.string().optional(),
+      sessionId: z.string().optional(),
+    });
+    const parsed = chatSearchSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        error: 'Query is required',
+        error: 'Invalid request body',
+        details: parsed.error.errors,
       });
     }
-    
-    const { results, formattedResponse, intent } = await searchForChat(query, {
-      type,
-      field,
-      country,
-      limit,
+    const { query, type, field, country, limit, userId, sessionId } = parsed.data;
+
+    // Context enrichment
+    const { contextBuilder } = await import('../../services/contextBuilder');
+    const userContext = userId ? await contextBuilder(userId, sessionId) : {};
+
+    // AI observability logging
+    const { logAIInteraction, logAIError } = await import('../../services/aiObservability');
+    const start = Date.now();
+    let results, formattedResponse, intent;
+    let error = null;
+    try {
+      ({ results, formattedResponse, intent } = await searchForChat(query, {
+        type,
+        field,
+        country,
+        limit,
+        userContext,
+      }));
+      // Personalized recommendations
+      if (userId && userContext && userContext.interests) {
+        const { generateEmbedding } = await import('../../services/embeddingService');
+        const userVector = await generateEmbedding(userContext.interests.join(' '));
+        // Use userVector to re-rank results (pseudo-code)
+        // results = rerankByEmbedding(results, userVector);
+      }
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err);
+      logAIError(userId || 'anonymous', 'chat-search', 'searchForChat', error);
+      throw err;
+    }
+    const latencyMs = Date.now() - start;
+    logAIInteraction({
+      userId: userId || 'anonymous',
+      feature: 'chat-search',
+      model: 'searchForChat',
+      prompt: query,
+      response: formattedResponse,
+      latencyMs,
+      tokensUsed: undefined,
+      error,
+      feedback: undefined,
+      timestamp: new Date().toISOString(),
     });
-    
     res.json({
       success: true,
       data: {
         results,
         formattedResponse,
         intent,
+        userContext,
       },
     });
   } catch (err) {

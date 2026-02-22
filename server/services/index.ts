@@ -9,3 +9,6 @@ export * from './embeddingService.js';
 export * from './ingestion.js';
 export * from './rssFetcher.js';
 export * from './searchService.js';
+export * from './contextBuilder';
+export * from './aiObservability';
+export * from './embeddingLifecycle';

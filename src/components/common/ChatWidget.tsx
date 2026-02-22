@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import DOMPurify from 'dompurify';
 import {
   MessageCircle,
   X,
@@ -260,7 +261,7 @@ export function ChatWidget({ className }: ChatWidgetProps) {
                       : 'bg-muted',
                   )}
                 >
-                  {message.content}
+                  {renderSafeHtml(message.content)}
                 </div>
               </div>
             ))}
@@ -353,4 +354,8 @@ export function ChatWidget({ className }: ChatWidgetProps) {
   );
 }
 
+  // Helper to safely render HTML from user messages
+  function renderSafeHtml(html: string) {
+    return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />;
+  }
 export default ChatWidget;
