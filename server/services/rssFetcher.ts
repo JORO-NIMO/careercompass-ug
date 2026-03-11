@@ -23,14 +23,9 @@ const parser = new Parser({
   },
   timeout: 30000, // 30 second timeout
   headers: {
-<<<<<<< Updated upstream
     "User-Agent": "OpportunityBot/1.0 (+https://www.placementbridge.org)",
     Accept:
       "application/rss+xml, application/xml, text/xml, application/atom+xml",
-=======
-    'User-Agent': 'OpportunityBot/1.0 (+https://placementbridge.org)',
-    'Accept': 'application/rss+xml, application/xml, text/xml, application/atom+xml',
->>>>>>> Stashed changes
   },
 });
 

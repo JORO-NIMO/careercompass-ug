@@ -40,7 +40,6 @@ app.use(express.urlencoded({ extended: true }));
 // Apply default rate limiter to all routes
 app.use(defaultRateLimiter);
 
-<<<<<<< Updated upstream
 // Basic security headers middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -77,29 +76,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   );
 
   if (req.method === "OPTIONS") {
-=======
-// CORS middleware with origin whitelist
-const parseOrigins = (value?: string): string[] =>
-  (value || '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
-
-const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS);
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const requestOrigin = req.headers.origin;
-  const isAllowed = requestOrigin && (allowedOrigins.length === 0 || allowedOrigins.includes(requestOrigin));
-
-  if (isAllowed && requestOrigin) {
-    res.header('Access-Control-Allow-Origin', requestOrigin);
-    res.header('Vary', 'Origin');
-  }
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-
-  if (req.method === 'OPTIONS') {
->>>>>>> Stashed changes
     return res.sendStatus(200);
   }
   next();
