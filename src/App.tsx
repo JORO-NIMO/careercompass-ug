@@ -215,21 +215,21 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="*" element={
-            <Suspense fallback={<PageLoader />}>
-              {/** Only show the Project Under Development page, block all other content */}
-              <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#f8fafc' }}>
-                <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b' }}>Project Under Development-Contact admin incase you want to access version 1 or 2.</h1>
-                <p style={{ fontSize: '1.25rem', marginTop: '1rem', color: '#334155' }}>
-                  For inquiries, contact <a href="mailto:admin@placementbridge.org" style={{ color: '#2563eb', textDecoration: 'underline' }}>admin@placementbridge.org</a>
-                </p>
-              </div>
-            </Suspense>
-          } />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <OnboardingProvider>
+          <LocaleProvider>
+            <TooltipProvider>
+              <Toaster />
+              <BrowserRouter>
+                <AppRouter />
+                <Suspense fallback={null}>
+                  <ChatWidget />
+                </Suspense>
+              </BrowserRouter>
+            </TooltipProvider>
+          </LocaleProvider>
+        </OnboardingProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
 );
