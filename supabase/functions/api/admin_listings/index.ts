@@ -87,7 +87,7 @@ export default async function (req: Request) {
 
   try {
     // Bulk publish: /api/admin_listings/bulk-publish
-    if (req.method === 'POST' && (segments[0] === 'bulk-publish' || segments[0] === 'bulk_publish')) {
+    if (req.method === 'POST' && segments.length === 1 && (segments[0] === 'bulk-publish' || segments[0] === 'bulk_publish')) {
       const payload = await req.json().catch(() => null) as {
         ids?: string[];
         autoFeatureByType?: boolean;

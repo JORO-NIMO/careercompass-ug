@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { AdminAnalyticsResponse } from '@/types/admin-analytics';
 
+interface AnalyticsMetrics {
+  unique_visitors: number;
+  page_views: number;
+  active_now: number;
+  top_pages: { path: string; views: number }[];
+}
+
 export function useAdminAnalytics() {
   const [data, setData] = useState<AdminAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -13,14 +20,13 @@ export function useAdminAnalytics() {
 
     async function fetchData() {
       try {
-        const result = await supabase.rpc('get_analytics_metrics');
-        if (result.error) throw result.error;
+        const { data: metrics, error: rpcError } = await supabase.rpc<AnalyticsMetrics>('get_analytics_metrics');
+        if (rpcError) throw rpcError;
 
-        const metrics = result.data as Record<string, unknown> | null;
         if (!cancelled) {
           setData({
             overview: {
-              totalUsers: (metrics?.unique_visitors as number) ?? 0,
+              totalUsers: metrics?.unique_visitors ?? 0,
               totalEmployers: 0,
               newSignups: { daily: 0, weekly: 0, monthly: 0 },
               totalPlacements: 0,

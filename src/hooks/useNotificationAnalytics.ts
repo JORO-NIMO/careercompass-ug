@@ -20,31 +20,44 @@ export function useNotificationAnalytics() {
 
     async function fetchData() {
       try {
-        // Count total notifications (sent)
+        // Count total notifications (sent) - use estimated for performance on large tables
         const { count: totalSent, error: sentError } = await supabase
           .from('notifications')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'estimated', head: true });
         if (sentError) throw sentError;
 
-        // Count total reads (opened)
+        // Count total reads (opened) - use estimated for performance on large tables
         const { count: totalOpened, error: readError } = await supabase
           .from('notification_reads')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'estimated', head: true });
         if (readError) throw readError;
 
-        // Get notifications with created_at for time series
+        // Build date filter for last 30 days
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const sinceDate = thirtyDaysAgo.toISOString();
+
+        // Get notifications with created_at for time series (last 30 days)
         const { data: notifications, error: fetchError } = await supabase
           .from('notifications')
           .select('id, type, created_at')
-          .order('created_at', { ascending: false })
-          .limit(500);
+          .gte('created_at', sinceDate)
+          .order('created_at', { ascending: false });
         if (fetchError) throw fetchError;
 
-        // Get reads for time series
-        const { data: reads, error: readsError } = await supabase
-          .from('notification_reads')
-          .select('notification_id, read_at')
-          .limit(500);
+        // Get notification IDs for filtering reads
+        const notificationIds = (notifications ?? []).map(n => n.id);
+
+        // Get reads for time series (filtered to fetched notifications, last 30 days)
+        const { data: reads, error: readsError } = notificationIds.length === 0
+          ? { data: [] as { notification_id: string; read_at: string | null }[], error: null }
+          : await supabase
+              .from('notification_reads')
+              .select('notification_id, read_at')
+              .in('notification_id', notificationIds)
+              .gte('read_at', sinceDate)
+              .order('read_at', { ascending: false });
         if (readsError) throw readsError;
 
         // Build time series (last 30 days)
