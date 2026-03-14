@@ -215,21 +215,16 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <OnboardingProvider>
-          <LocaleProvider>
-            <TooltipProvider>
-              <Toaster />
-              <BrowserRouter>
-                <AppRouter />
-                <Suspense fallback={null}>
-                  <ChatWidget />
-                </Suspense>
-              </BrowserRouter>
-            </TooltipProvider>
-          </LocaleProvider>
-        </OnboardingProvider>
-      </AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="*" element={
+            <Suspense fallback={<PageLoader />}>
+              {/* No catch-all route: allow Next.js app/page.tsx to serve the root */}
+              <NotFound />
+            </Suspense>
+          } />
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   </ErrorBoundary>
 );
