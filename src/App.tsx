@@ -153,37 +153,36 @@ function AppRouter() {
             <Route path="/about" element={<About />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/profile" element={<StudentProfile />} />
-          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-          <Route path="/admin/listings-review" element={<AdminRoute><AdminListingsReview /></AdminRoute>} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/notification-preferences" element={<NotificationPreferences />} />
-          <Route path="/feedback" element={<FeedbackPage />} />
-          <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
-          <Route path="/admin/ai-usage" element={<AdminRoute><AdminAIUsage /></AdminRoute>} />
-          <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
-          <Route path="/learning" element={<LearningHub />} />
-          <Route path="/jobs" element={<JobFeed />} />
-          <Route path="/cv-builder" element={<CVBuilder />} />
-          <Route path="/find-talent" element={<FindTalent />} />
-          <Route path="/updates" element={<Updates />} />
-
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/oauth/consent" element={<OAuthConsent />} />
-          <Route path="/guides/how-to-write-a-cv" element={<HowToWriteACV />} />
-          <Route path="/guides/interview-tips-uganda" element={<InterviewTipsUganda />} />
-          <Route path="/guides/interview-tips" element={<InterviewTips />} />
-          <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
-          <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
-          <Route path="/updates/:id" element={<UpdateDetails />} />
-           <Route path="/placements/:id" element={<PlacementDetails />} />
-          <Route path="/application-tips" element={<ApplicationTips />} />
-          <Route path="/opportunities-chat" element={<ProtectedRoute><OpportunitiesChat /></ProtectedRoute>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/listings-review" element={<AdminRoute><AdminListingsReview /></AdminRoute>} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/notification-preferences" element={<NotificationPreferences />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
+            <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+            <Route path="/admin/ai-usage" element={<AdminRoute><AdminAIUsage /></AdminRoute>} />
+            <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
+            <Route path="/learning" element={<LearningHub />} />
+            <Route path="/jobs" element={<JobFeed />} />
+            <Route path="/cv-builder" element={<CVBuilder />} />
+            <Route path="/find-talent" element={<FindTalent />} />
+            <Route path="/updates" element={<Updates />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/oauth/consent" element={<OAuthConsent />} />
+            <Route path="/guides/how-to-write-a-cv" element={<HowToWriteACV />} />
+            <Route path="/guides/interview-tips-uganda" element={<InterviewTipsUganda />} />
+            <Route path="/guides/interview-tips" element={<InterviewTips />} />
+            <Route path="/insights/top-internships/:industry" element={<TopInternships />} />
+            <Route path="/insights/career-trends" element={<CareerTrendsBlog />} />
+            <Route path="/updates/:id" element={<UpdateDetails />} />
+            <Route path="/placements/:id" element={<PlacementDetails />} />
+            <Route path="/application-tips" element={<ApplicationTips />} />
+            <Route path="/opportunities-chat" element={<ProtectedRoute><OpportunitiesChat /></ProtectedRoute>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
       </Suspense>
     </AppLayout>
     </>
