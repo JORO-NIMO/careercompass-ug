@@ -86,8 +86,8 @@ export default async function (req: Request) {
   const pageLimit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : null;
 
   try {
-    // Bulk publish: /api/admin/listings/bulk-publish
-    if (req.method === 'POST' && !listingId && (segments[0] === 'bulk-publish' || segments[0] === 'bulk_publish')) {
+    // Bulk publish: /api/admin_listings/bulk-publish
+    if (req.method === 'POST' && (segments[0] === 'bulk-publish' || segments[0] === 'bulk_publish')) {
       const payload = await req.json().catch(() => null) as {
         ids?: string[];
         autoFeatureByType?: boolean;

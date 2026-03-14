@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import type { AdminAnalyticsResponse } from '@/types/admin-analytics';
 
 export function useAdminAnalytics() {
@@ -9,14 +10,36 @@ export function useAdminAnalytics() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch('/api/admin/analytics/overview', { credentials: 'include' })
-      .then(r => {
-        if (!r.ok) throw new Error('Failed to fetch analytics');
-        return r.json();
-      })
-      .then(setData)
-      .catch(e => !cancelled && setError(e.message))
-      .finally(() => !cancelled && setLoading(false));
+
+    async function fetchData() {
+      try {
+        const result = await supabase.rpc('get_analytics_metrics');
+        if (result.error) throw result.error;
+
+        const metrics = result.data as Record<string, unknown> | null;
+        if (!cancelled) {
+          setData({
+            overview: {
+              totalUsers: (metrics?.unique_visitors as number) ?? 0,
+              totalEmployers: 0,
+              newSignups: { daily: 0, weekly: 0, monthly: 0 },
+              totalPlacements: 0,
+              applications: 0,
+              successfulPlacements: 0,
+            },
+            signupsSeries: [],
+            placementsSeries: [],
+            topCompanies: [],
+          });
+        }
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to fetch analytics');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchData();
     return () => { cancelled = true; };
   }, []);
 

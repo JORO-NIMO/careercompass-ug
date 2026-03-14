@@ -50,4 +50,6 @@ secrets/
 *.njsproj
 *.sln
 *.sw?
-node_modules
+
+# npm cache
+.npm-cache/

@@ -169,7 +169,7 @@ export async function bulkPublishListingsViaApi(ids: string[], opts?: { autoFeat
     companyAssignments: opts?.companyAssignments,
   };
 
-  const response = await authorizedFetch('/api/admin/listings/bulk-publish', {
+  const response = await authorizedFetch('/api/admin_listings/bulk-publish', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

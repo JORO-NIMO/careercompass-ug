@@ -33,7 +33,10 @@ const Header = () => {
           }
         });
         const data = await response.json();
-        setUnread(data.unread ?? 0);
+        const unreadCount = Array.isArray(data.items)
+          ? data.items.filter((item: { read?: boolean }) => !item.read).length
+          : 0;
+        setUnread(unreadCount);
       } catch (err) {
         console.error('Failed to fetch unread notifications:', err);
         setUnread(0);
