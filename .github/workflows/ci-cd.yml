@@ -80,7 +80,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: https://www.placementbridge.org
+      url: https://testing.placementbridge.org
 
     steps:
       - name: Checkout code

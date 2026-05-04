@@ -1,4 +1,4 @@
-Sitemap: https://www.placementbridge.org/sitemap.xml
+Sitemap: https://testing.placementbridge.org/sitemap.xml
 
 User-agent: Googlebot
 Allow: /

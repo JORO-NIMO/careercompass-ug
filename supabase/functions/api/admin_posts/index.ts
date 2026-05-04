@@ -140,7 +140,7 @@ export default async function (req: Request) {
       const parse = PostCreateSchema.safeParse(rawPayload);
       if (!parse.success) {
         return problemJson(
-          "https://www.placementbridge.org/errors/invalid_payload",
+          "https://testing.placementbridge.org/errors/invalid_payload",
           "Invalid payload",
           400,
           "Payload validation failed",
@@ -196,7 +196,7 @@ export default async function (req: Request) {
       const parsedUpdate = PostUpdateSchema.safeParse(rawUpdate);
       if (!parsedUpdate.success) {
         return problemJson(
-          "https://www.placementbridge.org/errors/invalid_payload",
+          "https://testing.placementbridge.org/errors/invalid_payload",
           "Invalid payload",
           400,
           "Update validation failed",

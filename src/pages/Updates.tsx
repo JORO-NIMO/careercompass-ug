@@ -68,7 +68,7 @@ const Updates = () => {
             <SEO
                 title="Latest Platform Updates & Announcements | PlacementBridge"
                 description="Stay updated with the latest news, placement opportunities, and platform announcements from PlacementBridge."
-                canonical="https://www.placementbridge.org/updates"
+                canonical="https://testing.placementbridge.org/updates"
                 siteName="All jobs in one place"
             />
 

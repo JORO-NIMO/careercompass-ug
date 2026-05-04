@@ -29,7 +29,7 @@ const InterviewTips = () => {
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://www.placementbridge.org";
+      : "https://testing.placementbridge.org";
 
   const prepTips = [
     {
@@ -112,7 +112,7 @@ const InterviewTips = () => {
           "common interview questions",
           "global job preparation",
         ]}
-        canonical="https://www.placementbridge.org/guides/interview-tips"
+        canonical="https://testing.placementbridge.org/guides/interview-tips"
         jsonLd={[
           {
             "@context": "https://schema.org",
@@ -122,19 +122,19 @@ const InterviewTips = () => {
                 "@type": "ListItem",
                 position: 1,
                 name: "Home",
-                item: "https://www.placementbridge.org/",
+                item: "https://testing.placementbridge.org/",
               },
               {
                 "@type": "ListItem",
                 position: 2,
                 name: "Guides",
-                item: "https://www.placementbridge.org/guides",
+                item: "https://testing.placementbridge.org/guides",
               },
               {
                 "@type": "ListItem",
                 position: 3,
                 name: "Interview Tips",
-                item: "https://www.placementbridge.org/guides/interview-tips",
+                item: "https://testing.placementbridge.org/guides/interview-tips",
               },
             ],
           },

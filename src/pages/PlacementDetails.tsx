@@ -95,7 +95,7 @@ export default function PlacementDetails() {
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://www.placementbridge.org";
+      : "https://testing.placementbridge.org";
   const canonical = `${baseUrl}/placements/${id}`;
 
   return (

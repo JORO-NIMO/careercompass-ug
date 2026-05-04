@@ -10,7 +10,7 @@ if (!adminJwt || !userId) {
 const payload = {
   title: 'Test Push',
   body: 'This is a test push notification.',
-  url: 'https://www.placementbridge.org/'
+  url: 'https://testing.placementbridge.org/'
 };
 
 async function sendPush() {

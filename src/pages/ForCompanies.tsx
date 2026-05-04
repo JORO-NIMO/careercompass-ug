@@ -80,7 +80,7 @@ const ForCompanies = () => {
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://www.placementbridge.org";
+      : "https://testing.placementbridge.org";
 
   const [company, setCompany] = useState<Company | null>(null);
   const [companyLoading, setCompanyLoading] = useState(true);
@@ -562,7 +562,7 @@ const ForCompanies = () => {
           "early talent marketplace",
           "student placements employers",
         ]}
-        canonical="https://www.placementbridge.org/for-companies"
+        canonical="https://testing.placementbridge.org/for-companies"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "Service",

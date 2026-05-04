@@ -23,7 +23,7 @@ const parser = new Parser({
   },
   timeout: 30000, // 30 second timeout
   headers: {
-    "User-Agent": "OpportunityBot/1.0 (+https://www.placementbridge.org)",
+    "User-Agent": "OpportunityBot/1.0 (+https://testing.placementbridge.org)",
     Accept:
       "application/rss+xml, application/xml, text/xml, application/atom+xml",
   },

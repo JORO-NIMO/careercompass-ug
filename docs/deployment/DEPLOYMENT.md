@@ -240,7 +240,7 @@ supabase functions logs payments_webhook
 Create a simple health check endpoint:
 
 ```bash
-curl https://www.placementbridge.org/
+curl https://testing.placementbridge.org/
 # Should return 200 OK
 ```
 

@@ -18,7 +18,7 @@ const InterviewTipsUganda = () => {
           "campus career interview preparation",
           "how to prepare for interviews",
         ]}
-        canonical="https://www.placementbridge.org/guides/interview-tips"
+        canonical="https://testing.placementbridge.org/guides/interview-tips"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "HowTo",

@@ -162,7 +162,7 @@ const TopInternships = () => {
         title={pageTitle}
         description={pageDescription}
         keywords={[`top internships in ${locationName}`, ...data.keywords]}
-        canonical={`https://www.placementbridge.org/insights/top-internships/${industry ?? ""}`}
+        canonical={`https://testing.placementbridge.org/insights/top-internships/${industry ?? ""}`}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "ItemList",

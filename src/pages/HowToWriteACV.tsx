@@ -64,15 +64,15 @@ const HowToWriteACV = () => {
           "resume writing",
           "student cv structure",
         ]}
-        canonical="https://www.placementbridge.org/guides/how-to-write-a-cv"
+        canonical="https://testing.placementbridge.org/guides/how-to-write-a-cv"
         jsonLd={[
           {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: "https://www.placementbridge.org/" },
-              { "@type": "ListItem", position: 2, name: "Guides", item: "https://www.placementbridge.org/guides" },
-              { "@type": "ListItem", position: 3, name: "How to Write a CV", item: "https://www.placementbridge.org/guides/how-to-write-a-cv" }
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://testing.placementbridge.org/" },
+              { "@type": "ListItem", position: 2, name: "Guides", item: "https://testing.placementbridge.org/guides" },
+              { "@type": "ListItem", position: 3, name: "How to Write a CV", item: "https://testing.placementbridge.org/guides/how-to-write-a-cv" }
             ]
           },
           {
@@ -87,7 +87,7 @@ const HowToWriteACV = () => {
             },
             mainEntityOfPage: {
               "@type": "WebPage",
-              "@id": "https://www.placementbridge.org/guides/how-to-write-a-cv",
+              "@id": "https://testing.placementbridge.org/guides/how-to-write-a-cv",
             },
             keywords: [
               "CV writing",

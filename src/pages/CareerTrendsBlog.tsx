@@ -53,7 +53,7 @@ const CareerTrendsBlog = () => {
           "graduate employment insights",
           "placementbridge career report",
         ]}
-        canonical="https://www.placementbridge.org/insights/career-trends"
+        canonical="https://testing.placementbridge.org/insights/career-trends"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "BlogPosting",
@@ -67,7 +67,7 @@ const CareerTrendsBlog = () => {
           datePublished: "2025-12-27",
           mainEntityOfPage: {
             "@type": "WebPage",
-            "@id": "https://www.placementbridge.org/insights/career-trends",
+            "@id": "https://testing.placementbridge.org/insights/career-trends",
           },
         }}
         siteName="All jobs in one place"

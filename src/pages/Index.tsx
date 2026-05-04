@@ -37,7 +37,7 @@ const Index = () => {
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://www.placementbridge.org";
+      : "https://testing.placementbridge.org";
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,7 +62,7 @@ const Index = () => {
           "Interns",
           "talent",
         ]}
-        canonical="https://www.placementbridge.org/"
+        canonical="https://testing.placementbridge.org/"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebSite",

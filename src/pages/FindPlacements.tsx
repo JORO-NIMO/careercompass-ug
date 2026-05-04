@@ -9,7 +9,7 @@ const FindPlacements = () => {
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://www.placementbridge.org";
+      : "https://testing.placementbridge.org";
 
   const handleSearch = (filters: PlacementFilters) => {
     // Current search updates filtered listings directly or triggers a navigation
@@ -28,7 +28,7 @@ const FindPlacements = () => {
           "student apprenticeships",
           "entry level jobs",
         ]}
-        canonical="https://www.placementbridge.org/find-placements"
+        canonical="https://testing.placementbridge.org/find-placements"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "CollectionPage",

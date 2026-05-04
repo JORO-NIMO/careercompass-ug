@@ -33,7 +33,7 @@ export default function SingleJobPostingJsonLd(props: Props) {
     const url =
       typeof window !== "undefined"
         ? window.location.href
-        : "https://www.placementbridge.org/find-placements";
+        : "https://testing.placementbridge.org/find-placements";
     const jobLocationType = props.region?.toLowerCase().includes("remote")
       ? "TELECOMMUTE"
       : undefined;
@@ -73,7 +73,7 @@ export default function SingleJobPostingJsonLd(props: Props) {
       hiringOrganization: {
         "@type": "Organization",
         name: props.companyName || "PlacementBridge Partner",
-        sameAs: props.companyWebsite || "https://www.placementbridge.org",
+        sameAs: props.companyWebsite || "https://testing.placementbridge.org",
       },
       jobLocation: buildJobLocation(),
       jobLocationType,

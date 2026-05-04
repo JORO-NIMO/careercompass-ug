@@ -22,7 +22,7 @@ export default function JobPostingJsonLd({ jobs }: Props) {
       const url =
         typeof window !== "undefined"
           ? window.location.origin
-          : "https://www.placementbridge.org";
+          : "https://testing.placementbridge.org";
       const applyUrl =
         j.application_url ||
         (j.application_method === "email" && j.application_email
@@ -62,7 +62,7 @@ export default function JobPostingJsonLd({ jobs }: Props) {
         hiringOrganization: {
           "@type": "Organization",
           name: j.companies?.name || "PlacementBridge Partner",
-          sameAs: j.companies?.website_url || "https://www.placementbridge.org",
+          sameAs: j.companies?.website_url || "https://testing.placementbridge.org",
         },
         jobLocation: buildJobLocation(),
         jobLocationType,
