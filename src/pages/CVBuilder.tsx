@@ -495,6 +495,16 @@ const CVBuilder = () => {
       lines.push("");
     }
 
+    // SIGNATURE DECLARATION
+    if (cvData.signatureDataUrl) {
+      lines.push("DECLARATION");
+      lines.push("I certify that the information provided above is true and correct to the best of my knowledge.");
+      lines.push("");
+      if (personalInfo.fullName) {
+        lines.push(personalInfo.fullName);
+      }
+    }
+
     return lines
       .join("\n")
       .replace(/\n{3,}/g, "\n\n")
@@ -970,9 +980,16 @@ const CVBuilder = () => {
                       <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
                         {buildResumePreview}
                       </pre>
-                      <p className="mt-4 text-xs text-muted-foreground">
-                        For one-page CV defaults, preview shows up to {MAX_EXPERIENCE_ENTRIES} experience items, {MAX_BULLETS_PER_ROLE} bullets per role, and {MAX_EDUCATION_ENTRIES} education items.
-                      </p>
+                      {cvData.signatureDataUrl && (
+                        <div className="signature-block mt-6 pt-4 border-t border-slate-200">
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Signature</p>
+                          <img
+                            src={cvData.signatureDataUrl}
+                            alt="Digital signature"
+                            className="h-16 w-auto object-contain block"
+                          />
+                        </div>
+                      )}
                     </>
                   )}
                 </CardContent>
@@ -1007,6 +1024,21 @@ const CVBuilder = () => {
               word-wrap: break-word !important;
               font-family: serif !important;
               font-size: 11pt !important;
+              line-height: 1.45 !important;
+              margin: 0 !important;
+            }
+            #cv-preview img {
+              max-height: 20mm !important;
+              display: block !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            #cv-preview .signature-block {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            #cv-preview p {
+              page-break-inside: avoid !important;
             }
           }
           @page {

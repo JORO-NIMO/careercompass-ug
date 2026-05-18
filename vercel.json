@@ -24,11 +24,26 @@
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://js.hcaptcha.com https://*.supabase.co https://vercel.live https://*.vercel.live; worker-src 'self' blob:; child-src 'self' blob:; connect-src 'self' https://*.supabase.co https://api.openai.com https://onesignal.com https://api.brevo.com https://app.posthog.com https://*.sentry.io https://vercel.live https://*.vercel.live wss://vercel.live wss://*.vercel.live; frame-src https://*.hcaptcha.com https://vercel.live https://*.vercel.live;"
         },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "geolocation=(self), microphone=(), camera=(), payment=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(self), microphone=(), camera=(), payment=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
       ]
     }
   ],
@@ -54,7 +69,7 @@
       "destination": "https://xicdxswrtdassnlurnmp.supabase.co/functions/v1/access-control"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/|cron/|access-control$|assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]
