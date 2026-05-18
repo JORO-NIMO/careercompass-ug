@@ -981,15 +981,18 @@ const CVBuilder = () => {
                         {buildResumePreview}
                       </pre>
                       {cvData.signatureDataUrl && (
-                        <div className="signature-block mt-6 pt-4 border-t border-slate-200">
+                        <div className="mt-6 pt-4 border-t border-slate-200">
                           <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Signature</p>
                           <img
                             src={cvData.signatureDataUrl}
                             alt="Digital signature"
-                            className="h-16 w-auto object-contain block"
+                            className="h-16 w-auto object-contain"
                           />
                         </div>
                       )}
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        For one-page CV defaults, preview shows up to {MAX_EXPERIENCE_ENTRIES} experience items, {MAX_BULLETS_PER_ROLE} bullets per role, and {MAX_EDUCATION_ENTRIES} education items.
+                      </p>
                     </>
                   )}
                 </CardContent>
@@ -1029,13 +1032,7 @@ const CVBuilder = () => {
             }
             #cv-preview img {
               max-height: 20mm !important;
-              display: block !important;
               page-break-inside: avoid !important;
-              break-inside: avoid !important;
-            }
-            #cv-preview .signature-block {
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
             }
             #cv-preview p {
               page-break-inside: avoid !important;
