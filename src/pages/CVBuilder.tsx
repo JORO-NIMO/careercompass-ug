@@ -54,6 +54,11 @@ interface CVData {
   referees: Referee[];
 }
 
+
+const MAX_EXPERIENCE_ENTRIES = 4;
+const MAX_EDUCATION_ENTRIES = 3;
+const MAX_BULLETS_PER_ROLE = 4;
+
 const CVBuilder = () => {
   const [cvData, setCvData] = useState<CVData>({
     personalInfo: {
@@ -349,7 +354,7 @@ const CVBuilder = () => {
         return dateA < dateB ? 1 : -1;
       });
 
-      sortedExperience.forEach((role) => {
+      sortedExperience.slice(0, MAX_EXPERIENCE_ENTRIES).forEach((role) => {
         const title = role.title || "Role";
         const company = role.company || "";
         const location = role.location ? `, ${role.location}` : "";
@@ -363,7 +368,7 @@ const CVBuilder = () => {
           lines.push(dateLine);
         }
 
-        const bullets = splitDescription(role.description);
+        const bullets = splitDescription(role.description).slice(0, MAX_BULLETS_PER_ROLE);
         bullets.forEach((bullet) => {
           lines.push(`• ${bullet}`);
         });
@@ -377,7 +382,7 @@ const CVBuilder = () => {
       lines.push("EDUCATION");
       const sortedEducation = [...education].sort((a, b) => (b.graduationDate || "") > (a.graduationDate || "") ? 1 : -1);
 
-      sortedEducation.forEach((edu) => {
+      sortedEducation.slice(0, MAX_EDUCATION_ENTRIES).forEach((edu) => {
         const degree = edu.degree || "";
         const institution = edu.institution ? ` — ${edu.institution}` : "";
         const location = edu.location ? `, ${edu.location}` : "";
@@ -856,9 +861,14 @@ const CVBuilder = () => {
                       <p className="text-sm">Complete the form to generate an optimized layout</p>
                     </div>
                   ) : (
-                    <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
-                      {buildResumePreview}
-                    </pre>
+                    <>
+                      <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground">
+                        {buildResumePreview}
+                      </pre>
+                      <p className="mt-4 text-xs text-muted-foreground">
+                        For one-page CV defaults, preview shows up to {MAX_EXPERIENCE_ENTRIES} experience items, {MAX_BULLETS_PER_ROLE} bullets per role, and {MAX_EDUCATION_ENTRIES} education items.
+                      </p>
+                    </>
                   )}
                 </CardContent>
               )}
