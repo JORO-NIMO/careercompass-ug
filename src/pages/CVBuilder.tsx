@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, type PointerEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,6 +52,7 @@ interface CVData {
   skills: string[];
   languages: string[];
   referees: Referee[];
+  signatureDataUrl?: string;
 }
 
 
@@ -60,6 +61,8 @@ const MAX_EDUCATION_ENTRIES = 3;
 const MAX_BULLETS_PER_ROLE = 4;
 
 const CVBuilder = () => {
+  const signatureCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawingRef = useRef(false);
   const [cvData, setCvData] = useState<CVData>({
     personalInfo: {
       fullName: "",
@@ -74,7 +77,8 @@ const CVBuilder = () => {
     education: [],
     skills: [],
     languages: [],
-    referees: []
+    referees: [],
+    signatureDataUrl: ""
   });
 
   const [currentSkill, setCurrentSkill] = useState("");
@@ -212,6 +216,76 @@ const CVBuilder = () => {
     });
   };
 
+  const getCanvasPoint = (event: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  };
+
+  const startSignatureStroke = (event: PointerEvent<HTMLCanvasElement>) => {
+    const canvas = signatureCanvasRef.current;
+    const point = getCanvasPoint(event);
+    if (!canvas || !point) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    drawingRef.current = true;
+    canvas.setPointerCapture(event.pointerId);
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+  };
+
+  const drawSignatureStroke = (event: PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    const canvas = signatureCanvasRef.current;
+    const point = getCanvasPoint(event);
+    if (!canvas || !point) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#111827";
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+  };
+
+  const endSignatureStroke = () => {
+    if (!drawingRef.current) return;
+    drawingRef.current = false;
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL("image/png");
+    setCvData((prev) => ({ ...prev, signatureDataUrl: dataUrl }));
+  };
+
+  const clearSignature = () => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setCvData((prev) => ({ ...prev, signatureDataUrl: "" }));
+    toast.success("Signature cleared");
+  };
+
+  useEffect(() => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!cvData.signatureDataUrl) return;
+    const image = new Image();
+    image.onload = () => {
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    };
+    image.src = cvData.signatureDataUrl;
+  }, [cvData.signatureDataUrl]);
+
   const handleDownload = () => {
     if (!cvData.personalInfo.fullName || !cvData.personalInfo.email) {
       toast.error("Please fill in your name and email first");
@@ -242,7 +316,8 @@ const CVBuilder = () => {
         education: [],
         skills: [],
         languages: [],
-        referees: []
+        referees: [],
+        signatureDataUrl: ""
       });
       localStorage.removeItem('cvBuilderData');
       toast.success("CV data cleared");
@@ -829,6 +904,36 @@ const CVBuilder = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Digital Signature */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Digital Signature</CardTitle>
+                <CardDescription>
+                  Sign with mouse, touchpad, or touchscreen. Your signature is saved and printed on your CV.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <canvas
+                  ref={signatureCanvasRef}
+                  width={700}
+                  height={180}
+                  className="w-full border rounded-md bg-white touch-none"
+                  onPointerDown={startSignatureStroke}
+                  onPointerMove={drawSignatureStroke}
+                  onPointerUp={endSignatureStroke}
+                  onPointerLeave={endSignatureStroke}
+                />
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={clearSignature}>
+                    Clear signature
+                  </Button>
+                  <p className="text-xs text-muted-foreground self-center">
+                    Tip: use a stylus or finger on touch devices for better precision.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Preview Section */}
