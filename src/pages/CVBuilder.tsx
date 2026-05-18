@@ -973,12 +973,6 @@ const CVBuilder = () => {
                       <p className="mt-4 text-xs text-muted-foreground">
                         For one-page CV defaults, preview shows up to {MAX_EXPERIENCE_ENTRIES} experience items, {MAX_BULLETS_PER_ROLE} bullets per role, and {MAX_EDUCATION_ENTRIES} education items.
                       </p>
-                      {cvData.signatureDataUrl ? (
-                        <div className="mt-6">
-                          <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Digital Signature</p>
-                          <img src={cvData.signatureDataUrl} alt="Digital signature" className="h-16 w-auto object-contain border-b" />
-                        </div>
-                      ) : null}
                     </>
                   )}
                 </CardContent>
