@@ -1,6 +1,6 @@
 # CareerCompass-UG
 
-CareerCompass-UG is a Vite + React + TypeScript web application that helps Ugandan learners, graduates, and employers connect around placements, learning pathways, and admin workflows. The frontend uses Tailwind CSS with shadcn-ui components, while Supabase powers authentication, persistence, and real-time features.
+CareerCompass-UG(I name it PlacementBridge) is a Vite + React + TypeScript web application that helps Ugandan learners, graduates, and employers connect around placements, learning pathways, and admin workflows. The frontend uses Tailwind CSS with shadcn-ui components, while Supabase powers authentication, persistence, and real-time features.
 
 This document reflects the project status as of December 2025.
 
@@ -11,7 +11,7 @@ This document reflects the project status as of December 2025.
 - Employer onboarding that allows missing websites, raises admin notifications, and provides guidance instead of “bullet spend” widgets
 - **Opportunity Feed**: Verified placements, internships, and fellowships aggregated from trusted local and regional sources.
 - **Learning & Growth Hub**: Curated courses, scholarships, and resources to bridge skill gaps.
-- **Career Insights**: CV guides, interview preparation tips, and labor market trends specific to Uganda.
+- **Career Insights**: CV guides, interview preparation tips, and labour market trends specific to Uganda.
 
 ## Recent Improvements
 
@@ -75,7 +75,7 @@ Server/Edge-only variables (if deploying functions):
 ## Known Issues & Follow-Up Work
 
 - Investigate and eliminate intermittent “request failed” resource errors reported on Find Talent flows
-- Extend Find Talent search with district filters leveraging the new Uganda district data
+- Extend Find Talent search with district filters, leveraging the new Uganda district data
 - Finalise newsletter subscription flow (pending backend endpoint wiring)
 - Document Supabase deployment and environment setup in more depth
 - Re-run `npm run build` and address any outstanding TypeScript build failures
