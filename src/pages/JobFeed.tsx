@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { searchJobsJSearch } from '@/services/jsearchService';
 import SEO from '@/components/seo/SEO';
+import { trackAction } from '@/lib/analytics';
 
 interface JobResult {
   job_id?: string;
@@ -18,6 +19,11 @@ interface JobResult {
 interface JSearchResponse {
   data?: JobResult[];
   results?: JobResult[];
+  meta?: {
+    query?: string;
+    total_raw?: number;
+    total_deduped?: number;
+  }
 }
 
 const DEFAULT_QUERY = 'software engineer remote';
@@ -33,11 +39,28 @@ const JobFeed: React.FC = () => {
     setError(null);
     try {
       const res = (await searchJobsJSearch(searchQuery)) as JSearchResponse;
-      setJobs(res?.data ?? res?.results ?? []);
+      const rankedResults = res?.data ?? res?.results ?? [];
+      setJobs(rankedResults);
+      trackAction('search.query', {
+        query: searchQuery,
+        filters: {
+          source: 'jsearch',
+          total_raw: res.meta?.total_raw ?? rankedResults.length,
+          total_deduped: res.meta?.total_deduped ?? rankedResults.length,
+          result_count: rankedResults.length,
+        },
+      });
     } catch (err: unknown) {
       console.error('Job search failed', err);
       setError('Failed to fetch jobs. Please try again later.');
       setJobs([]);
+      trackAction('search.query', {
+        query: searchQuery,
+        filters: {
+          source: 'jsearch',
+          status: 'failed',
+        },
+      });
     } finally {
       setLoading(false);
     }
