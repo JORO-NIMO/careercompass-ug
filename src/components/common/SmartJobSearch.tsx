@@ -46,7 +46,7 @@ export function SmartJobSearch() {
             {/* Results Dropdown/Area */}
             {results.length > 0 && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Top AI Matches</p>
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Top Matches</p>
                     {results.map((job) => (
                         <Card key={job.id} className="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors cursor-pointer" onClick={() => navigate(`/jobs/${job.id}`)}>
                             <CardContent className="p-3 flex items-start gap-3">
@@ -54,9 +54,11 @@ export function SmartJobSearch() {
                                 <div>
                                     <h4 className="font-medium text-sm text-primary">{job.title}</h4>
                                     <p className="text-xs text-muted-foreground line-clamp-1">{job.description}</p>
-                                    <span className="text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 px-1.5 py-0.5 rounded-full mt-1 inline-block">
-                                        {(job.similarity * 100).toFixed(0)}% Match
-                                    </span>
+                                    {typeof job.similarity === 'number' ? (
+                                        <span className="text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-600 px-1.5 py-0.5 rounded-full mt-1 inline-block">
+                                            {(job.similarity * 100).toFixed(0)}% Match
+                                        </span>
+                                    ) : null}
                                 </div>
                             </CardContent>
                         </Card>

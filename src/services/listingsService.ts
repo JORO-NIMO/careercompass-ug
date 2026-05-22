@@ -58,11 +58,28 @@ async function parseJsonResponse<T>(response: Response): Promise<{
  * 2. Searches DB using cosine similarity
  */
 export async function searchSmartListings(queryText: string) {
-  // AI-based search has been disabled. Use a simple client-side text fallback
-  console.warn('searchSmartListings: AI search disabled; using text fallback for:', queryText);
+  // Semantic retrieval via server endpoint with graceful text fallback.
+  const query = queryText.trim();
+  if (!query) return [];
+
+  try {
+    const semanticResponse = await fetch('/api/listings/semantic-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+
+    const semantic = await parseJsonResponse<AdminListingsCollection>(semanticResponse);
+    if (semantic.success && (semantic.data?.items?.length ?? 0) > 0) {
+      return semantic.data?.items ?? [];
+    }
+  } catch (semanticError) {
+    console.warn('searchSmartListings semantic retrieval unavailable; falling back to text search:', semanticError);
+  }
+
   try {
     const all = await fetchListings();
-    const q = queryText.trim().toLowerCase();
+    const q = query.toLowerCase();
     if (!q) return [];
     return all.filter((item) => {
       const title = (item as any).title ?? '';
