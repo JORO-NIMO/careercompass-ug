@@ -35,6 +35,47 @@ interface MatchRow {
   source_table?: string;
 }
 
+async function sendSmsNotification(params: {
+  supabase: ReturnType<typeof createClient>;
+  userId: string;
+  message: string;
+  matches: MatchRow[];
+}): Promise<{ delivered: boolean; reason?: string }> {
+  const { supabase, userId, message, matches } = params;
+  const smsWebhookUrl = Deno.env.get('SMS_WEBHOOK_URL');
+
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+  if (userError) return { delivered: false, reason: `auth user lookup failed: ${userError.message}` };
+
+  const phone = userData.user?.phone?.trim();
+  if (!phone) return { delivered: false, reason: 'no phone number configured for user' };
+
+  if (!smsWebhookUrl) {
+    return { delivered: false, reason: 'SMS_WEBHOOK_URL is not configured' };
+  }
+
+  const response = await fetch(smsWebhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: phone,
+      message,
+      user_id: userId,
+      metadata: {
+        source: 'match-notify',
+        match_count: matches.length,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text();
+    return { delivered: false, reason: `sms provider failed: ${response.status} ${responseBody}` };
+  }
+
+  return { delivered: true };
+}
+
 function includesAny(haystack: string, needles?: string[]): boolean {
   if (!needles || needles.length === 0) return true;
   const lower = haystack.toLowerCase();
@@ -205,7 +246,43 @@ serve(async (req: Request) => {
           }
 
           if (channel === 'sms') {
-            // SMS integration is optional; avoid hard-failing when phone storage/provider isn't configured.
+            const smsResult = await sendSmsNotification({
+              supabase,
+              userId: alert.user_id,
+              message,
+              matches: matchingJobs,
+            });
+
+            const { error: notifError } = await supabase.from('notifications').insert({
+              user_id: alert.user_id,
+              type: 'job_match',
+              title: 'New Job Matches!',
+              body: message,
+              message,
+              channel: ['sms', 'in_app'],
+              metadata: {
+                sms_delivered: smsResult.delivered,
+                sms_reason: smsResult.reason || null,
+                matches: matchingJobs.map((j) => ({
+                  id: j.placement_id,
+                  title: j.position_title,
+                  company_name: j.company_name,
+                  match_score: j.match_score,
+                  source_table: j.source_table || 'placements',
+                })),
+              },
+              sent_at: new Date().toISOString(),
+            });
+
+            if (notifError) {
+              results.errors.push(`notifications(${alert.user_id}/sms): ${notifError.message}`);
+            } else {
+              results.notifications_sent++;
+            }
+
+            if (!smsResult.delivered && smsResult.reason) {
+              results.errors.push(`sms(${alert.user_id}): ${smsResult.reason}`);
+            }
             continue;
           }
 
