@@ -9,6 +9,36 @@ interface RequestPayload {
     listing_id: string;
 }
 
+const FIELD_KEYWORDS: Record<string, string[]> = {
+    technology: ['software', 'developer', 'engineering', 'ict', 'data', 'ai', 'cloud', 'cyber', 'devops'],
+    business_finance: ['finance', 'accounting', 'audit', 'business', 'bank', 'investment', 'economics'],
+    engineering: ['engineer', 'mechanical', 'electrical', 'civil', 'manufacturing', 'infrastructure'],
+    health_medicine: ['health', 'medical', 'nurse', 'clinical', 'hospital', 'public health', 'pharma'],
+    education: ['education', 'teacher', 'lecturer', 'curriculum', 'school', 'university', 'training'],
+    development_ngo: ['ngo', 'development', 'humanitarian', 'community', 'livelihoods', 'program officer'],
+    agriculture: ['agriculture', 'agri', 'farming', 'crop', 'livestock', 'agronomy', 'food systems'],
+    arts_media: ['media', 'content', 'design', 'creative', 'journalism', 'communications', 'brand'],
+    law_governance: ['law', 'legal', 'compliance', 'policy', 'governance', 'regulation', 'advocacy'],
+    science_research: ['research', 'laboratory', 'scientist', 'analysis', 'innovation', 'evidence'],
+};
+
+function normalizeText(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9\s/_-]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function inferListingFields(title: string, description: string | null): string[] {
+    const haystack = normalizeText(`${title} ${description || ''}`);
+    const inferred: string[] = [];
+
+    for (const [field, keywords] of Object.entries(FIELD_KEYWORDS)) {
+        if (keywords.some((keyword) => haystack.includes(keyword))) {
+            inferred.push(field);
+        }
+    }
+
+    return inferred;
+}
+
 const handler = async (req: Request) => {
     const corsResponse = handleCors(req);
     if (corsResponse) return corsResponse;
@@ -24,7 +54,7 @@ const handler = async (req: Request) => {
         // 1. Fetch listing details
         const { data: listing, error: listingError } = await supabase
             .from('listings')
-            .select('title, description, company_id, companies(name)')
+            .select('id, title, description, field, company_id, companies(name)')
             .eq('id', listing_id)
             .single();
 
@@ -33,31 +63,45 @@ const handler = async (req: Request) => {
             return jsonError('Listing not found', 404);
         }
 
-        // 2. Simple matching: Check title/description against user interests
-        // In a real app, you'd use pg_trgm or semantic search.
-        // Here we'll find users whose areas_of_interest overlap with words in the title.
-        const keywords = listing.title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        // 2. Structured field matching first, keyword overlap as fallback.
+        const inferredFields = inferListingFields(listing.title, listing.description || null);
+        const listingField = listing.field ? normalizeText(String(listing.field)).replace(/\s+/g, '_') : null;
+        const targetFields = Array.from(new Set([...(listingField ? [listingField] : []), ...inferredFields]));
+        const keywords = normalizeText(`${listing.title} ${listing.description || ''}`)
+            .split(' ')
+            .filter((w) => w.length > 3)
+            .slice(0, 30);
 
-        // 3. Fetch potentially interested users
-        // Using a simple overlap check with overlap operator && for arrays
+        // 3. Fetch potentially interested users (single query, in-memory scoring)
         const { data: usersToNotify, error: usersError } = await supabase
             .from('profiles')
-            .select('id, full_name')
-            .filter('areas_of_interest', 'cs', keywords); // Using containment/overlap logic if possible via filter
+            .select('id, full_name, areas_of_interest')
+            .not('areas_of_interest', 'is', null);
 
         if (usersError) {
             console.error('Error fetching users:', usersError);
             // Fallback: Just notify everyone for now if filter fails? No, let's be targeted.
         }
 
-        const notifiedCount = 0;
-        if (usersToNotify && usersToNotify.length > 0) {
-            const notifications = usersToNotify.map(u => ({
+        const matchedUsers = (usersToNotify || []).filter((user) => {
+            const interests = (user.areas_of_interest || []).map((v: string) => normalizeText(v).replace(/\s+/g, '_'));
+            if (!interests.length) return false;
+
+            const hasFieldMatch = targetFields.length > 0 && interests.some((interest: string) => targetFields.includes(interest));
+            if (hasFieldMatch) return true;
+
+            const tokenizedInterests = interests.flatMap((interest: string) => interest.split('_'));
+            const keywordMatches = keywords.filter((keyword) => tokenizedInterests.includes(keyword)).length;
+            return keywordMatches >= 1;
+        });
+
+        if (matchedUsers.length > 0) {
+            const notifications = matchedUsers.map(u => ({
                 user_id: u.id,
                 type: 'opportunity_match',
                 title: 'New Match: ' + listing.title,
                 body: `${listing.companies?.name || 'A company'} just posted a new role that matches your interests.`,
-                metadata: { listing_id: listing_id },
+                metadata: { listing_id: listing_id, target_fields: targetFields },
                 sent_at: new Date().toISOString(),
             }));
 
@@ -70,7 +114,8 @@ const handler = async (req: Request) => {
 
         return jsonSuccess({
             processed: true,
-            matchCount: usersToNotify?.length || 0,
+            matchCount: matchedUsers.length,
+            targetFields,
             listing: listing.title
         });
 

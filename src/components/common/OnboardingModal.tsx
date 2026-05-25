@@ -70,16 +70,16 @@ const OPPORTUNITY_TYPES = [
 ];
 
 const AREAS_OF_INTEREST = [
-  'ICT / Technology',
-  'Business & Finance',
-  'Engineering',
-  'Health & Medicine',
-  'Education',
-  'Development / NGO',
-  'Agriculture',
-  'Arts & Media',
-  'Law & Governance',
-  'Science & Research',
+  { id: 'technology', label: 'ICT / Technology' },
+  { id: 'business_finance', label: 'Business & Finance' },
+  { id: 'engineering', label: 'Engineering' },
+  { id: 'health_medicine', label: 'Health & Medicine' },
+  { id: 'education', label: 'Education' },
+  { id: 'development_ngo', label: 'Development / NGO' },
+  { id: 'agriculture', label: 'Agriculture' },
+  { id: 'arts_media', label: 'Arts & Media' },
+  { id: 'law_governance', label: 'Law & Governance' },
+  { id: 'science_research', label: 'Science & Research' },
 ];
 
 export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProps) {
@@ -166,12 +166,12 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
     }));
   };
 
-  const toggleAreaOfInterest = (area: string) => {
+  const toggleAreaOfInterest = (areaId: string) => {
     setData((prev) => ({
       ...prev,
-      areasOfInterest: prev.areasOfInterest.includes(area)
-        ? prev.areasOfInterest.filter((a) => a !== area)
-        : [...prev.areasOfInterest, area],
+      areasOfInterest: prev.areasOfInterest.includes(areaId)
+        ? prev.areasOfInterest.filter((a) => a !== areaId)
+        : [...prev.areasOfInterest, areaId],
     }));
   };
 
@@ -261,16 +261,16 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
               <div className="flex flex-wrap gap-2">
                 {AREAS_OF_INTEREST.map((area) => (
                   <button
-                    key={area}
+                    key={area.id}
                     type="button"
                     className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                      data.areasOfInterest.includes(area)
+                      data.areasOfInterest.includes(area.id)
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border hover:border-primary/50'
                     }`}
-                    onClick={() => toggleAreaOfInterest(area)}
+                    onClick={() => toggleAreaOfInterest(area.id)}
                   >
-                    {area}
+                    {area.label}
                   </button>
                 ))}
               </div>
