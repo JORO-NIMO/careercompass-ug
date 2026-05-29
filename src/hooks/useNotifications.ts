@@ -41,7 +41,20 @@ export function useNotificationPreferences() {
   useEffect(() => { fetchPreferences(); }, [fetchPreferences]);
 
   const updatePreference = async (channel: string, type: string, enabled: boolean) => {
-    await supabase.from('notification_preferences').upsert({ channel, type, enabled });
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user?.id;
+    if (!userId) {
+      throw new Error('You must be signed in to update notification preferences.');
+    }
+
+    await supabase
+      .from('notification_preferences')
+      .upsert({ user_id: userId, channel, type, enabled }, { onConflict: 'user_id,channel,type' });
+
+    if (channel === 'sms' && userId) {
+      await supabase.from('profiles').update({ notification_sms: enabled }).eq('id', userId);
+    }
+
     fetchPreferences();
   };
 

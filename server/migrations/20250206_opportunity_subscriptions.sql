@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS opportunity_subscriptions (
   
   -- Constraints
   CONSTRAINT valid_channels CHECK (
-    channels <@ ARRAY['email', 'push', 'in_app']::TEXT[]
+    channels <@ ARRAY['email', 'push', 'in_app', 'sms']::TEXT[]
   )
 );
 
@@ -98,4 +98,4 @@ CREATE POLICY notification_service_all ON opportunity_notifications
 COMMENT ON TABLE opportunity_subscriptions IS 'User subscriptions for opportunity matching notifications';
 COMMENT ON TABLE opportunity_notifications IS 'Queue for pending and sent opportunity notifications';
 COMMENT ON COLUMN opportunity_subscriptions.criteria IS 'JSON object with types, fields, countries, keywords arrays';
-COMMENT ON COLUMN opportunity_subscriptions.channels IS 'Array of notification channels: email, push, in_app';
+COMMENT ON COLUMN opportunity_subscriptions.channels IS 'Array of notification channels: email, push, in_app, sms';

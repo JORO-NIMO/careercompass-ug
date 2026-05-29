@@ -50,6 +50,7 @@ interface OnboardingData {
   areasOfInterest: string[];
   notificationEmail: boolean;
   notificationPush: boolean;
+  notificationSms: boolean;
 }
 
 const CAREER_LEVELS = [
@@ -70,16 +71,16 @@ const OPPORTUNITY_TYPES = [
 ];
 
 const AREAS_OF_INTEREST = [
-  'ICT / Technology',
-  'Business & Finance',
-  'Engineering',
-  'Health & Medicine',
-  'Education',
-  'Development / NGO',
-  'Agriculture',
-  'Arts & Media',
-  'Law & Governance',
-  'Science & Research',
+  { id: 'technology', label: 'ICT / Technology' },
+  { id: 'business_finance', label: 'Business & Finance' },
+  { id: 'engineering', label: 'Engineering' },
+  { id: 'health_medicine', label: 'Health & Medicine' },
+  { id: 'education', label: 'Education' },
+  { id: 'development_ngo', label: 'Development / NGO' },
+  { id: 'agriculture', label: 'Agriculture' },
+  { id: 'arts_media', label: 'Arts & Media' },
+  { id: 'law_governance', label: 'Law & Governance' },
+  { id: 'science_research', label: 'Science & Research' },
 ];
 
 export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProps) {
@@ -92,6 +93,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
     areasOfInterest: [],
     notificationEmail: true,
     notificationPush: true,
+    notificationSms: false,
   });
 
   const totalSteps = 3;
@@ -135,6 +137,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
         p_areas_of_interest: data.areasOfInterest,
         p_notification_email: data.notificationEmail,
         p_notification_push: data.notificationPush,
+        p_notification_sms: data.notificationSms,
       });
 
       if (error) throw error;
@@ -166,12 +169,12 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
     }));
   };
 
-  const toggleAreaOfInterest = (area: string) => {
+  const toggleAreaOfInterest = (areaId: string) => {
     setData((prev) => ({
       ...prev,
-      areasOfInterest: prev.areasOfInterest.includes(area)
-        ? prev.areasOfInterest.filter((a) => a !== area)
-        : [...prev.areasOfInterest, area],
+      areasOfInterest: prev.areasOfInterest.includes(areaId)
+        ? prev.areasOfInterest.filter((a) => a !== areaId)
+        : [...prev.areasOfInterest, areaId],
     }));
   };
 
@@ -261,16 +264,16 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
               <div className="flex flex-wrap gap-2">
                 {AREAS_OF_INTEREST.map((area) => (
                   <button
-                    key={area}
+                    key={area.id}
                     type="button"
                     className={`px-3 py-1 text-sm rounded-full border transition-colors ${
-                      data.areasOfInterest.includes(area)
+                      data.areasOfInterest.includes(area.id)
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border hover:border-primary/50'
                     }`}
-                    onClick={() => toggleAreaOfInterest(area)}
+                    onClick={() => toggleAreaOfInterest(area.id)}
                   >
-                    {area}
+                    {area.label}
                   </button>
                 ))}
               </div>
@@ -323,6 +326,29 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
                 checked={data.notificationPush}
                 onCheckedChange={(checked) =>
                   setData((prev) => ({ ...prev, notificationPush: checked === true }))
+                }
+              />
+            </div>
+
+            <div
+              className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
+                data.notificationSms ? 'border-primary bg-primary/5' : 'border-border'
+              }`}
+              onClick={() => setData((prev) => ({ ...prev, notificationSms: !prev.notificationSms }))}
+            >
+              <div className="flex items-center space-x-3">
+                <Smartphone className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium">SMS Notifications</p>
+                  <p className="text-sm text-muted-foreground">
+                    Get urgent match alerts by SMS. You can opt out anytime.
+                  </p>
+                </div>
+              </div>
+              <Checkbox
+                checked={data.notificationSms}
+                onCheckedChange={(checked) =>
+                  setData((prev) => ({ ...prev, notificationSms: checked === true }))
                 }
               />
             </div>

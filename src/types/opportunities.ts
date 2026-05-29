@@ -38,7 +38,7 @@ export interface OpportunitySubscription {
   id: string;
   user_id: string;
   criteria: SubscriptionCriteria;
-  channels: ('email' | 'push' | 'in_app')[];
+  channels: ('email' | 'push' | 'in_app' | 'sms')[];
   is_active: boolean;
   created_at: string;
   updated_at?: string;
@@ -56,7 +56,7 @@ export interface OpportunityNotification {
   user_id: string;
   subscription_id: string;
   opportunity_id: string;
-  channel: 'email' | 'push' | 'in_app';
+  channel: 'email' | 'push' | 'in_app' | 'sms';
   status: 'pending' | 'sent' | 'failed';
   sent_at?: string;
   created_at: string;

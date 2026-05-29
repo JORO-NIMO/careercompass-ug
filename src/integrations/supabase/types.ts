@@ -377,6 +377,8 @@ export type Database = {
           availability_status: string | null
           created_at: string | null
           email: string
+          phone: string | null
+          notification_sms: boolean | null
           full_name: string | null
           id: string
           location: string | null
@@ -393,6 +395,8 @@ export type Database = {
           availability_status?: string | null
           created_at?: string | null
           email: string
+          phone?: string | null
+          notification_sms?: boolean | null
           full_name?: string | null
           id: string
           location?: string | null
@@ -409,6 +413,8 @@ export type Database = {
           availability_status?: string | null
           created_at?: string | null
           email?: string
+          phone?: string | null
+          notification_sms?: boolean | null
           full_name?: string | null
           id?: string
           location?: string | null

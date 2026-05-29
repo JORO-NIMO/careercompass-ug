@@ -35,6 +35,106 @@ interface MatchRow {
   source_table?: string;
 }
 
+interface SmsDeliveryResult {
+  delivered: boolean;
+  provider: 'africastalking';
+  providerMessageId?: string;
+  reason?: string;
+}
+
+async function resolveSmsPhone(supabase: ReturnType<typeof createClient>, userId: string): Promise<string | null> {
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('phone, notification_sms')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profileError) throw new Error(`profile phone lookup failed: ${profileError.message}`);
+
+  const profileRecord = profile as { phone?: string | null; notification_sms?: boolean | null } | null;
+  if (!profileRecord?.notification_sms) return null;
+
+  const profilePhone = profileRecord.phone?.trim();
+  if (profilePhone) return profilePhone;
+
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+  if (userError) throw new Error(`auth user lookup failed: ${userError.message}`);
+
+  return userData.user?.phone?.trim() || null;
+}
+
+async function sendSmsNotification(params: {
+  supabase: ReturnType<typeof createClient>;
+  userId: string;
+  message: string;
+  matches: MatchRow[];
+}): Promise<SmsDeliveryResult> {
+  const { supabase, userId, message, matches } = params;
+  const provider: SmsDeliveryResult['provider'] = 'africastalking';
+  const username = Deno.env.get('AFRICASTALKING_USERNAME');
+  const apiKey = Deno.env.get('AFRICASTALKING_API_KEY');
+  const senderId = Deno.env.get('AFRICASTALKING_SENDER_ID');
+  const apiUrl = Deno.env.get('AFRICASTALKING_SMS_URL') || 'https://api.africastalking.com/version1/messaging';
+
+  if (!username || !apiKey) {
+    return { delivered: false, provider, reason: 'Africa\'s Talking credentials are not configured' };
+  }
+
+  let phone: string | null = null;
+  try {
+    phone = await resolveSmsPhone(supabase, userId);
+  } catch (err) {
+    return { delivered: false, provider, reason: (err as Error).message };
+  }
+
+  if (!phone) {
+    return { delivered: false, provider, reason: 'SMS opt-in or saved phone number is missing' };
+  }
+
+  const body = new URLSearchParams({
+    username,
+    to: phone,
+    message,
+    bulkSMSMode: '1',
+  });
+  if (senderId) body.set('from', senderId);
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      apiKey,
+      Accept: 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body,
+  });
+
+  const responseText = await response.text();
+  let payload: Record<string, unknown> | null = null;
+  try {
+    payload = responseText ? JSON.parse(responseText) as Record<string, unknown> : null;
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok) {
+    return { delivered: false, provider, reason: `Africa's Talking failed: ${response.status} ${responseText}` };
+  }
+
+  const recipients = ((payload?.SMSMessageData as Record<string, unknown> | undefined)?.Recipients as Array<Record<string, unknown>> | undefined) || [];
+  const firstRecipient = recipients[0];
+  const status = String(firstRecipient?.status || '').toLowerCase();
+  const providerMessageId = firstRecipient?.messageId ? String(firstRecipient.messageId) : undefined;
+  const delivered = status === 'success' || status === 'sent' || status === 'submitted';
+
+  return {
+    delivered,
+    provider,
+    providerMessageId,
+    reason: delivered ? undefined : (firstRecipient?.status ? String(firstRecipient.status) : `Unexpected Africa's Talking response for ${matches.length} matches`),
+  };
+}
+
 function includesAny(haystack: string, needles?: string[]): boolean {
   if (!needles || needles.length === 0) return true;
   const lower = haystack.toLowerCase();
@@ -89,6 +189,10 @@ serve(async (req: Request) => {
     alerts_checked: 0,
     users_matched: 0,
     notifications_sent: 0,
+    notifications_recorded: 0,
+    sms_attempted: 0,
+    sms_delivered: 0,
+    sms_failed: 0,
     opportunities_seen_recently: 0,
     errors: [] as string[],
   };
@@ -205,7 +309,61 @@ serve(async (req: Request) => {
           }
 
           if (channel === 'sms') {
-            // SMS integration is optional; avoid hard-failing when phone storage/provider isn't configured.
+            results.sms_attempted++;
+            const smsResult = await sendSmsNotification({
+              supabase,
+              userId: alert.user_id,
+              message,
+              matches: matchingJobs,
+            });
+
+            const { data: smsNotification, error: notifError } = await supabase.from('notifications').insert({
+              user_id: alert.user_id,
+              type: 'job_match',
+              title: 'New Job Matches!',
+              body: message,
+              message,
+              channel: ['sms', 'in_app'],
+              sms_status: smsResult.delivered ? 'sent' : 'failed',
+              sms_provider: smsResult.provider,
+              sms_provider_message_id: smsResult.providerMessageId || null,
+              sms_error: smsResult.reason || null,
+              metadata: {
+                sms_delivered: smsResult.delivered,
+                sms_reason: smsResult.reason || null,
+                sms_provider: smsResult.provider,
+                sms_provider_message_id: smsResult.providerMessageId || null,
+                matches: matchingJobs.map((j) => ({
+                  id: j.placement_id,
+                  title: j.position_title,
+                  company_name: j.company_name,
+                  match_score: j.match_score,
+                  source_table: j.source_table || 'placements',
+                })),
+              },
+              sent_at: new Date().toISOString(),
+            }).select('id').single();
+
+            if (notifError) {
+              results.errors.push(`notifications(${alert.user_id}/sms): ${notifError.message}`);
+            } else {
+              results.notifications_recorded++;
+              if (smsResult.delivered) {
+                results.sms_delivered++;
+              } else {
+                results.sms_failed++;
+              }
+
+              await supabase.from('notification_events').insert({
+                notification_id: smsNotification?.id,
+                user_id: alert.user_id,
+                event_type: smsResult.delivered ? 'sms_sent' : 'sms_failed',
+              });
+            }
+
+            if (!smsResult.delivered && smsResult.reason) {
+              results.errors.push(`sms(${alert.user_id}): ${smsResult.reason}`);
+            }
             continue;
           }
 
@@ -232,6 +390,7 @@ serve(async (req: Request) => {
             results.errors.push(`notifications(${alert.user_id}/${channel}): ${notifError.message}`);
           } else {
             results.notifications_sent++;
+            results.notifications_recorded++;
           }
         } catch (err) {
           results.errors.push(`${channel}: ${(err as Error).message}`);

@@ -32,7 +32,8 @@ export default async function (req: Request) {
             areas_of_interest,
             location,
             experience_level,
-            availability_status
+            availability_status,
+            phone
         } = body as ProfileUpdate;
 
         // 3. Perform Update via Service Role (bypassing RLS, though we verified user above)
@@ -45,6 +46,7 @@ export default async function (req: Request) {
                 location,
                 experience_level,
                 availability_status,
+                phone,
                 updated_at: new Date().toISOString()
             })
             .eq('id', user.id)
