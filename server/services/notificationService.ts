@@ -22,7 +22,7 @@ export interface OpportunitySubscription {
   id: string;
   user_id: string;
   criteria: SubscriptionCriteria;
-  channels: ('email' | 'push' | 'in_app')[];
+  channels: ('email' | 'push' | 'in_app' | 'sms')[];
   is_active: boolean;
   created_at: string;
 }
@@ -33,7 +33,7 @@ export interface OpportunityNotification {
   user_id: string;
   subscription_id: string;
   opportunity_id: string;
-  channel: 'email' | 'push' | 'in_app';
+  channel: 'email' | 'push' | 'in_app' | 'sms';
   status: 'pending' | 'sent' | 'failed';
   sent_at?: string;
   error_message?: string;
@@ -111,7 +111,7 @@ export async function getActiveSubscriptions(): Promise<OpportunitySubscription[
 export async function createSubscription(
   userId: string,
   criteria: SubscriptionCriteria,
-  channels: ('email' | 'push' | 'in_app')[] = ['in_app']
+  channels: ('email' | 'push' | 'in_app' | 'sms')[] = ['in_app']
 ): Promise<OpportunitySubscription | null> {
   const supabase = getSupabaseClient();
   
@@ -245,6 +245,11 @@ export async function processPendingNotifications(): Promise<{
         case 'push':
           // Send push notification
           await sendPushNotification(notification);
+          break;
+
+        case 'sms':
+          // SMS delivery is handled by the match-notify Edge Function provider adapter.
+          await createInAppNotification(notification);
           break;
       }
       

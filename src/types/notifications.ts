@@ -37,7 +37,7 @@ export interface NotificationEvent {
 }
 import type { JsonValue } from '@/lib/api-client';
 
-export type NotificationChannel = 'in_app' | 'email' | 'push';
+export type NotificationChannel = 'in_app' | 'email' | 'push' | 'sms';
 
 export type NotificationType =
   | 'session'

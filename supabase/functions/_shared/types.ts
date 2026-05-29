@@ -13,6 +13,8 @@ export interface Database {
                 Row: {
                     id: string
                     email: string
+                    phone: string | null
+                    notification_sms: boolean | null
                     full_name: string | null
                     areas_of_interest: string[] | null
                     location: string | null
@@ -24,6 +26,8 @@ export interface Database {
                 Insert: {
                     id: string
                     email: string
+                    phone?: string | null
+                    notification_sms?: boolean | null
                     full_name?: string | null
                     areas_of_interest?: string[] | null
                     location?: string | null
@@ -35,6 +39,8 @@ export interface Database {
                 Update: {
                     id?: string
                     email?: string
+                    phone?: string | null
+                    notification_sms?: boolean | null
                     full_name?: string | null
                     areas_of_interest?: string[] | null
                     location?: string | null

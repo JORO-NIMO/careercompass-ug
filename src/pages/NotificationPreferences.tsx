@@ -7,13 +7,14 @@ import { loadAssistantPrefsFromServer, saveAssistantPrefsToServer } from '@/serv
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const channels: NotificationChannel[] = ['in_app', 'email', 'push'];
+const channels: NotificationChannel[] = ['in_app', 'email', 'push', 'sms'];
 const types: NotificationType[] = ['session', 'deadline', 'admin_alert', 'admin_broadcast', 'custom'];
 
 const channelLabels: Record<NotificationChannel, string> = {
   in_app: 'In-app',
   email: 'Email',
   push: 'Push',
+  sms: 'SMS',
 };
 
 const NotificationPreferences: React.FC = () => {

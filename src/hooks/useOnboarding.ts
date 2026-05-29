@@ -14,6 +14,7 @@ interface OnboardingStatus {
   areas_of_interest: string[] | null;
   notification_email: boolean;
   notification_push: boolean;
+  notification_sms: boolean;
 }
 
 export function useOnboarding(userId: string | null) {

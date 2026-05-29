@@ -1,5 +1,5 @@
 // Supabase Edge Function: opportunity-notifications
-// Matches new listings with user interests and sends alerts
+// Routes listing notifications through the canonical SQL matching engine.
 
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
 import { handleCors } from '../_shared/auth.ts';
@@ -21,10 +21,9 @@ const handler = async (req: Request) => {
 
         const supabase = createSupabaseServiceClient();
 
-        // 1. Fetch listing details
         const { data: listing, error: listingError } = await supabase
             .from('listings')
-            .select('title, description, company_id, companies(name)')
+            .select('id, title')
             .eq('id', listing_id)
             .single();
 
@@ -33,47 +32,33 @@ const handler = async (req: Request) => {
             return jsonError('Listing not found', 404);
         }
 
-        // 2. Simple matching: Check title/description against user interests
-        // In a real app, you'd use pg_trgm or semantic search.
-        // Here we'll find users whose areas_of_interest overlap with words in the title.
-        const keywords = listing.title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        const { data: matches, error: matchError } = await supabase.rpc('match_profiles_for_listing', {
+            p_listing_id: listing_id,
+        });
 
-        // 3. Fetch potentially interested users
-        // Using a simple overlap check with overlap operator && for arrays
-        const { data: usersToNotify, error: usersError } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .filter('areas_of_interest', 'cs', keywords); // Using containment/overlap logic if possible via filter
-
-        if (usersError) {
-            console.error('Error fetching users:', usersError);
-            // Fallback: Just notify everyone for now if filter fails? No, let's be targeted.
+        if (matchError) {
+            console.error('Listing match failed:', matchError);
+            return jsonError('Failed to match listing interests', 500);
         }
 
-        const notifiedCount = 0;
-        if (usersToNotify && usersToNotify.length > 0) {
-            const notifications = usersToNotify.map(u => ({
-                user_id: u.id,
-                type: 'opportunity_match',
-                title: 'New Match: ' + listing.title,
-                body: `${listing.companies?.name || 'A company'} just posted a new role that matches your interests.`,
-                metadata: { listing_id: listing_id },
-                sent_at: new Date().toISOString(),
-            }));
+        const { data: insertedCount, error: notifyError } = await supabase.rpc('notify_listing_interest_matches', {
+            p_listing_id: listing_id,
+        });
 
-            const { error: notifError } = await supabase
-                .from('notifications')
-                .insert(notifications);
-
-            if (notifError) console.error('Failed to insert notifications:', notifError);
+        if (notifyError) {
+            console.error('Listing notification insert failed:', notifyError);
+            return jsonError('Failed to insert listing notifications', 500);
         }
+
+        const targetFields = Array.from(new Set((matches || []).flatMap((match: { matched_fields?: string[] | null }) => match.matched_fields || [])));
 
         return jsonSuccess({
             processed: true,
-            matchCount: usersToNotify?.length || 0,
-            listing: listing.title
+            matchCount: insertedCount ?? matches?.length ?? 0,
+            targetFields,
+            listing: listing.title,
+            routingEngine: 'match_profiles_for_listing',
         });
-
     } catch (err) {
         console.error('Error in opportunity-notifications:', err);
         return jsonError(err instanceof Error ? err.message : 'Internal error', 500);

@@ -300,7 +300,7 @@ const StudentProfile = () => {
 			setLoadingProfile(true);
 			const { data, error } = await supabase
 				.from("profiles")
-				.select("full_name, areas_of_interest, location, experience_level, availability_status, email")
+				.select("full_name, phone, areas_of_interest, location, experience_level, availability_status, email")
 				.eq("id", user.id)
 				.maybeSingle();
 
@@ -317,6 +317,9 @@ const StudentProfile = () => {
 			}
 
 			if (data) {
+				if (data.phone) {
+					setPhoneNumber(data.phone);
+				}
 				if (data.full_name) {
 					const segments = data.full_name.trim().split(/\s+/);
 					setFirstName(segments[0] ?? "");
@@ -445,6 +448,7 @@ const StudentProfile = () => {
 				location: locationPayload as string | null,
 				experience_level: stage || null,
 				availability_status: availability || null,
+				phone: phoneNumber.trim() || null,
 			});
 
 			persistExtraFields(user.id, { region: effectiveRegion, district });
