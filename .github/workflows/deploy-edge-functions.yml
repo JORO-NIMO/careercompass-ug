@@ -38,7 +38,7 @@ jobs:
             echo "Missing SUPABASE_PROJECT_REF secret" >&2
             exit 1
           fi
-          supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --no-prompt
 
       - name: Deploy all functions
         env:

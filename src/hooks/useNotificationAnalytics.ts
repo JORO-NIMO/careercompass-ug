@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface NotificationAnalyticsData {
   totalSent: number;
@@ -6,6 +7,8 @@ export interface NotificationAnalyticsData {
   totalClicked: number;
   eventsSeries: Array<{ date: string; sent: number; opened: number; clicked: number }>;
   typeBreakdown: Array<{ type: string; sent: number; opened: number; clicked: number }>;
+  smsDelivery?: Array<{ provider: string; status: string; day: string; total: number; successful: number; failed: number; pending: number }>;
+  smsTotals?: { total: number; successful: number; failed: number; pending: number };
 }
 
 export function useNotificationAnalytics() {
@@ -20,6 +23,20 @@ export function useNotificationAnalytics() {
       .then(r => {
         if (!r.ok) throw new Error('Failed to fetch notification analytics');
         return r.json();
+      })
+      .then(async (analyticsData) => {
+        const { data: smsRows } = await supabase.rpc('get_sms_delivery_stats', { p_days: 30 });
+        const smsDelivery = (smsRows || []) as NotificationAnalyticsData['smsDelivery'];
+        const smsTotals = (smsDelivery || []).reduce(
+          (acc, row) => ({
+            total: acc.total + Number(row.total || 0),
+            successful: acc.successful + Number(row.successful || 0),
+            failed: acc.failed + Number(row.failed || 0),
+            pending: acc.pending + Number(row.pending || 0),
+          }),
+          { total: 0, successful: 0, failed: 0, pending: 0 },
+        );
+        return { ...analyticsData, smsDelivery, smsTotals };
       })
       .then(setData)
       .catch(e => !cancelled && setError(e.message))

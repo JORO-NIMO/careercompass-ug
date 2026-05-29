@@ -11,6 +11,8 @@ const corsHeaders = {
 
 const LOCK_DURATION_MINUTES = 20;
 const LOOKBACK_HOURS = 6;
+const SMS_DAILY_USER_LIMIT = Number(Deno.env.get('SMS_DAILY_USER_LIMIT') || '3');
+const SMS_DAILY_PLATFORM_LIMIT = Number(Deno.env.get('SMS_DAILY_PLATFORM_LIMIT') || '500');
 
 interface JobAlert {
   id: string;

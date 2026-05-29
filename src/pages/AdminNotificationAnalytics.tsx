@@ -64,6 +64,27 @@ const AdminNotificationAnalytics: React.FC = () => {
         <div className="text-center text-muted-foreground mt-2">Notification Events (last 30 days)</div>
       </div>
 
+      {data.smsTotals && (
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="p-3 border rounded">
+            <div className="font-bold text-lg">{data.smsTotals.total}</div>
+            <div className="text-muted-foreground">SMS Records</div>
+          </div>
+          <div className="p-3 border rounded">
+            <div className="font-bold text-lg">{data.smsTotals.successful}</div>
+            <div className="text-muted-foreground">SMS Sent/Delivered</div>
+          </div>
+          <div className="p-3 border rounded">
+            <div className="font-bold text-lg">{data.smsTotals.failed}</div>
+            <div className="text-muted-foreground">SMS Failed</div>
+          </div>
+          <div className="p-3 border rounded">
+            <div className="font-bold text-lg">{data.smsTotals.pending}</div>
+            <div className="text-muted-foreground">SMS Pending</div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full h-64 bg-card p-4 rounded mb-6">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data.typeBreakdown}>

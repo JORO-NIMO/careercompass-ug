@@ -36,6 +36,10 @@ export default async function (req: Request) {
             phone
         } = body as ProfileUpdate;
 
+        if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
+            return jsonError('Phone number must be in E.164 format, e.g. +256700000000', 400);
+        }
+
         // 3. Perform Update via Service Role (bypassing RLS, though we verified user above)
         // Using service role here allows us to potentially add server-side logic/logging that users can't trigger directly
         const { data, error } = await supabase
