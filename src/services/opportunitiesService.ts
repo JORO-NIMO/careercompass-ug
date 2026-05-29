@@ -146,7 +146,7 @@ export async function subscribeToAlerts(criteria: {
   fields?: string[];
   countries?: string[];
   keywords?: string[];
-}): Promise<{ success: boolean; subscriptionId?: string }> {
+}, channels: ('email' | 'push' | 'in_app' | 'sms')[] = ['in_app']): Promise<{ success: boolean; subscriptionId?: string }> {
   const session = await supabase.auth.getSession();
   const userId = session.data.session?.user?.id;
   
@@ -159,7 +159,7 @@ export async function subscribeToAlerts(criteria: {
     .insert({
       user_id: userId,
       criteria,
-      channels: ['in_app'],
+      channels,
       is_active: true,
     })
     .select()

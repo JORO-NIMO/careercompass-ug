@@ -75,7 +75,7 @@ export const mapProfileToCandidate = (profile: Profile): Candidate => {
         skills: interests,
         experience: profile.experience_level ?? 'Experience not specified',
         email: profile.email,
-        phone: undefined,
+        phone: profile.phone ?? undefined,
         availability: profile.availability_status ?? 'Available upon request',
         verified: false,
         updatedAt: profile.updated_at,
@@ -86,7 +86,7 @@ export async function fetchCandidates(limit = 100): Promise<Candidate[]> {
     const { data, error } = await supabase
         .from('profiles')
         .select(
-            'id, full_name, email, areas_of_interest, updated_at, location, experience_level, availability_status'
+            'id, full_name, email, phone, areas_of_interest, updated_at, location, experience_level, availability_status'
         )
         .order('updated_at', { ascending: false })
         .limit(limit);
@@ -107,7 +107,8 @@ export async function updateProfile(profile: Partial<Profile>): Promise<Profile>
             areas_of_interest: profile.areas_of_interest,
             location: profile.location,
             experience_level: profile.experience_level,
-            availability_status: profile.availability_status
+            availability_status: profile.availability_status,
+            phone: profile.phone
         }),
     });
 

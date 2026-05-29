@@ -1,5 +1,5 @@
 // Supabase Edge Function: opportunity-notifications
-// Matches new listings with user interests and sends alerts
+// Routes listing notifications through the canonical SQL matching engine.
 
 import { createSupabaseServiceClient } from '../_shared/sbClient.ts';
 import { handleCors } from '../_shared/auth.ts';
@@ -51,7 +51,6 @@ const handler = async (req: Request) => {
 
         const supabase = createSupabaseServiceClient();
 
-        // 1. Fetch listing details
         const { data: listing, error: listingError } = await supabase
             .from('listings')
             .select('id, title, description, field, company_id, companies(name)')
@@ -78,9 +77,9 @@ const handler = async (req: Request) => {
             .select('id, full_name, areas_of_interest')
             .not('areas_of_interest', 'is', null);
 
-        if (usersError) {
-            console.error('Error fetching users:', usersError);
-            // Fallback: Just notify everyone for now if filter fails? No, let's be targeted.
+        if (matchError) {
+            console.error('Listing match failed:', matchError);
+            return jsonError('Failed to match listing interests', 500);
         }
 
         const matchedUsers = (usersToNotify || []).filter((user) => {
@@ -109,8 +108,12 @@ const handler = async (req: Request) => {
                 .from('notifications')
                 .insert(notifications);
 
-            if (notifError) console.error('Failed to insert notifications:', notifError);
+        if (notifyError) {
+            console.error('Listing notification insert failed:', notifyError);
+            return jsonError('Failed to insert listing notifications', 500);
         }
+
+        const targetFields = Array.from(new Set((matches || []).flatMap((match: { matched_fields?: string[] | null }) => match.matched_fields || [])));
 
         return jsonSuccess({
             processed: true,
@@ -118,7 +121,6 @@ const handler = async (req: Request) => {
             targetFields,
             listing: listing.title
         });
-
     } catch (err) {
         console.error('Error in opportunity-notifications:', err);
         return jsonError(err instanceof Error ? err.message : 'Internal error', 500);

@@ -130,6 +130,10 @@ serve(async (req: Request) => {
     alerts_checked: 0,
     users_matched: 0,
     notifications_sent: 0,
+    notifications_recorded: 0,
+    sms_attempted: 0,
+    sms_delivered: 0,
+    sms_failed: 0,
     opportunities_seen_recently: 0,
     errors: [] as string[],
   };
@@ -309,6 +313,7 @@ serve(async (req: Request) => {
             results.errors.push(`notifications(${alert.user_id}/${channel}): ${notifError.message}`);
           } else {
             results.notifications_sent++;
+            results.notifications_recorded++;
           }
         } catch (err) {
           results.errors.push(`${channel}: ${(err as Error).message}`);
