@@ -7,26 +7,6 @@ ALTER TABLE public.profiles
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS notification_sms boolean NOT NULL DEFAULT false;
 
-CREATE OR REPLACE FUNCTION public.is_valid_e164_phone(p_phone text)
-RETURNS boolean
-LANGUAGE sql
-IMMUTABLE
-AS $$
-  SELECT p_phone IS NULL OR p_phone ~ '^\+[1-9][0-9]{7,14}$';
-$$;
-
-ALTER TABLE public.profiles
-  DROP CONSTRAINT IF EXISTS profiles_phone_e164_check;
-
-ALTER TABLE public.profiles
-  ADD CONSTRAINT profiles_phone_e164_check
-  CHECK (public.is_valid_e164_phone(phone))
-  NOT VALID;
-
-CREATE INDEX IF NOT EXISTS idx_profiles_phone
-  ON public.profiles(phone)
-  WHERE phone IS NOT NULL;
-
 -- Allow SMS in the general opportunity subscription channel list where the table exists.
 DO $$
 BEGIN
@@ -42,25 +22,14 @@ $$;
 
 -- Delivery analytics fields for notification records.
 ALTER TABLE public.notifications
-  ADD COLUMN IF NOT EXISTS listing_id uuid REFERENCES public.listings(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS sms_status text CHECK (sms_status IS NULL OR sms_status IN ('pending', 'sent', 'delivered', 'failed', 'skipped')),
+  ADD COLUMN IF NOT EXISTS sms_status text CHECK (sms_status IS NULL OR sms_status IN ('pending', 'sent', 'failed', 'skipped')),
   ADD COLUMN IF NOT EXISTS sms_provider text,
   ADD COLUMN IF NOT EXISTS sms_provider_message_id text,
   ADD COLUMN IF NOT EXISTS sms_error text;
 
-UPDATE public.notifications
-SET listing_id = NULLIF(metadata->>'listing_id', '')::uuid
-WHERE listing_id IS NULL
-  AND metadata ? 'listing_id'
-  AND metadata->>'listing_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$';
-
 CREATE INDEX IF NOT EXISTS idx_notifications_sms_status
   ON public.notifications(sms_status)
   WHERE sms_status IS NOT NULL;
-
-CREATE UNIQUE INDEX IF NOT EXISTS notifications_user_type_listing_key
-  ON public.notifications(user_id, type, listing_id)
-  WHERE listing_id IS NOT NULL;
 
 -- Preference upserts should update one row per user/channel/type instead of creating duplicates.
 DELETE FROM public.notification_preferences a
@@ -270,42 +239,19 @@ AS $$
 DECLARE
   v_count integer := 0;
 BEGIN
-  INSERT INTO public.notifications (
-    user_id,
-    type,
-    title,
-    body,
-    message,
-    channel,
-    listing_id,
-    sms_status,
-    sms_provider,
-    metadata,
-    sent_at
-  )
+  INSERT INTO public.notifications (user_id, type, title, body, message, channel, metadata, sent_at)
   SELECT
     m.user_id,
     'opportunity_match',
     'New Match: ' || l.title,
     COALESCE(c.name, 'A company') || ' just posted a new role that matches your interests.',
     COALESCE(c.name, 'A company') || ' just posted a new role that matches your interests.',
-    ARRAY['in_app']::text[]
-      || CASE WHEN COALESCE(email_pref.enabled, p.notification_email, true) THEN ARRAY['email']::text[] ELSE ARRAY[]::text[] END
-      || CASE WHEN COALESCE(push_pref.enabled, p.notification_push, true) THEN ARRAY['push']::text[] ELSE ARRAY[]::text[] END
-      || CASE WHEN COALESCE(sms_pref.enabled, p.notification_sms, false) AND public.is_valid_e164_phone(p.phone) THEN ARRAY['sms']::text[] ELSE ARRAY[]::text[] END,
-    l.id,
-    CASE WHEN COALESCE(sms_pref.enabled, p.notification_sms, false) AND public.is_valid_e164_phone(p.phone) THEN 'pending' ELSE NULL END,
-    CASE WHEN COALESCE(sms_pref.enabled, p.notification_sms, false) AND public.is_valid_e164_phone(p.phone) THEN 'africastalking' ELSE NULL END,
+    ARRAY['in_app']::text[],
     jsonb_build_object('listing_id', l.id, 'target_fields', m.matched_fields, 'routing_engine', 'match_profiles_for_listing'),
     now()
   FROM public.match_profiles_for_listing(p_listing_id) m
-  JOIN public.profiles p ON p.id = m.user_id
   JOIN public.listings l ON l.id = p_listing_id
-  LEFT JOIN public.companies c ON c.id = l.company_id
-  LEFT JOIN public.notification_preferences email_pref ON email_pref.user_id = m.user_id AND email_pref.type = 'opportunity_match' AND email_pref.channel = 'email'
-  LEFT JOIN public.notification_preferences push_pref ON push_pref.user_id = m.user_id AND push_pref.type = 'opportunity_match' AND push_pref.channel = 'push'
-  LEFT JOIN public.notification_preferences sms_pref ON sms_pref.user_id = m.user_id AND sms_pref.type = 'opportunity_match' AND sms_pref.channel = 'sms'
-  ON CONFLICT (user_id, type, listing_id) WHERE listing_id IS NOT NULL DO NOTHING;
+  LEFT JOIN public.companies c ON c.id = l.company_id;
 
   GET DIAGNOSTICS v_count = ROW_COUNT;
   RETURN v_count;
@@ -376,41 +322,12 @@ BEGIN
 END;
 $$;
 
-
-CREATE OR REPLACE VIEW public.sms_delivery_analytics AS
-SELECT
-  COALESCE(sms_provider, 'unknown') AS provider,
-  COALESCE(sms_status, 'unknown') AS status,
-  date_trunc('day', created_at) AS day,
-  count(*) AS total,
-  count(*) FILTER (WHERE sms_status IN ('sent', 'delivered')) AS successful,
-  count(*) FILTER (WHERE sms_status = 'failed') AS failed,
-  count(*) FILTER (WHERE sms_status = 'pending') AS pending
-FROM public.notifications
-WHERE 'sms' = ANY(channel) OR sms_status IS NOT NULL
-GROUP BY 1, 2, 3;
-
-CREATE OR REPLACE FUNCTION public.get_sms_delivery_stats(p_days integer DEFAULT 30)
-RETURNS TABLE(provider text, status text, day timestamptz, total bigint, successful bigint, failed bigint, pending bigint)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT provider, status, day, total, successful, failed, pending
-  FROM public.sms_delivery_analytics
-  WHERE day >= date_trunc('day', now()) - make_interval(days => GREATEST(p_days, 1))
-  ORDER BY day DESC, provider, status;
-$$;
-
 GRANT EXECUTE ON FUNCTION public.canonical_interest_field(text) TO authenticated, service_role;
-
 GRANT EXECUTE ON FUNCTION public.canonical_interest_fields(text[]) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.match_profiles_for_listing(uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.notify_listing_interest_matches(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.subscribe_job_alerts(uuid, jsonb, text[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.complete_onboarding(uuid, text, text[], text[], text[], boolean, boolean, boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_onboarding_status(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_sms_delivery_stats(integer) TO authenticated, service_role;
 
 COMMIT;
