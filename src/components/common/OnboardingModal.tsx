@@ -53,6 +53,12 @@ interface OnboardingData {
   notificationSms: boolean;
 }
 
+function isUnsupportedSmsOnboardingRpc(errorMessage: string) {
+  return /p_notification_sms|complete_onboarding\(|function .*complete_onboarding|column .*notification_sms/i.test(
+    errorMessage,
+  );
+}
+
 const CAREER_LEVELS = [
   { id: 'student', label: 'Student', description: 'Currently studying or recent graduate', icon: GraduationCap },
   { id: 'entry', label: 'Entry Level', description: '0-2 years of experience', icon: Briefcase },
@@ -129,7 +135,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
   const handleComplete = async () => {
     setLoading(true);
     try {
-      const { data: result, error } = await supabase.rpc('complete_onboarding', {
+      const onboardingArgs = {
         p_user_id: userId,
         p_career_level: data.careerLevel,
         p_opportunity_types: data.opportunityTypes,
@@ -138,9 +144,27 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
         p_notification_email: data.notificationEmail,
         p_notification_push: data.notificationPush,
         p_notification_sms: data.notificationSms,
-      });
+      };
 
-      if (error) throw error;
+      const { error } = await supabase.rpc('complete_onboarding', onboardingArgs);
+
+      if (error && isUnsupportedSmsOnboardingRpc(error.message)) {
+        const fallbackArgs = {
+          p_user_id: userId,
+          p_career_level: data.careerLevel,
+          p_opportunity_types: data.opportunityTypes,
+          p_countries: null,
+          p_areas_of_interest: data.areasOfInterest,
+          p_notification_email: data.notificationEmail,
+          p_notification_push: data.notificationPush,
+        };
+
+        const { error: fallbackError } = await supabase.rpc('complete_onboarding', fallbackArgs);
+
+        if (fallbackError) throw fallbackError;
+      } else if (error) {
+        throw error;
+      }
 
       toast({
         title: 'Welcome to CareerCompass!',
