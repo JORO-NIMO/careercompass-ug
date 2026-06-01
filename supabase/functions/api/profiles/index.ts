@@ -40,11 +40,17 @@ export default async function (req: Request) {
             return jsonError('Phone number must be in E.164 format, e.g. +256700000000', 400);
         }
 
-        // 3. Perform Update via Service Role (bypassing RLS, though we verified user above)
-        // Using service role here allows us to potentially add server-side logic/logging that users can't trigger directly
+        if (!user.email) {
+            return jsonError('Authenticated user is missing an email address', 400);
+        }
+
+        // 3. Perform an upsert via Service Role (bypassing RLS, though we verified user above).
+        // This keeps profile saves working for legacy users whose auth trigger did not create a row.
         const { data, error } = await supabase
             .from('profiles')
-            .update({
+            .upsert({
+                id: user.id,
+                email: user.email,
                 full_name,
                 areas_of_interest,
                 location,
@@ -52,8 +58,7 @@ export default async function (req: Request) {
                 availability_status,
                 phone,
                 updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id)
+            }, { onConflict: 'id' })
             .select()
             .single();
 

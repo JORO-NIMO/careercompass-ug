@@ -274,6 +274,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
                   >
                     <Checkbox
                       checked={data.opportunityTypes.includes(id)}
+                      onClick={(event) => event.stopPropagation()}
                       onCheckedChange={() => toggleOpportunityType(id)}
                     />
                     <Icon className="h-4 w-4 text-primary" />
@@ -325,6 +326,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
               </div>
               <Checkbox
                 checked={data.notificationEmail}
+                onClick={(event) => event.stopPropagation()}
                 onCheckedChange={(checked) =>
                   setData((prev) => ({ ...prev, notificationEmail: checked === true }))
                 }
@@ -348,6 +350,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
               </div>
               <Checkbox
                 checked={data.notificationPush}
+                onClick={(event) => event.stopPropagation()}
                 onCheckedChange={(checked) =>
                   setData((prev) => ({ ...prev, notificationPush: checked === true }))
                 }
@@ -371,6 +374,7 @@ export function OnboardingModal({ isOpen, onClose, userId }: OnboardingModalProp
               </div>
               <Checkbox
                 checked={data.notificationSms}
+                onClick={(event) => event.stopPropagation()}
                 onCheckedChange={(checked) =>
                   setData((prev) => ({ ...prev, notificationSms: checked === true }))
                 }
