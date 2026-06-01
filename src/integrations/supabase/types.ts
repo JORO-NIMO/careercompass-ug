@@ -62,27 +62,75 @@ export type Database = {
       profiles: {
         Row: {
           areas_of_interest: string[] | null
+          availability_status: string | null
+          career_level: string | null
+          course_of_study: string | null
           created_at: string | null
+          cv_url: string | null
           email: string
+          experience_level: string | null
           full_name: string | null
           id: string
+          location: string | null
+          notification_email: boolean | null
+          notification_push: boolean | null
+          notification_sms: boolean
+          onboarding_completed: boolean | null
+          phone: string | null
+          portfolio_url: string | null
+          preferred_countries: string[] | null
+          preferred_opportunity_types: string[] | null
+          school_name: string | null
           updated_at: string | null
+          year_of_study: string | null
         }
         Insert: {
           areas_of_interest?: string[] | null
+          availability_status?: string | null
+          career_level?: string | null
+          course_of_study?: string | null
           created_at?: string | null
+          cv_url?: string | null
           email: string
+          experience_level?: string | null
           full_name?: string | null
           id: string
+          location?: string | null
+          notification_email?: boolean | null
+          notification_push?: boolean | null
+          notification_sms?: boolean
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          portfolio_url?: string | null
+          preferred_countries?: string[] | null
+          preferred_opportunity_types?: string[] | null
+          school_name?: string | null
           updated_at?: string | null
+          year_of_study?: string | null
         }
         Update: {
           areas_of_interest?: string[] | null
+          availability_status?: string | null
+          career_level?: string | null
+          course_of_study?: string | null
           created_at?: string | null
+          cv_url?: string | null
           email?: string
+          experience_level?: string | null
           full_name?: string | null
           id?: string
+          location?: string | null
+          notification_email?: boolean | null
+          notification_push?: boolean | null
+          notification_sms?: boolean
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          portfolio_url?: string | null
+          preferred_countries?: string[] | null
+          preferred_opportunity_types?: string[] | null
+          school_name?: string | null
           updated_at?: string | null
+          year_of_study?: string | null
         }
         Relationships: []
       }
@@ -122,7 +170,7 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "employer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -250,7 +298,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "employer"],
     },
   },
 } as const
